@@ -1,0 +1,15 @@
+#version 330 core
+
+layout (location = 0) in vec3 vertex_pos;
+
+out vec4 mid_color;
+
+uniform mat4 mv_mat;
+uniform mat4 proj_mat;
+uniform vec4 color_vec;
+
+void main()
+{
+    gl_Position = proj_mat * mv_mat * vec4(vertex_pos, 1.0f);
+    mid_color = color_vec;
+}

@@ -12,12 +12,16 @@ int main(int argc, void **argv)
 	//test_rigid_body_square();
 	
 	// square
-	test_mpm_rigidbody_square();
+	//test_mpm_rigidbody_square();
+	//test_mpm_rigid_animation_square();
 
-	// caltilever beam
+	// cantilever beam
 	//test_mpm_rigidbody_cantilever();
+	//test_mpm_rigid_animation_can();
 
-	test_mpm_rigid_animation();
+	// cantilever beam - frictional contact
+	test_mpm_rigidbody_cantilever_fric();
+	test_mpm_rigid_animation_can_fric();
 
 	//system("pause");
 	return 0;

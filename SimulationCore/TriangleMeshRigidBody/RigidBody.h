@@ -97,6 +97,12 @@ protected: // for calculation
 		Fy_con = 0.0;
 		M_con = 0.0;
 	}
+	inline void init_per_substep(void)
+	{
+		Fx_con = 0.0;
+		Fy_con = 0.0;
+		M_con = 0.0;
+	}
 	inline void predict_motion_from_ext_force(double dt) // Euler - Cromer
 	{
 		if (vx_bc)
@@ -176,11 +182,6 @@ protected: // for calculation
 		y = y_ori + uy;
 		theta = theta_ori + utheta;
 		trim_to_pi(theta);
-
-		// reset for the next substep
-		Fx_con = 0.0;
-		Fy_con = 0.0;
-		M_con = 0.0;
 	}
 
 protected: // helper data and functions

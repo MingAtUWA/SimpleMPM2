@@ -1,8 +1,10 @@
-#pragma once
+#ifndef __GENERATE_ANIMATION_H__
+#define __GENERATE_ANIMATION_H__
 
 #include <fstream>
 #include "ItemArray.hpp"
 
+#include "ResultFileData.h"
 #include "ShaderProgram.h"
 
 class SquareParticleSystem
@@ -21,6 +23,12 @@ public:
 		bl_indices.set_page_size(30);
 	}
 	~SquareParticleSystem() { clear(); }
+	inline void set_pcl_num(size_t pcl_num)
+	{
+		coords.reserve(pcl_num * 12);
+		indices.set_page_size(pcl_num * 6);
+		bl_indices.set_page_size(pcl_num * 8);
+	}
 	void add_pcl(double x, double y, double vol)
 	{
 		double half_len = sqrt(vol) / 2.0;
@@ -61,14 +69,14 @@ public:
 	inline GLsizei get_index_num(void) const { return GLsizei(indices.get_num()); }
 	inline GLuint *get_bl_indices(void) const { return bl_indices.get_mem(); }
 	inline GLsizei get_bl_index_num(void) const { return GLsizei(bl_indices.get_num()); }
-	void reset(void)
+	inline void reset(void)
 	{
 		coords.reset();
 		indices.reset();
 		bl_indices.reset();
 		index_num = 0;
 	}
-	void clear(void)
+	inline void clear(void)
 	{
 		coords.clear();
 		indices.clear();
@@ -79,7 +87,7 @@ public:
 
 class GenerateAnimation
 {
-public:
+protected:
 	// shader program
 	ShaderProgram shader;
 	// color
@@ -88,6 +96,9 @@ public:
 	GLint mv_mat_id;
 	// projection matrix id in shader
 	GLint proj_mat_id;
+
+	// plain buffer
+	std::fstream res_file;
 
 	struct BufferObject
 	{
@@ -134,55 +145,8 @@ public:
 	BufferObject rigid_body_data;
 	BufferObject mp_data;
 
-	// plain buffer
-	std::fstream res_file;
-
-public: // model data
-	struct MeshHeader
-	{
-		double h, x0, xn, y0, yn;
-		unsigned long long elem_x_num, elem_y_num;
-	};
-	struct RigidBodyHeader
-	{
-		unsigned long long node_num, elem_num;
-		double x_mc, y_mc;
-		// node coordinates, elem indices
-	};
-	struct MPObjectHeader
-	{
-		unsigned long long pcl_num;
-		// x coord, y coord, vol, ...
-	};
-
-	MeshHeader mh;
-	GLsizei grid_line_points_num;
-	RigidBodyHeader rbh;
-	GLsizei rb_elem_point_num;
-	MPObjectHeader mph;
-
-public: // time history data
-	struct TimeHistoryHeader
-	{
-		size_t substep_num;
-		size_t total_substep_num;
-		double current_time;
-		double total_time;
-	};
-	struct RigidBodyMotionHeader
-	{
-		double x, y, theta;
-		double vx, vy, v_theta;
-	};
-
-	// particle data
-	double *mp_x_data, *mp_y_data, *mp_vol_data;
-	SquareParticleSystem pcls_mem;
-
-	// start position of current time record
-	size_t first_time_rcd_file_pos;
-	// length of each time record
-	size_t time_rcd_len;
+protected: // time history data
+	typedef ResultFileData::TimeHistoryHeader TimeHistoryHeader;
 	TimeHistoryHeader *time_rcds;
 	size_t time_rcd_num;
 
@@ -200,16 +164,17 @@ public: // animation generation
 
 public:
 	GenerateAnimation();
-	~GenerateAnimation();
+	virtual ~GenerateAnimation();
 	// main function
 	int generate(double ani_time, double xl, double xu, double yl, double yu,
 				 const char *res_file_name, const char *gif_name = nullptr);
 
-protected: // helper functions of generate()
-	// assume pcl_num is the same in each time history output
-	int init(const char *res_file_name);
-	int render_frame(double xl, double xu, double yl, double yu);
+protected: // helper functions for generate()
+	virtual int init(const char *res_file_name) { return 0; }
+	virtual int render_frame(double xl, double xu, double yl, double yu) { return 0; }
 	// return true if there is still next frame
 	// return false if already reach the last frame
 	bool find_next_frame(void);
 };
+
+#endif

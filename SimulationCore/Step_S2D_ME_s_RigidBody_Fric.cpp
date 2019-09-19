@@ -4,13 +4,13 @@
 
 namespace
 {
-	typedef Model_S2D_ME_s_RigidBody::Particle Particle_rb;
-	typedef Model_S2D_ME_s_RigidBody::Element Element_rb;
-	typedef Model_S2D_ME_s_RigidBody::Node Node_rb;
+	typedef Model_S2D_ME_s_RigidBody_Fric::Particle Particle_rb;
+	typedef Model_S2D_ME_s_RigidBody_Fric::Element Element_rb;
+	typedef Model_S2D_ME_s_RigidBody_Fric::Node Node_rb;
 };
 
 Step_S2D_ME_s_RigidBody_Fric::Step_S2D_ME_s_RigidBody_Fric() :
-	Step(&solve_substep_S2D_ME_s_RigidBody),
+	Step(&solve_substep_S2D_ME_s_RigidBody_Fric),
 	h_elem_raio(0.05), h_pcl_ratio(0.1),
 	model(nullptr) {}
 
@@ -44,7 +44,7 @@ int Step_S2D_ME_s_RigidBody_Fric::finalize_calculation() { return 0; }
 int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 {
 	Step_S2D_ME_s_RigidBody_Fric &self = *((Step_S2D_ME_s_RigidBody_Fric *)_self);
-	Model_S2D_ME_s_RigidBody &md = *(self.model);
+	Model_S2D_ME_s_RigidBody_Fric &md = *(self.model);
 
 	// init nodes
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
@@ -227,17 +227,28 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 		n.ay = 0.0;
 	}
 
-	md.rigid_body.predict_motion_from_ext_force(self.dtime);
+	RigidBody &rb = md.rigid_body;
+	rb.init_per_substep();
+	rb.predict_motion_from_ext_force(self.dtime);
 
 	//// Contact detection
 	double x1, y1, x2, y2, x3, y3, x4, y4;
-	md.rigid_body.init_transformation();
-	md.rigid_body.get_bounding_box(x1, y1, x2, y2, x3, y3, x4, y4, md.h);
+	rb.init_transformation();
+	rb.get_bounding_box(x1, y1, x2, y2, x3, y3, x4, y4, md.h);
 	md.rasterize_rect_on_grid(x1, y1, x2, y2, x3, y3, x4, y4);
+	// normal contact force
+	double Kn = 100.0; // Panelty factor, contact stiffness
 	double dist, nx, ny;
-	double f_con, fx_con, fy_con;
-	double K = 100.0; // Panelty factor, stiffness of interpenetration
-	int res;
+	double fn_con, fnx_con, fny_con;
+	// tangential contact force
+	double Kt = 100.0; // Panelty factor, slide stiffness
+	double miu = 0.1; // friction ratio
+	double ft_max = 10.0; // maximum tangential force
+	double vrbx, vrby; // rigid body velocity
+	double dsx, dsy, dsn; // relative tangential displacement
+	double ft_con, alpha;
+	// reset current contact state 
+	self.contact_state_list.reset_all_contact_state();
 	for (size_t elem_id = 0; elem_id < md.elem_num; ++elem_id)
 	{
 		Element_rb &elem = md.elems[elem_id];
@@ -247,32 +258,58 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 			{
 				Particle_rb &pcl = *pcl_iter;
 				Point pcl_pos = { pcl.x, pcl.y };
-				res = md.rigid_body.distance_from_boundary(pcl_pos, dist, nx, ny, md.h);
-				if (res < 0) continue; // not in contact
+				if (rb.distance_from_boundary(pcl_pos, dist, nx, ny, md.h) < 0)
+					continue; // not in contact
 				// modify distance to consider size of material point
 				dist += sqrt(pcl.vol / 4.0); // treated as square
 				if (dist > 0) // is in contact
 				{
-					// normal force
-					f_con = K * dist;
-					fx_con = f_con * nx;
-					fy_con = f_con * ny;
+					// Normal contact force
+					fn_con = Kn * dist;
+					fnx_con = fn_con * nx;
+					fny_con = fn_con * ny;
+					// Tangential contact force
+					vrbx = rb.vx - rb.vtheta * (pcl.y - rb.y);
+					vrby = rb.vy + rb.vtheta * (pcl.x - rb.x);
+					dsx = (pcl.vx - vrbx) * self.dtime;
+					dsy = (pcl.vy + vrby) * self.dtime;
+					dsn = dsx * nx + dsy * ny;
+					dsx -= dsn * nx;
+					dsy -= dsn * ny;
+					ContactState &cs = pcl.contact_state;
+					if (cs.prev_in_contact) // is in contact state list
+						cs.cur_in_contact = true;
+					else
+						self.contact_state_list.add_pcl(pcl); // ftx_con = 0.0, fty_con = 0.0
+					// contact constitutive model
+					cs.ftx_con += -Kt * dsx;
+					cs.fty_con += -Kt * dsy;
+					ft_con = sqrt(cs.ftx_con * cs.ftx_con + cs.fty_con * cs.fty_con);
+					if (ft_con > ft_max)
+					{
+						alpha = ft_max / ft_con;
+						cs.ftx_con *= alpha;
+						cs.fty_con *= alpha;
+					}
 					// add force on rigid body
-					md.rigid_body.add_con_force(-fx_con, -fy_con, pcl.x, pcl.y);
-					// add force on material point to bg grid
-					pcl.pn1->fx_con += fx_con * pcl.N1;
-					pcl.pn1->fy_con += fy_con * pcl.N1;
-					pcl.pn2->fx_con += fx_con * pcl.N2;
-					pcl.pn2->fy_con += fy_con * pcl.N2;
-					pcl.pn3->fx_con += fx_con * pcl.N3;
-					pcl.pn3->fy_con += fy_con * pcl.N3;
-					pcl.pn4->fx_con += fx_con * pcl.N4;
-					pcl.pn4->fy_con += fy_con * pcl.N4;
+					rb.add_con_force(-fnx_con, -fny_con, pcl.x, pcl.y);
+					rb.add_con_force(-cs.ftx_con, -cs.fty_con, pcl.x, pcl.y);
+					// add force on material point (to bg grid)
+					pcl.pn1->fx_con += (fnx_con + cs.ftx_con) * pcl.N1;
+					pcl.pn1->fy_con += (fny_con + cs.fty_con) * pcl.N1;
+					pcl.pn2->fx_con += (fnx_con + cs.ftx_con) * pcl.N2;
+					pcl.pn2->fy_con += (fny_con + cs.fty_con) * pcl.N2;
+					pcl.pn3->fx_con += (fnx_con + cs.ftx_con) * pcl.N3;
+					pcl.pn3->fy_con += (fny_con + cs.fty_con) * pcl.N3;
+					pcl.pn4->fx_con += (fnx_con + cs.ftx_con) * pcl.N4;
+					pcl.pn4->fy_con += (fny_con + cs.fty_con) * pcl.N4;
 				}
 			}
 		}
 	}
-
+	// delete particles no longer in contact
+	self.contact_state_list.clear_not_in_contact();
+	
 	// corrected velocity and distance of nodes and rigid body
 	double dt_square = self.dtime * self.dtime;
 	double ax_corr, ay_corr;
@@ -306,7 +343,7 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 		n.ay = 0.0;
 	}
 
-	md.rigid_body.correct_motion_by_con_force(self.dtime);
+	rb.correct_motion_by_con_force(self.dtime);
 
 	// map variables back to particles
 	double de11, de12, de22, dw12, de_vol;

@@ -227,12 +227,14 @@ int solve_substep_S2D_ME_s_RigidBody(void *_self)
 		n.ay = 0.0;
 	}
 
-	md.rigid_body.predict_motion_from_ext_force(self.dtime);
+	RigidBody &rb = md.rigid_body;
+	rb.init_per_substep();
+	rb.predict_motion_from_ext_force(self.dtime);
 
 	//// Contact detection
 	double x1, y1, x2, y2, x3, y3, x4, y4;
-	md.rigid_body.init_transformation();
-	md.rigid_body.get_bounding_box(x1, y1, x2, y2, x3, y3, x4, y4, md.h);
+	rb.init_transformation();
+	rb.get_bounding_box(x1, y1, x2, y2, x3, y3, x4, y4, md.h);
 	md.rasterize_rect_on_grid(x1, y1, x2, y2, x3, y3, x4, y4);
 	double dist, nx, ny;
 	double f_con, fx_con, fy_con;
@@ -258,7 +260,7 @@ int solve_substep_S2D_ME_s_RigidBody(void *_self)
 					fx_con = f_con * nx;
 					fy_con = f_con * ny;
 					// add force on rigid body
-					md.rigid_body.add_con_force(-fx_con, -fy_con, pcl.x, pcl.y);
+					rb.add_con_force(-fx_con, -fy_con, pcl.x, pcl.y);
 					// add force on material point to bg grid
 					pcl.pn1->fx_con += fx_con * pcl.N1;
 					pcl.pn1->fy_con += fy_con * pcl.N1;
@@ -306,7 +308,7 @@ int solve_substep_S2D_ME_s_RigidBody(void *_self)
 		n.ay = 0.0;
 	}
 
-	md.rigid_body.correct_motion_by_con_force(self.dtime);
+	rb.correct_motion_by_con_force(self.dtime);
 
 	// map variables back to particles
 	double de11, de12, de22, dw12, de_vol;

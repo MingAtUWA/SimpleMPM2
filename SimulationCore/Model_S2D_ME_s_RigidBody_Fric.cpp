@@ -1,10 +1,10 @@
 #include "SimulationCore_pcp.h"
 
 #include "Geometry.h"
-#include "Model_S2D_ME_s_RigidBody.h"
+#include "Model_S2D_ME_s_RigidBody_Fric.h"
 
-Model_S2D_ME_s_RigidBody::Model_S2D_ME_s_RigidBody() :
-	Model("Model_S2D_ME_MPM_s_RigidBody"),
+Model_S2D_ME_s_RigidBody_Fric::Model_S2D_ME_s_RigidBody_Fric() :
+	Model("Model_S2D_ME_MPM_s_RigidBody_Fric"),
 	nodes(nullptr), node_x_num(0), node_y_num(0),
 	elems(nullptr), elem_x_num(0), elem_y_num(0),
 	pcls(nullptr), pcl_num(0),
@@ -13,7 +13,7 @@ Model_S2D_ME_s_RigidBody::Model_S2D_ME_s_RigidBody() :
 	ax_num(0), ay_num(0), axs(nullptr), ays(nullptr),
 	vx_num(0), vy_num(0), vxs(nullptr), vys(nullptr) {}
 
-Model_S2D_ME_s_RigidBody::~Model_S2D_ME_s_RigidBody()
+Model_S2D_ME_s_RigidBody_Fric::~Model_S2D_ME_s_RigidBody_Fric()
 {
 	clear_mesh();
 	clear_pcl();
@@ -43,7 +43,7 @@ Model_S2D_ME_s_RigidBody::~Model_S2D_ME_s_RigidBody()
 	vy_num = 0;
 }
 
-void Model_S2D_ME_s_RigidBody::init_mesh(
+void Model_S2D_ME_s_RigidBody_Fric::init_mesh(
 	double grid_size, size_t _elem_x_num, size_t _elem_y_num,
 	double x_start, double y_start)
 {
@@ -82,7 +82,7 @@ void Model_S2D_ME_s_RigidBody::init_mesh(
 		}
 }
 
-void Model_S2D_ME_s_RigidBody::clear_mesh(void)
+void Model_S2D_ME_s_RigidBody_Fric::clear_mesh(void)
 {
 	if (nodes) delete[] nodes;
 	nodes = nullptr;
@@ -96,7 +96,7 @@ void Model_S2D_ME_s_RigidBody::clear_mesh(void)
 	elem_num = 0;
 }
 
-void Model_S2D_ME_s_RigidBody::init_pcl(
+void Model_S2D_ME_s_RigidBody_Fric::init_pcl(
 	size_t num, double m, double density, double E, double niu)
 {
 	clear_pcl();
@@ -122,10 +122,11 @@ void Model_S2D_ME_s_RigidBody::init_pcl(
 		pcl.e11 = 0.0;
 		pcl.e12 = 0.0;
 		pcl.e22 = 0.0;
+		pcl.contact_state.init();
 	}
 }
 
-void Model_S2D_ME_s_RigidBody::clear_pcl(void)
+void Model_S2D_ME_s_RigidBody_Fric::clear_pcl(void)
 {
 	if (pcls)
 	{
@@ -135,7 +136,7 @@ void Model_S2D_ME_s_RigidBody::clear_pcl(void)
 	pcl_num = 0;
 }
 
-bool Model_S2D_ME_s_RigidBody::get_intersect_points(
+bool Model_S2D_ME_s_RigidBody_Fric::get_intersect_points(
 		double x1, double y1, double x2, double y2,
 		LongLongRange &y_id_range, PreAllocIdArray &x_ids_mem)
 {
@@ -216,7 +217,7 @@ bool Model_S2D_ME_s_RigidBody::get_intersect_points(
 	return true;
 }
 
-void Model_S2D_ME_s_RigidBody::update_x_id_range(
+void Model_S2D_ME_s_RigidBody_Fric::update_x_id_range(
 	LongLongRange &y_id_range, PreAllocIdArray & x_ids_mem)
 {
 	size_t start_id = y_id_range.lower - y_id_min;
@@ -245,7 +246,7 @@ void Model_S2D_ME_s_RigidBody::update_x_id_range(
 }
 
 // clip and resterize, need better algorithm later
-void Model_S2D_ME_s_RigidBody::rasterize_rect_on_grid(
+void Model_S2D_ME_s_RigidBody_Fric::rasterize_rect_on_grid(
 		double x1, double y1, double x2, double y2,
 		double x3, double y3, double x4, double y4)
 {

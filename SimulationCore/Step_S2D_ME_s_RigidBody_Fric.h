@@ -1,8 +1,8 @@
 #ifndef __STEP_S2D_ME_S_RIGIDBODY_FRIC_H__
 #define __STEP_S2D_ME_S_RIGIDBODY_FRIC_H__
 
+#include "Model_S2D_ME_s_RigidBody_Fric.h"
 #include "Step.h"
-#include "Model_S2D_ME_s_RigidBody.h"
 
 int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self);
 
@@ -10,7 +10,7 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self);
 class Step_S2D_ME_s_RigidBody_Fric : public Step
 {
 protected:
-	Model_S2D_ME_s_RigidBody *model;
+	Model_S2D_ME_s_RigidBody_Fric *model;
 	double min_dt, max_dt;
 	double h_elem_raio, h_pcl_ratio;
 	// pcl_ratio part not yet finished
@@ -19,7 +19,7 @@ public:
 	Step_S2D_ME_s_RigidBody_Fric();
 	~Step_S2D_ME_s_RigidBody_Fric();
 
-	inline void set_model(Model_S2D_ME_s_RigidBody &md)
+	inline void set_model(Model_S2D_ME_s_RigidBody_Fric &md)
 	{
 		Step::set_model(md);
 		model = &md;
@@ -52,6 +52,9 @@ protected:
 	int init_calculation(void) override;
 	friend int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self);
 	int finalize_calculation(void) override;
+
+protected: // keep tract of tangential contact
+	ContactStateList contact_state_list;
 };
 
 #endif

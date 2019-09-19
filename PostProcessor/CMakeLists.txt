@@ -7,11 +7,14 @@ add_library(
     PostProcessor STATIC 
     PostProcessor_pcp.h PostProcessor_pcp.cpp
     GenerateAnimation.h GenerateAnimation.cpp
+    GA_S2D_ME_s_RigidBody.h GA_S2D_ME_s_RigidBody.cpp
+    GA_S2D_ME_s_RigidBody_Fric.h GA_S2D_ME_s_RigidBody_Fric.cpp
     )
 
 target_include_directories(
     PostProcessor PRIVATE
     ${UTILITIES_INCLUDE_DIR}
+    ${SIMULATIONCORE_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     )
 

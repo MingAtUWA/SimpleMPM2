@@ -11,17 +11,19 @@ add_library(
     Model.h
     Step.h Step.cpp
     TimeHistory.h
-    ResultFile.h
+    ResultFileData.h ResultFile.h
     # ProgressBar
     TimeHistory_ConsoleProgressBar.h TimeHistory_ConsoleProgressBar.cpp
     # Plain binary result file
     ResultFile_PlainBin.h ResultFile_PlainBin.cpp
     ResultFile_XML.h ResultFile_XML.cpp
-    # Mechanics, material point and rigid-body smooth contact
+    # Purely mechanics, material point and rigid-body smooth contact
     Model_S2D_ME_s_RigidBody.h Model_S2D_ME_s_RigidBody.cpp
     Step_S2D_ME_s_RigidBody.h Step_S2D_ME_s_RigidBody.cpp
     TimeHistory_S2D_ME_s_RigidBody.h
-    #
+    # Purely mechanics, material ponit and rigid-body frictional contact
+    ContactState.h # keep tract of contact state
+    Model_S2D_ME_s_RigidBody_Fric.h Model_S2D_ME_s_RigidBody_Fric.cpp
     Step_S2D_ME_s_RigidBody_Fric.h Step_S2D_ME_s_RigidBody_Fric.cpp
     TimeHistory_S2D_ME_s_RigidBody_Fric.h
     )

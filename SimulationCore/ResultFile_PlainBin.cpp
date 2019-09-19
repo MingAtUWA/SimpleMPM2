@@ -1,5 +1,7 @@
 #include "SimulationCore_pcp.h"
 
+#include "ResultFileData.h"
+
 #include "Step_S2D_ME_s_RigidBody.h"
 #include "TimeHistory_S2D_ME_s_RigidBody.h"
 
@@ -29,22 +31,10 @@ void ResultFile_PlainBin::finalize(void)
 // Output model data
 int ResultFile_PlainBin::output(Model_S2D_ME_s_RigidBody &model)
 {
-	struct MeshHeader
-	{
-		double h, x0, xn, y0, yn;
-		unsigned long long elem_x_num, elem_y_num;
-	};
-	struct RigidBodyHeader
-	{
-		unsigned long long node_num, elem_num;
-		double x_mc, y_mc;
-		// node coordinates, elem indices
-	};
-	struct MPObjectHeader
-	{
-		unsigned long long pcl_num;
-		// x coord, y coord, vol, ...
-	};
+	typedef ResultFileData::ME_s_RigidBody::MeshHeader MeshHeader;
+	typedef ResultFileData::ME_s_RigidBody::RigidBodyHeader RigidBodyHeader;
+	typedef ResultFileData::ME_s_RigidBody::MPObjectHeader MPObjectHeader;
+	
 	// mesh
 	MeshHeader mh;
 	mh.h = model.h;
@@ -101,27 +91,12 @@ int rf_out_func_imp_th_MPM_RigidBody_PlainBin(TimeHistory &_th, ResultFile &_rf)
 	ResultFile_PlainBin &rf = static_cast<ResultFile_PlainBin &>(_rf);
 	std::fstream &file = rf.file;
 
-	struct TimeHistoryHeader
-	{
-		size_t substep_num;
-		size_t total_substep_num;
-		double current_time;
-		double total_time;
-	};
-	struct RigidBodyMotionHeader
-	{
-		double x, y, theta;
-		double vx, vy, v_theta;
-	};
-	struct MPObjectHeader
-	{
-		unsigned long long pcl_num;
-		// x coord, y coord, vol, ...
-	};
-
+	typedef ResultFileData::TimeHistoryHeader TimeHistoryHeader;
+	typedef ResultFileData::ME_s_RigidBody::RigidBodyMotionHeader RigidBodyMotionHeader;
+	typedef ResultFileData::ME_s_RigidBody::MPObjectHeader MPObjectHeader;
+	
 	TimeHistoryHeader thh;
-	Step_S2D_ME_s_RigidBody &step =
-		static_cast<Step_S2D_ME_s_RigidBody &>(th.get_step());
+	Step_S2D_ME_s_RigidBody &step = static_cast<Step_S2D_ME_s_RigidBody &>(th.get_step());
 	thh.substep_num = step.get_substep_num();
 	thh.total_substep_num = step.get_total_substep_num();
 	thh.current_time = step.get_current_time();
@@ -129,14 +104,17 @@ int rf_out_func_imp_th_MPM_RigidBody_PlainBin(TimeHistory &_th, ResultFile &_rf)
 	file.write(reinterpret_cast<char *>(&thh), sizeof(thh));
 
 	RigidBodyMotionHeader rbmh;
-	Model_S2D_ME_s_RigidBody &model =
-		static_cast<Model_S2D_ME_s_RigidBody &>(th.get_model());
-	rbmh.x = model.rigid_body.x;
-	rbmh.y = model.rigid_body.y;
-	rbmh.theta = model.rigid_body.theta;
-	rbmh.vx = model.rigid_body.vx;
-	rbmh.vy = model.rigid_body.vy;
-	rbmh.v_theta = model.rigid_body.vtheta;
+	Model_S2D_ME_s_RigidBody &model = static_cast<Model_S2D_ME_s_RigidBody &>(th.get_model());
+	RigidBody &rb = model.rigid_body;
+	rbmh.x = rb.x;
+	rbmh.y = rb.y;
+	rbmh.theta = rb.theta;
+	rbmh.vx = rb.vx;
+	rbmh.vy = rb.vy;
+	rbmh.v_theta = rb.vtheta;
+	rbmh.fx_con = rb.Fx_con;
+	rbmh.fy_con = rb.Fy_con;
+	rbmh.m_con = rb.M_con;
 	file.write(reinterpret_cast<char *>(&rbmh), sizeof(rbmh));
 
 	// output particles data
@@ -164,6 +142,63 @@ int rf_out_func_imp_th_MPM_RigidBody_PlainBin(TimeHistory &_th, ResultFile &_rf)
 
 const OutputFunc ResultFile_PlainBin::out_func_th_MPM_RigidBody_PlainBin = &rf_out_func_imp_th_MPM_RigidBody_PlainBin;
 
+// MPM - Rigid body frictional contact problem
+// Output model data
+int ResultFile_PlainBin::output(Model_S2D_ME_s_RigidBody_Fric &model)
+{
+	typedef ResultFileData::ME_s_RigidBody::MeshHeader MeshHeader;
+	typedef ResultFileData::ME_s_RigidBody::RigidBodyHeader RigidBodyHeader;
+	typedef ResultFileData::ME_s_RigidBody::MPObjectHeader MPObjectHeader;
+
+	// mesh
+	MeshHeader mh;
+	mh.h = model.h;
+	mh.x0 = model.x0;
+	mh.xn = model.xn;
+	mh.y0 = model.y0;
+	mh.yn = model.yn;
+	mh.elem_x_num = model.elem_x_num;
+	mh.elem_y_num = model.elem_y_num;
+	file.write(reinterpret_cast<char *>(&mh), sizeof(mh));
+
+	// rigid body
+	RigidBodyHeader rbh;
+	TriangleMesh &rb_mesh = model.rigid_body.mesh;
+	rbh.node_num = rb_mesh.get_node_num();
+	rbh.elem_num = rb_mesh.get_elem_num();
+	rbh.x_mc = rb_mesh.get_x_mc();
+	rbh.y_mc = rb_mesh.get_y_mc();
+	file.write(reinterpret_cast<char *>(&rbh), sizeof(rbh));
+	// node coordinates
+	double *node_coords = new double[rbh.node_num * 2];
+	const TriangleMesh::Node *rb_mesh_nodes = rb_mesh.get_nodes();
+	for (size_t n_id = 0; n_id < rbh.node_num; ++n_id)
+	{
+		node_coords[n_id * 2] = rb_mesh_nodes[n_id].x;
+		node_coords[n_id * 2 + 1] = rb_mesh_nodes[n_id].y;
+	}
+	file.write(reinterpret_cast<char *>(node_coords), rbh.node_num * 2 * sizeof(double));
+	delete[] node_coords;
+	// element topology
+	unsigned long long *elem_indices = new unsigned long long[rbh.elem_num * 3];
+	const TriangleMesh::Element *rb_mesh_elems = rb_mesh.get_elems();
+	for (size_t e_id = 0; e_id < rbh.elem_num; ++e_id)
+	{
+		elem_indices[e_id * 3] = rb_mesh_elems[e_id].n1;
+		elem_indices[e_id * 3 + 1] = rb_mesh_elems[e_id].n2;
+		elem_indices[e_id * 3 + 2] = rb_mesh_elems[e_id].n3;
+	}
+	file.write(reinterpret_cast<char *>(elem_indices), rbh.elem_num * 3 * sizeof(unsigned long long));
+	delete[] elem_indices;
+
+	// material point object
+	MPObjectHeader mph;
+	mph.pcl_num = model.pcl_num;
+	file.write(reinterpret_cast<char *>(&mph), sizeof(mph));
+
+	return 0;
+}
+
 // Output time history
 int rf_out_func_imp_th_MPM_RigidBody_Fric_PlainBin(TimeHistory &_th, ResultFile &_rf)
 {
@@ -171,23 +206,9 @@ int rf_out_func_imp_th_MPM_RigidBody_Fric_PlainBin(TimeHistory &_th, ResultFile 
 	ResultFile_PlainBin &rf = static_cast<ResultFile_PlainBin &>(_rf);
 	std::fstream &file = rf.file;
 
-	struct TimeHistoryHeader
-	{
-		size_t substep_num;
-		size_t total_substep_num;
-		double current_time;
-		double total_time;
-	};
-	struct RigidBodyMotionHeader
-	{
-		double x, y, theta;
-		double vx, vy, v_theta;
-	};
-	struct MPObjectHeader
-	{
-		unsigned long long pcl_num;
-		// x coord, y coord, vol, ...
-	};
+	typedef ResultFileData::TimeHistoryHeader TimeHistoryHeader;
+	typedef ResultFileData::ME_s_RigidBody::RigidBodyMotionHeader RigidBodyMotionHeader;
+	typedef ResultFileData::ME_s_RigidBody::MPObjectHeader MPObjectHeader;
 
 	TimeHistoryHeader thh;
 	Step_S2D_ME_s_RigidBody_Fric &step = static_cast<Step_S2D_ME_s_RigidBody_Fric &>(th.get_step());
@@ -198,13 +219,17 @@ int rf_out_func_imp_th_MPM_RigidBody_Fric_PlainBin(TimeHistory &_th, ResultFile 
 	file.write(reinterpret_cast<char *>(&thh), sizeof(thh));
 
 	RigidBodyMotionHeader rbmh;
-	Model_S2D_ME_s_RigidBody &model = static_cast<Model_S2D_ME_s_RigidBody &>(th.get_model());
-	rbmh.x = model.rigid_body.x;
-	rbmh.y = model.rigid_body.y;
-	rbmh.theta = model.rigid_body.theta;
-	rbmh.vx = model.rigid_body.vx;
-	rbmh.vy = model.rigid_body.vy;
-	rbmh.v_theta = model.rigid_body.vtheta;
+	Model_S2D_ME_s_RigidBody_Fric &model = static_cast<Model_S2D_ME_s_RigidBody_Fric &>(th.get_model());
+	RigidBody &rb = model.rigid_body;
+	rbmh.x = rb.x;
+	rbmh.y = rb.y;
+	rbmh.theta = rb.theta;
+	rbmh.vx = rb.vx;
+	rbmh.vy = rb.vy;
+	rbmh.v_theta = rb.vtheta;
+	rbmh.fx_con = rb.Fx_con;
+	rbmh.fy_con = rb.Fy_con;
+	rbmh.m_con = rb.M_con;
 	file.write(reinterpret_cast<char *>(&rbmh), sizeof(rbmh));
 
 	// output particles data

@@ -14,5 +14,6 @@ void test_rigid_body_square(void);
 void test_mpm_rigidbody_circle(void);
 void test_mpm_rigidbody_square(void);
 void test_mpm_rigidbody_cantilever(void);
+void test_mpm_rigidbody_cantilever_fric(void);
 
 #endif

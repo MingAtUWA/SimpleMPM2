@@ -19,6 +19,7 @@ add_executable(
     test_mpm_rigidbody_circle.cpp
     test_mpm_rigidbody_square.cpp
     test_mpm_rigidbody_cantilever.cpp
+    test_mpm_rigidbody_cantilever_fric.cpp
     # Animation output
     test_mpm_rigidbody_animation.cpp
     )

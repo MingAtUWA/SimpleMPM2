@@ -1,6 +1,8 @@
 #include "SimulationCore_pcp.h"
 
 #include "Geometry.h"
+#include "TriangleMeshToParticles.hpp"
+
 #include "Model_S2D_ME_s_RigidBody.h"
 
 Model_S2D_ME_s_RigidBody::Model_S2D_ME_s_RigidBody() :
@@ -323,4 +325,17 @@ void Model_S2D_ME_s_RigidBody::rasterize_rect_on_grid(
 			 x_id < x_range[range_id].upper; ++x_id)
 			elems[y_id * elem_x_num + x_id].has_rigid_object = true;
 	}
+}
+
+int Model_S2D_ME_s_RigidBody::get_pcls_from_mesh(const char *mesh_file_name,
+		double m, double density, double E, double niu,	double max_pcl_size)
+{
+	TriangleMesh mesh;
+	int res = mesh.load_mesh(mesh_file_name);
+	if (res < 0) return res;
+
+	TriangleMeshToParticles<Particle> pcls_generator(mesh, TriangleMeshToParticles<Particle>::GeneratorType::SecondOrderGaussPoint);
+	init_pcl(pcls_generator.get_pcl_num(), m, density, E, niu);
+	pcls_generator.get_pcls(pcls, max_pcl_size);
+	return 0;
 }

@@ -180,6 +180,11 @@ public: // helper data and functions
 public:
 	void rasterize_rect_on_grid(double x1, double y1, double x2, double y2,
 								double x3, double y3, double x4, double y4);
+
+public:
+	int get_pcls_from_mesh(const char *mesh_file_name,
+						   double m, double density, double E, double niu,
+						   double max_pcl_size = 0.0);
 };
 
 #endif

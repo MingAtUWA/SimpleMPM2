@@ -6,6 +6,8 @@
 #include "RigidBody.h"
 #include "BC.h"
 
+#include "TriangleMeshToParticles.hpp"
+
 #include "Model.h"
 
 struct Model_S2D_ME_s_RigidBody_Fric : public Model

@@ -23,6 +23,74 @@ bool TriangleMesh::is_in_triangle(Element &elem, Point &p)
 		&& 0.0 <= c && c <= elem.area;
 }
 
+void TriangleMesh::compress_node_and_elem_indices(void)
+{
+	// "compress" nodes and elements index
+	HashTable node_id_map(node_num);
+	for (size_t i = 0; i < node_num; ++i)
+	{
+		node_id_map.add_pair(nodes[i].id, i);
+		nodes[i].id = i;
+	}
+	for (size_t i = 0; i < elem_num; ++i)
+	{
+		size_t n_id;
+		Element &elem = elems[i];
+		node_id_map.get_pair(elem.n1, n_id);
+		elem.n1 = n_id;
+		node_id_map.get_pair(elem.n2, n_id);
+		elem.n2 = n_id;
+		node_id_map.get_pair(elem.n3, n_id);
+		elem.n3 = n_id;
+		elem.id = i;
+	}
+}
+
+void TriangleMesh::cal_area_and_reorder_node(void)
+{
+	// Calculate area of triangle.
+	area = 0.0;
+	x_mc = 0.0;
+	y_mc = 0.0;
+	moi_area = 0.0;
+	double elem_area;
+	for (size_t i = 0; i < elem_num; ++i)
+	{
+		Element &elem = elems[i];
+		Node &n1 = nodes[elem.n1];
+		Node &n2 = nodes[elem.n2];
+		Node &n3 = nodes[elem.n3];
+		double x1, y1, x2, y2, x3, y3;
+		x1 = n1.x;
+		y1 = n1.y;
+		x2 = n2.x;
+		y2 = n2.y;
+		x3 = n3.x;
+		y3 = n3.y;
+		elem.area = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+		// Ensure that nodes index of element is in counter-clockwise sequence.
+		if (elem.area < 0.0)
+		{
+			elem.area = -elem.area;
+			size_t n_tmp = elem.n2;
+			elem.n2 = elem.n3;
+			elem.n3 = n_tmp;
+		}
+
+		elem_area = elem.area / 2.0;
+		area += elem_area;
+		x_mc += elem_area * (x1 + x2 + x3) / 3.0;
+		y_mc += elem_area * (y1 + y2 + y3) / 3.0;
+		moi_area += (x1 * x1 + x2 * x2 + x3 * x3
+			+ x1 * x2 + x2 * x3 + x3 * x1
+			+ y1 * y1 + y2 * y2 + y3 * y3
+			+ y1 * y2 + y2 * y3 + y3 * y1) * elem_area / 6.0;
+	}
+	x_mc /= area;
+	y_mc /= area;
+	moi_area -= area * (x_mc * x_mc + y_mc * y_mc);
+}
+
 int TriangleMesh::load_mesh(const char *file_name)
 {
 	union
@@ -60,8 +128,6 @@ int TriangleMesh::load_mesh(const char *file_name)
 		nodes[i].id = node_info.id;
 		nodes[i].x = node_info.x;
 		nodes[i].y = node_info.y;
-		//std::cout << "node " << nodes[i].id << ": "
-		//		  << nodes[i].x << ", " << nodes[i].y << "\n";
 	}
 
 	// load element
@@ -74,78 +140,53 @@ int TriangleMesh::load_mesh(const char *file_name)
 		elems[i].n1 = elem_info.n1;
 		elems[i].n2 = elem_info.n2;
 		elems[i].n3 = elem_info.n3;
-		//std::cout << "elem " << elems[i].id << ": "
-		//	<< elems[i].n1 << ", " << elems[i].n2 << ", " << elems[i].n3 << "\n";
 	}
 
 	if (node_num == 0 || elem_num == 0)
 		return -2;
 
-	// "compress" nodes and elements index
-	HashTable node_id_map(node_num);
-	for (size_t i = 0; i < node_num; ++i)
-	{
-		node_id_map.add_pair(nodes[i].id, i);
-		nodes[i].id = i;
-	}
-	for (size_t i = 0; i < elem_num; ++i)
-	{
-		size_t n_id;
-		Element &elem = elems[i];
-		node_id_map.get_pair(elem.n1, n_id);
-		elem.n1 = n_id;
-		node_id_map.get_pair(elem.n2, n_id);
-		elem.n2 = n_id;
-		node_id_map.get_pair(elem.n3, n_id);
-		elem.n3 = n_id;
-		elem.id = i;
-	}
-
-	// Calculate area of triangle.
-	area = 0.0;
-	x_mc = 0.0;
-	y_mc = 0.0;
-	moi_area = 0.0;
-	double elem_area;
-	for (size_t i = 0; i < elem_num; ++i)
-	{
-		Element &elem = elems[i];
-		Node &n1 = nodes[elem.n1];
-		Node &n2 = nodes[elem.n2];
-		Node &n3 = nodes[elem.n3];
-		double x1, y1, x2, y2, x3, y3;
-		x1 = n1.x;
-		y1 = n1.y;
-		x2 = n2.x;
-		y2 = n2.y;
-		x3 = n3.x;
-		y3 = n3.y;
-		elem.area = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
-		// Ensure that nodes index of element is in counter-clockwise sequence.
-		if (elem.area < 0.0)
-		{
-			elem.area = -elem.area;
-			size_t n_tmp = elem.n2;
-			elem.n2 = elem.n3;
-			elem.n3 = n_tmp;
-		}
-		
-		elem_area = elem.area / 2.0;
-		area += elem_area;
-		x_mc += elem_area * (x1 + x2 + x3) / 3.0;
-		y_mc += elem_area * (y1 + y2 + y3) / 3.0;
-		moi_area += (x1 * x1 + x2 * x2 + x3 * x3
-				   + x1 * x2 + x2 * x3 + x3 * x1
-				   + y1 * y1 + y2 * y2 + y3 * y3
-				   + y1 * y2 + y2 * y3 + y3 * y1) * elem_area / 6.0;
-	}
-	x_mc /= area;
-	y_mc /= area;
-	moi_area -= area * (x_mc * x_mc + y_mc * y_mc);
-	//std::cout << "mc: (" << x_mc << ", " << y_mc << ") "
-	//			 "area: " << area << ", moi: " << moi_area << "\n";
+	compress_node_and_elem_indices();
+	cal_area_and_reorder_node();
 
 	return 0;
+}
+
+int TriangleMesh::load_mesh(double *node_coords, size_t node_num,
+							size_t *elem_indices, size_t elem_num)
+{
+	if (node_num == 0 || elem_num == 0)
+		return -2;
+
+	size_t max_node_id;
+	max_node_id = elem_indices[0];
+	for (size_t i = 1; i < 3*elem_num; ++i)
+	{
+		if (max_node_id < elem_indices[i])
+			max_node_id = elem_indices[i];
+	}
+	if (max_node_id >= node_num)
+		return -2;
+
+	alloc_nodes(node_num);
+	for (size_t n_id = 0; n_id < node_num; ++n_id)
+	{
+		nodes[n_id].id = n_id;
+		nodes[n_id].x = node_coords[2 * n_id];
+		nodes[n_id].y = node_coords[2 * n_id + 1];
+	}
+	alloc_elements(elem_num);
+	for (size_t e_id = 0; e_id < elem_num; ++e_id)
+	{
+		elems[e_id].id = e_id;
+		elems[e_id].n1 = elem_indices[3 * e_id];
+		elems[e_id].n2 = elem_indices[3 * e_id + 1];
+		elems[e_id].n3 = elem_indices[3 * e_id + 2];
+	}
+
+	cal_area_and_reorder_node();
+
+	return 0;
+
 }
 
 int TriangleMesh::get_bounding_box(void)

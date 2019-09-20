@@ -158,19 +158,25 @@ public:
 	}
 
 	inline size_t get_node_num(void) const noexcept { return node_num; }
-	inline const Node *get_nodes(void) const noexcept { return nodes; }
+	inline Node *get_nodes(void) const noexcept { return nodes; }
 	inline size_t get_elem_num(void) const noexcept { return elem_num; }
-	inline const Element *get_elems(void) const noexcept { return elems; }
+	inline Element *get_elems(void) const noexcept { return elems; }
 	inline BgGrid &get_bg_grid(void) { return bg_grid; }
 	inline double get_x_mc(void) const noexcept { return x_mc; }
 	inline double get_y_mc(void) const noexcept { return y_mc; }
-	inline double get_(void) const noexcept { return area; }
+	inline double get_area(void) const noexcept { return area; }
 	inline double get_moi_area(void) const noexcept { return moi_area; }
 
 	bool is_in_triangle(Element &elem, Point &p);
 	inline Rect get_display_range(void) const { return { 0.0, bg_grid.xn, 0.0, bg_grid.yn }; }
 
+protected: // helper functions for initializing mesh 
+	void compress_node_and_elem_indices(void);
+	// reorder node to counter-clockwise order
+	void cal_area_and_reorder_node(void);
+public:
 	int load_mesh(const char *file_name);
+	int load_mesh(double *node_coords, size_t node_num, size_t *elem_indices, size_t elem_num);
 	// after load_mesh()
 	int get_bounding_box(void);
 	// after load_mesh()

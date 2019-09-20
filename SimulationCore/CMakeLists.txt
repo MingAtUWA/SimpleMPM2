@@ -7,11 +7,13 @@ add_library(
     SimulationCore STATIC
     SimulationCore_pcp.h SimulationCore_pcp.cpp
     BC.h
+    # Utilities
+    TriangleMeshToParticles.hpp
     # Base Class
     Model.h
     Step.h Step.cpp
     TimeHistory.h
-    ResultFileData.h ResultFile.h
+    ResultFile.h ResultFileData.h
     # ProgressBar
     TimeHistory_ConsoleProgressBar.h TimeHistory_ConsoleProgressBar.cpp
     # Plain binary result file

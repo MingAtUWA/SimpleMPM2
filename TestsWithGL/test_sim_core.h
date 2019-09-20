@@ -16,4 +16,6 @@ void test_mpm_rigidbody_square(void);
 void test_mpm_rigidbody_cantilever(void);
 void test_mpm_rigidbody_cantilever_fric(void);
 
+void test_get_pcls_from_mesh(void);
+
 #endif

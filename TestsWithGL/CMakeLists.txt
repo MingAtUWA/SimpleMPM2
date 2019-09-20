@@ -22,6 +22,8 @@ add_executable(
     test_mpm_rigidbody_cantilever_fric.cpp
     # Animation output
     test_mpm_rigidbody_animation.cpp
+    # Generate material points from mesh
+    test_get_pcls_from_mesh.cpp
     )
 
 target_include_directories(

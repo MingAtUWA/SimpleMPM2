@@ -51,7 +51,7 @@ void test_slide_down_frictional_slope(void)
 	ResultFile_PlainBin res_file_pb;
 	res_file_pb.init("mpm_rb_res_slope_fric.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("mpm.rb_res_slope_fric.xml");
+	res_file_xml.init("mpm_rb_res_slope_fric.xml");
 
 	// output model
 	res_file_pb.output(model);
@@ -60,9 +60,11 @@ void test_slide_down_frictional_slope(void)
 	TimeHistory_S2D_ME_s_RigidBody_Fric out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_interval_num(50);
+	//out1.set_output_init_state();
 	TimeHistory_S2D_ME_s_RigidBody_Fric out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_interval_num(50);
+	//out2.set_output_init_state();
 	TimeHistory_ConsoleProgressBar cpb;
 
 	Step_S2D_ME_s_RigidBody_Fric step;

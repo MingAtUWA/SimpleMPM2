@@ -19,14 +19,17 @@ int ResultFile_XML::init(const char *file_name)
 		return -1;
 
 	// xml version info
-	const char *ver_info = "<?xml version=\"1.0\" encoding=\"ascii\"?>\n";
-	file.write(ver_info, strlen(ver_info));
+	const char *file_header = "<?xml version=\"1.0\" encoding=\"ascii\"?>\n"
+							  "<ResultFile>\n";
+	file.write(file_header, strlen(file_header));
 
 	return 0;
 }
 
 void ResultFile_XML::finalize(void)
 {
+	const char *file_ending = "</ResultFile>\n";
+	file.write(file_ending, strlen(file_ending));
 	file.close();
 }
 
@@ -132,8 +135,8 @@ int rf_out_func_imp_th_MPM_RigidBody_XML(TimeHistory &_th, ResultFile &_rf)
 		"        <x> %16.10e </x>\n"
 		"        <y> %16.10e </y>\n"
 		"        <theta> %16.10e </theta>\n"
-		"        <vx> %16.10e </current_time>\n"
-		"        <vy> %16.10e </total_time>\n"
+		"        <vx> %16.10e </vx>\n"
+		"        <vy> %16.10e </vy>\n"
 		"        <vtheta> %16.10e </vtheta>\n"
 		"        <Fx_contact> %16.10e </Fx_contact>\n"
 		"        <Fy_contact> %16.10e </Fy_contact>\n"
@@ -270,8 +273,8 @@ int rf_out_func_imp_th_MPM_RigidBody_Fric_XML(TimeHistory &_th, ResultFile &_rf)
 		"        <x> %16.10e </x>\n"
 		"        <y> %16.10e </y>\n"
 		"        <theta> %16.10e </theta>\n"
-		"        <vx> %16.10e </current_time>\n"
-		"        <vy> %16.10e </total_time>\n"
+		"        <vx> %16.10e </vx>\n"
+		"        <vy> %16.10e </vy>\n"
 		"        <vtheta> %16.10e </vtheta>\n"
 		"        <Fx_contact> %16.10e </Fx_contact>\n"
 		"        <Fy_contact> %16.10e </Fy_contact>\n"

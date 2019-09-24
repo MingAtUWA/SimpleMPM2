@@ -55,7 +55,7 @@ void test_mpm_rigidbody_cantilever(void)
 	ResultFile_PlainBin res_file_pb;
 	res_file_pb.init("mpm_rb_res_can.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("mpm.rb_res_can.xml");
+	res_file_xml.init("mpm_rb_res_can.xml");
 
 	// output model
 	res_file_pb.output(model);

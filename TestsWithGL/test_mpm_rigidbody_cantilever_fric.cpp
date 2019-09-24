@@ -54,7 +54,7 @@ void test_mpm_rigidbody_cantilever_fric(void)
 	ResultFile_PlainBin res_file_pb;
 	res_file_pb.init("mpm_rb_res_can_fric.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("mpm.rb_res_can_fric.xml");
+	res_file_xml.init("mpm_rb_res_can_fric.xml");
 
 	// output model
 	res_file_pb.output(model);

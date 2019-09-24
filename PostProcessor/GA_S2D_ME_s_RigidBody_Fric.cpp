@@ -68,12 +68,6 @@ int GA_S2D_ME_s_RigidBody_Fric::init(const char *res_file_name)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
 	glEnableVertexAttribArray(0);
 	bg_grid_data.init_elem_array_buffer(mesh_line_indices, (node_y_num + node_x_num) * 2);
-	//for (size_t i = 0; i < (node_y_num + node_x_num); i++)
-	//{
-	//	std::cout << "(" << mesh_line_coords[6 * i] << ", " << mesh_line_coords[6 * i + 1] << ", " << mesh_line_coords[6 * i + 2] << ") - ("
-	//		<< mesh_line_coords[6 * i + 3] << ", " << mesh_line_coords[6 * i + 4] << ", " << mesh_line_coords[6 * i + 5] << ")  "
-	//		<< mesh_line_indices[2 * i] << " - " << mesh_line_indices[2 * i + 1] << "\n";
-	//}
 	delete[] mesh_line_coords;
 	delete[] mesh_line_indices;
 
@@ -171,19 +165,16 @@ int GA_S2D_ME_s_RigidBody_Fric::render_frame(double xl, double xu, double yl, do
 	glm::mat4 identity_mat = glm::mat4(1.0f);
 	shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(identity_mat));
 	// color
-	glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-	shader.set_uniform_vec4f(color_id, glm::value_ptr(white));
+	glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
+	shader.set_uniform_vec4f(color_id, glm::value_ptr(grey));
 	bg_grid_data.use();
 	// draw
-	//glLineWidth(1);
+	glLineWidth(1);
 	glDrawElements(GL_LINES, grid_line_points_num, GL_UNSIGNED_INT, (GLvoid *)0);
 	
 	// draw material points
 	// model/view matrix
 	shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(identity_mat));
-	// color
-	glm::vec4 moccasin(1.0f, 0.894118f, 0.709804f, 1.0f); // yellow
-	shader.set_uniform_vec4f(color_id, glm::value_ptr(moccasin));
 	// init object buffer
 	RigidBodyMotionHeader rbmh;
 	MPObjectHeader mph;
@@ -198,8 +189,11 @@ int GA_S2D_ME_s_RigidBody_Fric::render_frame(double xl, double xu, double yl, do
 	mp_data.init_array_buffer(pcls_mem.get_pcls(), pcls_mem.get_point_num());
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
 	glEnableVertexAttribArray(0);
-	mp_data.init_elem_array_buffer(pcls_mem.get_indices(), pcls_mem.get_index_num());
 	// draw particles
+	// color
+	glm::vec4 moccasin(1.0f, 0.894118f, 0.709804f, 1.0f); // yellow
+	shader.set_uniform_vec4f(color_id, glm::value_ptr(moccasin));
+	mp_data.init_elem_array_buffer(pcls_mem.get_indices(), pcls_mem.get_index_num());
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDrawElements(GL_TRIANGLES, pcls_mem.get_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
 	// draw particle boundary

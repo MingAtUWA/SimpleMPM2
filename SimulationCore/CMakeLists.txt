@@ -8,7 +8,7 @@ add_library(
     SimulationCore_pcp.h SimulationCore_pcp.cpp
     BC.h
     # Utilities
-    TriangleMeshToParticles.hpp
+    TriangleMeshToParticles.h TriangleMeshToParticles.cpp
     # Base Class
     Model.h
     Step.h Step.cpp

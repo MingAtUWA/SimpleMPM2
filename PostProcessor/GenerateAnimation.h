@@ -87,6 +87,9 @@ public:
 
 class GenerateAnimation
 {
+public:
+	static GenerateAnimation *cur_generator;
+
 protected:
 	// shader program
 	ShaderProgram shader;
@@ -162,9 +165,16 @@ public: // animation generation
 	double delay_ani;
 	unsigned short int delay_ani_100th;
 
+	// window
+	GLsizei win_width, win_height;
+	// viewport
+	double vp_hw_ratio, vp_wh_ratio;
+
 public:
-	GenerateAnimation();
+	GenerateAnimation(GLsizei win_w = 600, GLsizei win_h = 600);
 	virtual ~GenerateAnimation();
+	inline void set_init_win_size(GLsizei _w, GLsizei _h) noexcept { win_width = _w, win_height = _h; }
+	inline void make_current(void) noexcept { cur_generator = this; }
 	// main function
 	int generate(double ani_time, double xl, double xu, double yl, double yu,
 				 const char *res_file_name, const char *gif_name = nullptr);

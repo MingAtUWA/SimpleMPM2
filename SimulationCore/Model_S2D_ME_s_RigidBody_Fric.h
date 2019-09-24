@@ -6,8 +6,6 @@
 #include "RigidBody.h"
 #include "BC.h"
 
-#include "TriangleMeshToParticles.hpp"
-
 #include "Model.h"
 
 struct Model_S2D_ME_s_RigidBody_Fric : public Model
@@ -110,6 +108,9 @@ public:
 	void init_pcl(size_t num, double m, double density, double E, double niu);
 	void clear_pcl(void);
 
+	size_t get_node_num(void) const noexcept { return node_num; }
+	size_t get_pcl_num(void) const noexcept { return pcl_num; }
+
 	inline bool init_pcl_cal_var(Particle &pcl) noexcept
 	{
 		if (pcl.x < x0 || pcl.x >= xn ||
@@ -185,6 +186,10 @@ public: // helper data and functions
 public:
 	void rasterize_rect_on_grid(double x1, double y1, double x2, double y2,
 								double x3, double y3, double x4, double y4);
+
+public:
+	int get_pcls_from_mesh(const char *mesh_file_name,
+		double density, double E, double niu, double max_pcl_area = 0.0);
 };
 
 #endif

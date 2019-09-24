@@ -19,13 +19,14 @@ public:
 	~TimeHistory_ConsoleProgressBar();
 
 	// Initialize each steps
-	int init_per_step(void);
+	int init_per_step(void) override;
 	// Finalize each steps
-	void finalize_per_step(void);
-	// Output funtion
-	int output(void);
+	void finalize_per_step(void) override;
 
-	inline void set_width(int wd)
+	// Output funtion per substep
+	int output(void) override;
+
+	inline void set_width(int wd) noexcept
 	{
 		if (wd > 0)
 		{

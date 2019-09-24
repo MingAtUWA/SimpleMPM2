@@ -104,6 +104,7 @@ public:
 	void clear_mesh(void);
 	void init_pcl(size_t num, double m, double density, double E, double niu);
 	void clear_pcl(void);
+	size_t get_pcl_num(void) const noexcept { return pcl_num; }
 
 	inline bool init_pcl_cal_var(Particle &pcl) noexcept
 	{
@@ -183,7 +184,7 @@ public:
 
 public:
 	int get_pcls_from_mesh(const char *mesh_file_name,
-						   double m, double density, double E, double niu,
+						   double density, double E, double niu,
 						   double max_pcl_size = 0.0);
 };
 

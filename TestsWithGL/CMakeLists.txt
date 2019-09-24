@@ -20,6 +20,8 @@ add_executable(
     test_mpm_rigidbody_square.cpp
     test_mpm_rigidbody_cantilever.cpp
     test_mpm_rigidbody_cantilever_fric.cpp
+    test_slide_down_frictional_slope.cpp
+    test_slide_down_frictional_slope2.cpp
     # Animation output
     test_mpm_rigidbody_animation.cpp
     # Generate material points from mesh

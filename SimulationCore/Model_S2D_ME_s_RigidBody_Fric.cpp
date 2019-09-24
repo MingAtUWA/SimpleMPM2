@@ -1,6 +1,8 @@
 #include "SimulationCore_pcp.h"
 
 #include "Geometry.h"
+#include "TriangleMeshToParticles.h"
+
 #include "Model_S2D_ME_s_RigidBody_Fric.h"
 
 Model_S2D_ME_s_RigidBody_Fric::Model_S2D_ME_s_RigidBody_Fric() :
@@ -324,4 +326,28 @@ void Model_S2D_ME_s_RigidBody_Fric::rasterize_rect_on_grid(
 			 x_id < x_range[range_id].upper; ++x_id)
 			elems[y_id * elem_x_num + x_id].has_rigid_object = true;
 	}
+}
+
+int Model_S2D_ME_s_RigidBody_Fric::get_pcls_from_mesh(const char *mesh_file_name,
+	double density, double E, double niu, double max_pcl_area)
+{
+	TriangleMesh mesh;
+	int res = mesh.load_mesh(mesh_file_name);
+	if (res < 0) return res;
+
+	TriangleMeshToParticles pcls_generator(mesh, TriangleMeshToParticles::GeneratorType::FirstOrderGaussPoint);
+	pcls_generator.generate_pcls(max_pcl_area);
+	init_pcl(pcls_generator.get_pcl_num(), density, density, E, niu);
+	size_t pcl_id = 0;
+	for (TriangleMeshToParticles::Particle *ppcl = pcls_generator.first();
+		 ppcl; ppcl = pcls_generator.next(ppcl))
+	{
+		Particle &pcl = pcls[pcl_id];
+		pcl.x = ppcl->x;
+		pcl.y = ppcl->y;
+		pcl.m *= ppcl->vol;
+		++pcl_id;
+	}
+
+	return 0;
 }

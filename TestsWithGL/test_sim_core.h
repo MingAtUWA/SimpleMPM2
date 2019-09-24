@@ -18,4 +18,7 @@ void test_mpm_rigidbody_cantilever_fric(void);
 
 void test_get_pcls_from_mesh(void);
 
+void test_slide_down_frictional_slope(void);
+void test_slide_down_frictional_slope2(void);
+
 #endif

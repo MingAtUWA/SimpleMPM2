@@ -26,6 +26,7 @@ int Step::solve(void)
 		if (pth->need_output_init_state) pth->output();
 		pth->interval_time = step_time / double(pth->interval_num);
 		pth->next_time = pth->interval_time;
+		pth->init_per_step();
 	}
 
 	double time_diff_tmp;
@@ -47,6 +48,10 @@ int Step::solve(void)
 		output_time_history();
 
 	} while (-time_diff_tmp > time_tol);
+
+	// finalize time history
+	for (TimeHistory *pth = time_history_top; pth; pth = pth->next)
+		pth->finalize_per_step();
 
 	// finalize calculation
 	finalize_calculation();

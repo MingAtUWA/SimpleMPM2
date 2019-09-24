@@ -4,8 +4,12 @@
 
 #include "GenerateAnimation.h"
 
-GenerateAnimation::GenerateAnimation() :
+GenerateAnimation *GenerateAnimation::cur_generator = nullptr;
+
+GenerateAnimation::GenerateAnimation(GLsizei win_w, GLsizei win_h) :
+	win_width(win_w), win_height(win_h),
 	time_rcds(nullptr), time_rcd_num(0) {}
+
 GenerateAnimation::~GenerateAnimation()
 {
 	if (time_rcds)
@@ -14,6 +18,8 @@ GenerateAnimation::~GenerateAnimation()
 		time_rcds = nullptr;
 		time_rcd_num = 0;
 	}
+	if (cur_generator == this)
+		cur_generator = nullptr;
 }
 
 static void processInput(GLFWwindow *window)
@@ -22,27 +28,31 @@ static void processInput(GLFWwindow *window)
 		glfwSetWindowShouldClose(window, true);
 }
 
-static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+static void resize_window(GLFWwindow *window, GLsizei width, GLsizei height)
 {
-	GLsizei win_size;
-	GLsizei win_padding;
-	if (width < height)
+	GenerateAnimation &cur_gen = *GenerateAnimation::cur_generator;
+	cur_gen.win_width = width;
+	cur_gen.win_height = height;
+
+	// reset viewport size
+	GLsizei vp_width, vp_height, padding;
+	vp_height = width * cur_gen.vp_hw_ratio;
+	if (vp_height < height)
 	{
-		win_size = width;
-		win_padding = (height - width) / 2;
-		glViewport(0, win_padding, win_size, win_size);
+		vp_width = width;
+		padding = (height - vp_height) / 2;
+		glViewport(0, padding, vp_width, vp_height);
 	}
 	else
 	{
-		win_size = height;
-		win_padding = (width - height) / 2;
-		glViewport(win_padding, 0, win_size, win_size);
+		vp_height = height;
+		vp_width = height * cur_gen.vp_wh_ratio;
+		padding = (width - vp_width) / 2;
+		glViewport(padding, 0, vp_width, vp_height);
 	}
 }
 
-static const size_t SCREEN_WIDTH = 600;
-static const size_t SCREEN_HEIGHT = 600;
-
+// helper function
 void reorder_buffer(unsigned char *RGBA_data, int width, int height)
 {
 	// RGBA data are 4 bytes long
@@ -66,20 +76,22 @@ void reorder_buffer(unsigned char *RGBA_data, int width, int height)
 int GenerateAnimation::generate(double ani_time, double xl, double xu, double yl, double yu,
 								const char *res_file_name, const char *gif_name)
 {
+	make_current();
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "model display", nullptr, nullptr);
-	if (window == nullptr)
+	GLFWwindow *window = glfwCreateWindow(win_width, win_height, "model display", nullptr, nullptr);
+	if (!window)
 	{
 		std::cout << "Failed to create GLFW window.\n";
 		glfwTerminate();
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetFramebufferSizeCallback(window, resize_window);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -87,6 +99,14 @@ int GenerateAnimation::generate(double ani_time, double xl, double xu, double yl
 		glfwTerminate();
 		return -2;
 	}
+
+	// init viewport
+	double cam_width, cam_height;
+	cam_width = xu - xl;
+	cam_height = yu - yl;
+	vp_hw_ratio = cam_height / cam_width;
+	vp_wh_ratio = cam_width / cam_height;
+	resize_window(window, win_width, win_height);
 
 	// init animation
 	init(res_file_name);
@@ -104,8 +124,8 @@ int GenerateAnimation::generate(double ani_time, double xl, double xu, double yl
 	unsigned char *pixels_data;
 	if (gif_name)
 	{
-		GifBegin(&gif_file, gif_name, SCREEN_WIDTH, SCREEN_HEIGHT, 1);
-		pixels_data = new unsigned char[SCREEN_WIDTH * SCREEN_HEIGHT * 4];
+		GifBegin(&gif_file, gif_name, win_width, win_height, 1);
+		pixels_data = new unsigned char[win_width * win_height * 4];
 	}
 
 	bool render_new_frame = true; // control whether it is time to swap and render new frame
@@ -132,9 +152,9 @@ int GenerateAnimation::generate(double ani_time, double xl, double xu, double yl
 				if (gif_name)
 				{
 					// read pixel from back buffer
-					glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, pixels_data);
-					reorder_buffer(pixels_data, SCREEN_WIDTH, SCREEN_HEIGHT);
-					GifWriteFrame(&gif_file, pixels_data, SCREEN_WIDTH, SCREEN_HEIGHT, (delay_ani_100th ? delay_ani_100th : 1));
+					glReadPixels(0, 0, win_width, win_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels_data);
+					reorder_buffer(pixels_data, win_width, win_height);
+					GifWriteFrame(&gif_file, pixels_data, win_width, win_height, (delay_ani_100th ? delay_ani_100th : 1));
 				}
 			}
 		}

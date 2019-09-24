@@ -42,7 +42,12 @@ public:
 	inline Model &get_model(void) const noexcept { return *model; }
 	inline Step &get_step(void) const noexcept { return *step; }
 
-	// main function
+	// Initialize each steps
+	virtual int init_per_step(void) { return 0; }
+	// Finalize each steps
+	virtual void finalize_per_step(void) {}
+
+	// Output per substep
 	virtual int output(void) { return 0; }
 
 protected: // set and used by Step class

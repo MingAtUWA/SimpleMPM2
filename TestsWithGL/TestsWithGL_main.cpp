@@ -10,7 +10,7 @@ int main(int argc, void **argv)
 	//test_triangle_mesh_circle();
 	//test_triangle_mesh_square();
 	//test_rigid_body_square();
-	test_get_pcls_from_mesh();
+	//test_get_pcls_from_mesh();
 
 	// square
 	//test_mpm_rigidbody_square();
@@ -23,6 +23,12 @@ int main(int argc, void **argv)
 	// cantilever beam - frictional contact
 	//test_mpm_rigidbody_cantilever_fric();
 	//test_mpm_rigid_animation_can_fric();
+
+	// block slide down slope
+	//test_slide_down_frictional_slope();
+	// 2
+	test_slide_down_frictional_slope2();
+	test_mpm_rigid_animation_slope_fric();
 
 	//system("pause");
 	return 0;

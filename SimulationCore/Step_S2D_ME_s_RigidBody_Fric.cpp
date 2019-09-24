@@ -23,7 +23,8 @@ int Step_S2D_ME_s_RigidBody_Fric::init_calculation()
 		for (size_t i = 0; i < model->pcl_num; ++i)
 		{
 			// assign non-zero value
-			model->pcls[i].pelem = model->elems; 
+			Particle_rb &pcl = model->pcls[i];
+			pcl.pelem = model->elems;
 		}
 	}
 
@@ -242,8 +243,6 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 	double fn_con, fnx_con, fny_con;
 	// tangential contact force
 	double Kt = 100.0; // Panelty factor, slide stiffness
-	double miu = 0.1; // friction ratio
-	double ft_max = 10.0; // maximum tangential force
 	double vrbx, vrby; // rigid body velocity
 	double dsx, dsy, dsn; // relative tangential displacement
 	double ft_con, alpha;
@@ -261,14 +260,14 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 				if (rb.distance_from_boundary(pcl_pos, dist, nx, ny, md.h) < 0)
 					continue; // not in contact
 				// modify distance to consider size of material point
-				dist += sqrt(pcl.vol / 4.0); // treated as square
+				dist += sqrt(pcl.vol / 3.14159265359); // treated as circle
 				if (dist > 0) // is in contact
 				{
 					// Normal contact force
 					fn_con = Kn * dist;
 					fnx_con = fn_con * nx;
 					fny_con = fn_con * ny;
-					// Tangential contact force
+					// Tangential relative movement
 					vrbx = rb.vx - rb.vtheta * (pcl.y - rb.y);
 					vrby = rb.vy + rb.vtheta * (pcl.x - rb.x);
 					dsx = (pcl.vx - vrbx) * self.dtime;
@@ -276,21 +275,40 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 					dsn = dsx * nx + dsy * ny;
 					dsx -= dsn * nx;
 					dsy -= dsn * ny;
+					// update contact state
 					ContactState &cs = pcl.contact_state;
-					if (cs.prev_in_contact) // is in contact state list
+					if (cs.prev_in_contact) // already in contact state list
 						cs.cur_in_contact = true;
-					else
+					else // not yet in contact state list
 						self.contact_state_list.add_pcl(pcl); // ftx_con = 0.0, fty_con = 0.0
-					// contact constitutive model
+					// Tangential contact force (constitutive model)
+					// ft = next_ft (cur_ft, ds, ds_dt)
+					// 1. ft = 0.0 (smooth contact)
+					//cs.ftx_con = 0.0;
+					//cs.fty_con = 0.0;
+					// 2. ft = miu * fn (frictional contact)
+					double miu = 0.1; // friction ratio
 					cs.ftx_con += -Kt * dsx;
 					cs.fty_con += -Kt * dsy;
 					ft_con = sqrt(cs.ftx_con * cs.ftx_con + cs.fty_con * cs.fty_con);
+					double ft_max = miu * fn_con;
 					if (ft_con > ft_max)
 					{
 						alpha = ft_max / ft_con;
 						cs.ftx_con *= alpha;
 						cs.fty_con *= alpha;
 					}
+					// 3. ft has maximum limit
+					//double ft_max = 10.0; // maximum tangential force
+					//cs.ftx_con += -Kt * dsx;
+					//cs.fty_con += -Kt * dsy;
+					//ft_con = sqrt(cs.ftx_con * cs.ftx_con + cs.fty_con * cs.fty_con);
+					//if (ft_con > ft_max)
+					//{
+					//	alpha = ft_max / ft_con;
+					//	cs.ftx_con *= alpha;
+					//	cs.fty_con *= alpha;
+					//}
 					// add force on rigid body
 					rb.add_con_force(-fnx_con, -fny_con, pcl.x, pcl.y);
 					rb.add_con_force(-cs.ftx_con, -cs.fty_con, pcl.x, pcl.y);
@@ -368,7 +386,6 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 					 + pcl.N3 * n3.vy + pcl.N4 * n4.vy) * self.dtime;
 			pcl.x = pcl.x_ori + pcl.ux;
 			pcl.y = pcl.y_ori + pcl.uy;
-			//std::cout << pcl.x_ori << ", " << pcl.y_ori << "\n";
 
 			de11 = (pcl.dN1_dx * n1.vx + pcl.dN2_dx * n2.vx
 				  + pcl.dN3_dx * n3.vx + pcl.dN4_dx * n4.vx) * self.dtime;

@@ -252,7 +252,7 @@ int solve_substep_S2D_ME_s_RigidBody(void *_self)
 				res = md.rigid_body.distance_from_boundary(pcl_pos, dist, nx, ny, md.h);
 				if (res < 0) continue; // not in contact
 				// modify distance to consider size of material point
-				dist += sqrt(pcl.vol / 4.0); // treated as square
+				dist += sqrt(pcl.vol / 3.14159265359); // treated as square
 				if (dist > 0) // is in contact
 				{
 					// normal force

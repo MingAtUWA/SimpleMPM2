@@ -29,7 +29,7 @@ public:
 	// Uniform variables operations
 	// Need to first call use() before calling function below
 	int init_uniform(const char *uniform_name);
-	int set_uniform_vec4f(GLint uniform_loc, const GLfloat *mat_value);
+	int set_uniform_vec4f(GLint uniform_loc, const GLfloat *vec_value);
 	int set_uniform_matrix4f(GLint uniform_loc, const GLfloat *mat_value);
 	int set_uniform_matrix4f(const char *uniform_name, const GLfloat *mat_value);
 	// need to first init_uniform() before get_uniform_loc()

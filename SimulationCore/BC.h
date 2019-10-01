@@ -1,5 +1,5 @@
-#ifndef _BC_H_
-#define _BC_H_
+#ifndef __BC_H__
+#define __BC_H__
 
 struct BodyForce
 {

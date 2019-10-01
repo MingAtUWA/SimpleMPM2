@@ -13,8 +13,8 @@ int main(int argc, void **argv)
 	//test_get_pcls_from_mesh();
 
 	// square
-	test_mpm_rigidbody_square();
-	test_mpm_rigid_animation_square();
+	//test_mpm_rigidbody_square();
+	//test_mpm_rigid_animation_square();
 
 	// cantilever beam
 	//test_mpm_rigidbody_cantilever();
@@ -33,6 +33,10 @@ int main(int argc, void **argv)
 	// bar compression
 	//test_mpm_rigidbody_bar_compression();
 	//test_mpm_rigid_animation_bar_compression();
+
+	// 1D consolidation
+	test_mpm_chm_s_1d_consolidation();
+	//test_animation_chm_s_1d_consolidation();
 
 	//system("pause");
 	return 0;

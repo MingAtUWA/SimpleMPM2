@@ -170,51 +170,57 @@ int solve_substep_S2D_CHM_s(void *_self)
 	{
 		BodyForce &bf = model.bfxs[bf_id];
 		Particle_mpm &pcl = model.pcls[bf.pcl_id];
-		ParticleCalVar_mpm &pcl_var = pcl.var;
-		// body force on particle
-		bf_m = pcl_var.vol * ((1.0 - pcl.n) * pcl.density_s + pcl.n * pcl.density_f) * bf.bf;
-		bf_tf = pcl_var.vol * pcl.density_f * bf.bf;
-		// node 1
-		Node_mpm &n1 = *pcl_var.pn1;
-		n1.fx_ext_m += pcl_var.N1 * bf_m;
-		n1.fx_ext_tf += pcl_var.N1 * bf_tf;
-		// node 2
-		Node_mpm &n2 = *pcl_var.pn2;
-		n2.fx_ext_m += pcl_var.N2 * bf_m;
-		n2.fx_ext_tf += pcl_var.N2 * bf_tf;
-		// node 3
-		Node_mpm &n3 = *pcl_var.pn3;
-		n3.fx_ext_m += pcl_var.N3 * bf_m;
-		n3.fx_ext_tf += pcl_var.N3 * bf_tf;
-		// node 4
-		Node_mpm &n4 = *pcl_var.pn4;
-		n4.fx_ext_m += pcl_var.N4 * bf_m;
-		n4.fx_ext_tf += pcl_var.N4 * bf_tf;
+		if (pcl.elem_num)
+		{
+			ParticleCalVar_mpm &pcl_var = pcl.var;
+			// body force on particle
+			bf_m = pcl_var.vol * ((1.0 - pcl.n) * pcl.density_s + pcl.n * pcl.density_f) * bf.bf;
+			bf_tf = pcl_var.vol * pcl.density_f * bf.bf;
+			// node 1
+			Node_mpm &n1 = *pcl_var.pn1;
+			n1.fx_ext_m += pcl_var.N1 * bf_m;
+			n1.fx_ext_tf += pcl_var.N1 * bf_tf;
+			// node 2
+			Node_mpm &n2 = *pcl_var.pn2;
+			n2.fx_ext_m += pcl_var.N2 * bf_m;
+			n2.fx_ext_tf += pcl_var.N2 * bf_tf;
+			// node 3
+			Node_mpm &n3 = *pcl_var.pn3;
+			n3.fx_ext_m += pcl_var.N3 * bf_m;
+			n3.fx_ext_tf += pcl_var.N3 * bf_tf;
+			// node 4
+			Node_mpm &n4 = *pcl_var.pn4;
+			n4.fx_ext_m += pcl_var.N4 * bf_m;
+			n4.fx_ext_tf += pcl_var.N4 * bf_tf;
+		}
 	}
 	for (size_t bf_id = 0; bf_id < model.bfy_num; ++bf_id)
 	{
 		BodyForce &bf = model.bfys[bf_id];
 		Particle_mpm &pcl = model.pcls[bf.pcl_id];
-		ParticleCalVar_mpm &pcl_var = pcl.var;
-		// body force on particle
-		bf_m = ((1.0 - pcl.n) * pcl.density_s + pcl.n * pcl.density_f) * pcl_var.vol * bf.bf;
-		bf_tf = pcl.density_f * pcl_var.vol * bf.bf;
-		// node 1
-		Node_mpm &n1 = *pcl_var.pn1;
-		n1.fy_ext_m += pcl_var.N1 * bf_m;
-		n1.fy_ext_tf += pcl_var.N1 * bf_tf;
-		// node 2
-		Node_mpm &n2 = *pcl_var.pn2;
-		n2.fy_ext_m += pcl_var.N2 * bf_m;
-		n2.fy_ext_tf += pcl_var.N2 * bf_tf;
-		// node 3
-		Node_mpm &n3 = *pcl_var.pn3;
-		n3.fy_ext_m += pcl_var.N3 * bf_m;
-		n3.fy_ext_tf += pcl_var.N3 * bf_tf;
-		// node 4
-		Node_mpm &n4 = *pcl_var.pn4;
-		n4.fy_ext_m += pcl_var.N4 * bf_m;
-		n4.fy_ext_tf += pcl_var.N4 * bf_tf;
+		if (pcl.elem_num)
+		{
+			ParticleCalVar_mpm &pcl_var = pcl.var;
+			// body force on particle
+			bf_m = ((1.0 - pcl.n) * pcl.density_s + pcl.n * pcl.density_f) * pcl_var.vol * bf.bf;
+			bf_tf = pcl.density_f * pcl_var.vol * bf.bf;
+			// node 1
+			Node_mpm &n1 = *pcl_var.pn1;
+			n1.fy_ext_m += pcl_var.N1 * bf_m;
+			n1.fy_ext_tf += pcl_var.N1 * bf_tf;
+			// node 2
+			Node_mpm &n2 = *pcl_var.pn2;
+			n2.fy_ext_m += pcl_var.N2 * bf_m;
+			n2.fy_ext_tf += pcl_var.N2 * bf_tf;
+			// node 3
+			Node_mpm &n3 = *pcl_var.pn3;
+			n3.fy_ext_m += pcl_var.N3 * bf_m;
+			n3.fy_ext_tf += pcl_var.N3 * bf_tf;
+			// node 4
+			Node_mpm &n4 = *pcl_var.pn4;
+			n4.fy_ext_m += pcl_var.N4 * bf_m;
+			n4.fy_ext_tf += pcl_var.N4 * bf_tf;
+		}
 	}
 
 	// surface force
@@ -222,37 +228,43 @@ int solve_substep_S2D_CHM_s(void *_self)
 	{
 		TractionBC_MPM &tf = model.txs[sf_id];
 		Particle_mpm &pcl = model.pcls[tf.pcl_id];
-		ParticleCalVar_mpm &pcl_var = pcl.var;
-		// node 1
-		Node_mpm &n1 = *pcl_var.pn1;
-		n1.fx_ext_m += pcl_var.N1 * tf.t;
-		// node 2
-		Node_mpm &n2 = *pcl_var.pn2;
-		n2.fx_ext_m += pcl_var.N2 * tf.t;
-		// node 3
-		Node_mpm &n3 = *pcl_var.pn3;
-		n3.fx_ext_m += pcl_var.N3 * tf.t;
-		// node 4
-		Node_mpm &n4 = *pcl_var.pn4;
-		n4.fx_ext_m += pcl_var.N4 * tf.t;
+		if (pcl.elem_num)
+		{
+			ParticleCalVar_mpm &pcl_var = pcl.var;
+			// node 1
+			Node_mpm &n1 = *pcl_var.pn1;
+			n1.fx_ext_m += pcl_var.N1 * tf.t;
+			// node 2
+			Node_mpm &n2 = *pcl_var.pn2;
+			n2.fx_ext_m += pcl_var.N2 * tf.t;
+			// node 3
+			Node_mpm &n3 = *pcl_var.pn3;
+			n3.fx_ext_m += pcl_var.N3 * tf.t;
+			// node 4
+			Node_mpm &n4 = *pcl_var.pn4;
+			n4.fx_ext_m += pcl_var.N4 * tf.t;
+		}
 	}
 	for (size_t sf_id = 0; sf_id < model.ty_num; ++sf_id)
 	{
 		TractionBC_MPM &tf = model.tys[sf_id];
 		Particle_mpm &pcl = model.pcls[tf.pcl_id];
-		ParticleCalVar_mpm &pcl_var = pcl.var;
-		// node 1
-		Node_mpm &n1 = *pcl_var.pn1;
-		n1.fy_ext_m += pcl_var.N1 * tf.t;
-		// node 2
-		Node_mpm &n2 = *pcl_var.pn2;
-		n2.fy_ext_m += pcl_var.N2 * tf.t;
-		// node 3
-		Node_mpm &n3 = *pcl_var.pn3;
-		n3.fy_ext_m += pcl_var.N3 * tf.t;
-		// node 4
-		Node_mpm &n4 = *pcl_var.pn4;
-		n4.fy_ext_m += pcl_var.N4 * tf.t;
+		if (pcl.elem_num)
+		{
+			ParticleCalVar_mpm &pcl_var = pcl.var;
+			// node 1
+			Node_mpm &n1 = *pcl_var.pn1;
+			n1.fy_ext_m += pcl_var.N1 * tf.t;
+			// node 2
+			Node_mpm &n2 = *pcl_var.pn2;
+			n2.fy_ext_m += pcl_var.N2 * tf.t;
+			// node 3
+			Node_mpm &n3 = *pcl_var.pn3;
+			n3.fy_ext_m += pcl_var.N3 * tf.t;
+			// node 4
+			Node_mpm &n4 = *pcl_var.pn4;
+			n4.fy_ext_m += pcl_var.N4 * tf.t;
+		}
 	}
 	// pore pressure force...
 
@@ -309,31 +321,33 @@ int solve_substep_S2D_CHM_s(void *_self)
 	for (size_t pcl_id = 0; pcl_id < model.pcl_num; ++pcl_id)
 	{
 		Particle_mpm &pcl = model.pcls[pcl_id];
-		ParticleCalVar_mpm &pcl_var = pcl.var;
-		Node_mpm &n1 = *pcl_var.pn1;
-		Node_mpm &n2 = *pcl_var.pn2;
-		Node_mpm &n3 = *pcl_var.pn3;
-		Node_mpm &n4 = *pcl_var.pn4;
-		// particle acceleration
-		pcl_ax_f = pcl_var.N1 * n1.ax_f + pcl_var.N2 * n2.ax_f
-				 + pcl_var.N3 * n3.ax_f + pcl_var.N4 * n4.ax_f;
-		pcl_ay_f = pcl_var.N1 * n1.ay_f + pcl_var.N2 * n2.ay_f
-				 + pcl_var.N3 * n3.ay_f + pcl_var.N4 * n4.ay_f;
-
-		pcl_max_f = pcl.n * pcl.density_f * pcl_ax_f * pcl_var.vol;
-		pcl_may_f = pcl.n * pcl.density_f * pcl_ay_f * pcl_var.vol;
-		// node 1
-		n1.fx_kin_f += pcl_var.N1 * pcl_max_f;
-		n1.fy_kin_f += pcl_var.N1 * pcl_may_f;
-		// node 2
-		n2.fx_kin_f += pcl_var.N2 * pcl_max_f;
-		n2.fy_kin_f += pcl_var.N2 * pcl_may_f;
-		// node 3
-		n3.fx_kin_f += pcl_var.N3 * pcl_max_f;
-		n3.fy_kin_f += pcl_var.N3 * pcl_may_f;
-		// node 4
-		n4.fx_kin_f += pcl_var.N4 * pcl_max_f;
-		n4.fy_kin_f += pcl_var.N4 * pcl_may_f;
+		if (pcl.elem_num)
+		{
+			ParticleCalVar_mpm &pcl_var = pcl.var;
+			Node_mpm &n1 = *pcl_var.pn1;
+			Node_mpm &n2 = *pcl_var.pn2;
+			Node_mpm &n3 = *pcl_var.pn3;
+			Node_mpm &n4 = *pcl_var.pn4;
+			// particle acceleration
+			pcl_ax_f = pcl_var.N1 * n1.ax_f + pcl_var.N2 * n2.ax_f
+					 + pcl_var.N3 * n3.ax_f + pcl_var.N4 * n4.ax_f;
+			pcl_ay_f = pcl_var.N1 * n1.ay_f + pcl_var.N2 * n2.ay_f
+					 + pcl_var.N3 * n3.ay_f + pcl_var.N4 * n4.ay_f;
+			pcl_max_f = pcl.n * pcl.density_f * pcl_ax_f * pcl_var.vol;
+			pcl_may_f = pcl.n * pcl.density_f * pcl_ay_f * pcl_var.vol;
+			// node 1
+			n1.fx_kin_f += pcl_var.N1 * pcl_max_f;
+			n1.fy_kin_f += pcl_var.N1 * pcl_may_f;
+			// node 2
+			n2.fx_kin_f += pcl_var.N2 * pcl_max_f;
+			n2.fy_kin_f += pcl_var.N2 * pcl_may_f;
+			// node 3
+			n3.fx_kin_f += pcl_var.N3 * pcl_max_f;
+			n3.fy_kin_f += pcl_var.N3 * pcl_may_f;
+			// node 4
+			n4.fx_kin_f += pcl_var.N4 * pcl_max_f;
+			n4.fy_kin_f += pcl_var.N4 * pcl_may_f;
+		}
 	}
 
 	// update nodal velocity of solid phase
@@ -406,9 +420,9 @@ int solve_substep_S2D_CHM_s(void *_self)
 	for (size_t pcl_id = 0; pcl_id < model.pcl_num; ++pcl_id)
 	{
 		Particle_mpm &pcl = model.pcls[pcl_id];
-		ParticleCalVar_mpm &pcl_var = pcl.var;
 		if (pcl.elem_num)
 		{
+			ParticleCalVar_mpm &pcl_var = pcl.var;
 			Node_mpm &n1 = *pcl_var.pn1;
 			Node_mpm &n2 = *pcl_var.pn2;
 			Node_mpm &n3 = *pcl_var.pn3;

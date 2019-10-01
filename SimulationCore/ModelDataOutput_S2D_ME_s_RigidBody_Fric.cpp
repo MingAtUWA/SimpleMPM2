@@ -17,6 +17,7 @@ int model_data_output_func_s2d_me_s_rigid_body_fric_to_plain_bin_res_file(ModelD
 	std::fstream &file = rf.get_file();
 
 	typedef ResultFile_PlainBin_DataStruct::MeshHeader MeshHeader;
+	typedef ResultFile_PlainBin_DataStruct::RigidBodyHeader RigidBodyHeader;
 	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 
 	// mesh
@@ -29,6 +30,36 @@ int model_data_output_func_s2d_me_s_rigid_body_fric_to_plain_bin_res_file(ModelD
 	mh.elem_x_num = model.elem_x_num;
 	mh.elem_y_num = model.elem_y_num;
 	file.write(reinterpret_cast<char *>(&mh), sizeof(mh));
+
+	// rigid body
+	TriangleMesh &rb_mesh = model.rigid_body.mesh;
+	RigidBodyHeader rbh;
+	rbh.node_num = rb_mesh.get_node_num();
+	rbh.elem_num = rb_mesh.get_elem_num();
+	rbh.x_mc = rb_mesh.get_x_mc();
+	rbh.y_mc = rb_mesh.get_y_mc();
+	file.write(reinterpret_cast<char *>(&rbh), sizeof(rbh));
+	// node coordinates
+	TriangleMesh::Node *rb_mesh_nodes = rb_mesh.get_nodes();
+	double *rb_node_coords = new double[rbh.node_num * 2];
+	for (size_t n_id = 0; n_id < rbh.node_num; ++n_id)
+	{
+		rb_node_coords[n_id * 2] = rb_mesh_nodes[n_id].x;
+		rb_node_coords[n_id * 2 + 1] = rb_mesh_nodes[n_id].y;
+	}
+	file.write(reinterpret_cast<char *>(rb_node_coords), rbh.node_num * 2 * sizeof(double));
+	delete[] rb_node_coords;
+	// element topology
+	TriangleMesh::Element *rb_mesh_elems = rb_mesh.get_elems();
+	unsigned long long *rb_elem_indices = new unsigned long long[rbh.elem_num * 3];
+	for (size_t e_id = 0; e_id < rbh.elem_num; ++e_id)
+	{
+		rb_elem_indices[e_id * 3] = rb_mesh_elems[e_id].n1;
+		rb_elem_indices[e_id * 3 + 1] = rb_mesh_elems[e_id].n2;
+		rb_elem_indices[e_id * 3 + 2] = rb_mesh_elems[e_id].n3;
+	}
+	file.write(reinterpret_cast<char *>(rb_elem_indices), rbh.elem_num * 3 * sizeof(unsigned long long));
+	delete[] rb_elem_indices;
 
 	// material point object
 	MPObjectHeader mph;

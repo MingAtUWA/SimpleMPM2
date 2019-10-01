@@ -9,6 +9,7 @@ add_library(
     GenerateAnimation.h GenerateAnimation.cpp
     GA_S2D_ME_s_RigidBody.h GA_S2D_ME_s_RigidBody.cpp
     GA_S2D_ME_s_RigidBody_Fric.h GA_S2D_ME_s_RigidBody_Fric.cpp
+    GA_S2D_CHM_s.h GA_S2D_CHM_s.cpp
     DisplayModel.h DisplayModel.cpp
     )
 

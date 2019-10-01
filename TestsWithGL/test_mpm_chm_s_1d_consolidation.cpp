@@ -8,6 +8,10 @@
 #include "TimeHistoryOutput_S2D_CHM_s.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
+#include "test_post_processor.h"
+
+#include "GA_S2D_CHM_s.h"
+
 void test_mpm_chm_s_1d_consolidation(void)
 {
 	Model_S2D_CHM_s model;
@@ -66,9 +70,9 @@ void test_mpm_chm_s_1d_consolidation(void)
 	}
 
 	ResultFile_PlainBin res_file_pb;
-	res_file_pb.init("mpm_rb_res_bar_compression.bin");
+	res_file_pb.init("mpm_1d_consolidation_standard.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("mpm_rb_res_bar_compression.xml");
+	res_file_xml.init("mpm_1d_consolidation_standard.xml");
 
 	// output model
 	ModelDataOutput_S2D_CHM_s md;
@@ -91,22 +95,30 @@ void test_mpm_chm_s_1d_consolidation(void)
 	Step_S2D_CHM_s step1;
 	step1.set_name("geostatic");
 	step1.set_model(model);
-	step1.set_time(5.0);
+	step1.set_time(1.0e-5);
 	step1.set_dtime(1.0e-5);
 	step1.add_time_history(out1);
 	step1.add_time_history(out2);
 	step1.add_time_history(cpb);
 	step1.solve();
 
-	Step_S2D_CHM_s step2;
-	step2.set_name("consolidation");
-	step2.set_model(model);
-	step2.set_time(30.0);
-	step2.set_dtime(1.0e-5);
-	step2.add_time_history(out1);
-	step2.add_time_history(out2);
-	step2.add_time_history(cpb);
-	// free drainage bcs
-	model.vfy_num = model.node_x_num;
-	step2.solve();
+	//Step_S2D_CHM_s step2;
+	//step2.set_name("consolidation");
+	//step2.set_model(model);
+	//step2.set_time(30.0);
+	//step2.set_dtime(1.0e-5);
+	//step2.add_time_history(out1);
+	//step2.add_time_history(out2);
+	//step2.add_time_history(cpb);
+	//// free drainage bcs
+	//model.vfy_num = model.node_x_num;
+	//step2.solve();
+}
+
+void test_animation_chm_s_1d_consolidation(void)
+{
+	GA_S2D_CHM_s gen;
+	gen.generate(5.0, -0.1, 1.1, -0.1, 1.1,
+				 "mpm_1d_consolidation_standard.bin",
+				 "mpm_1d_consolidation_standard.gif");
 }

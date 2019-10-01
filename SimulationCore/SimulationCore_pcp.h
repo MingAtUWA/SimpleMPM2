@@ -1,5 +1,5 @@
-#ifndef _SIMULATION_CORE_PCP_H_
-#define _SIMULATION_CORE_PCP_H_
+#ifndef __SIMULATION_CORE_PCP_H__
+#define __SIMULATION_CORE_PCP_H__
 
 #include <iostream>
 

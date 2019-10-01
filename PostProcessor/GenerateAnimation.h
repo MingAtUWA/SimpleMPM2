@@ -2,6 +2,7 @@
 #define __GENERATE_ANIMATION_H__
 
 #include <fstream>
+
 #include "ItemArray.hpp"
 
 #include "ResultFile_PlainBin_DataStruct.h"

@@ -8,7 +8,6 @@ target_sources(
     PRIVATE
         ItemArray.hpp
         ItemBuffer.hpp
-        ItemBufferMultiAlloc.hpp
         ItemStack.hpp
         MemoryBuffer.h
         StringBuffer.h

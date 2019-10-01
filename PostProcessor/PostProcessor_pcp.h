@@ -1,5 +1,5 @@
-#ifndef _PRECOMPILATION_H_
-#define _PRECOMPILATION_H_
+#ifndef __PRECOMPILATION_H__
+#define __PRECOMPILATION_H__
 
 #include <string>
 #include <iostream>

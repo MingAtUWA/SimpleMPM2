@@ -1,9 +1,9 @@
 #include "PostProcessor_pcp.h"
 
-#include "GA_S2D_ME_s_RigidBody.h"
+#include "GA_S2D_CHM_s.h"
 
-GA_S2D_ME_s_RigidBody::GA_S2D_ME_s_RigidBody() : mp_x_data(nullptr) {}
-GA_S2D_ME_s_RigidBody::~GA_S2D_ME_s_RigidBody()
+GA_S2D_CHM_s::GA_S2D_CHM_s() : mp_x_data(nullptr) {}
+GA_S2D_CHM_s::~GA_S2D_CHM_s()
 {
 	if (mp_x_data)
 	{
@@ -12,7 +12,7 @@ GA_S2D_ME_s_RigidBody::~GA_S2D_ME_s_RigidBody()
 	}
 }
 
-int GA_S2D_ME_s_RigidBody::init(const char *res_file_name)
+int GA_S2D_CHM_s::init(const char *res_file_name)
 {
 	res_file.open(res_file_name, std::ios_base::binary | std::ios_base::in);
 	if (!res_file.is_open())
@@ -76,44 +76,7 @@ int GA_S2D_ME_s_RigidBody::init(const char *res_file_name)
 	//}
 	delete[] mesh_line_coords;
 	delete[] mesh_line_indices;
-
-	// rigid body
-	res_file.read(reinterpret_cast<char *>(&rbh), sizeof(rbh));
-	// node coordinates
-	double *rb_node_coords = new double[rbh.node_num * 2];
-	res_file.read(reinterpret_cast<char *>(rb_node_coords), rbh.node_num * 2 * sizeof(double));
-	// element topology
-	unsigned long long *rb_elem_indices = new unsigned long long[rbh.elem_num * 3];
-	res_file.read(reinterpret_cast<char *>(rb_elem_indices), rbh.elem_num * 3 * sizeof(unsigned long long));
-	rb_elem_point_num = GLsizei(rbh.elem_num * 3);
-	// init rigid body data
-	GLfloat *rb_coords = new GLfloat[rbh.node_num * 3];
-	GLuint *rb_indices = new GLuint[rbh.elem_num * 3];
-	for (size_t n_id = 0; n_id < rbh.node_num; ++n_id)
-	{
-		rb_coords[n_id * 3] = GLfloat(rb_node_coords[n_id * 2]);
-		rb_coords[n_id * 3 + 1] = GLfloat(rb_node_coords[n_id * 2 + 1]);
-		rb_coords[n_id * 3 + 2] = 0.0f;
-		//std::cout << n_id << ", " << rb_coords[n_id * 3] << ", " << rb_coords[n_id * 3 + 1]
-		//	<< ", " << rb_coords[n_id * 3 + 2] << "\n";
-	}
-	for (size_t e_id = 0; e_id < rbh.elem_num; ++e_id)
-	{
-		rb_indices[e_id * 3] = GLuint(rb_elem_indices[e_id * 3]);
-		rb_indices[e_id * 3 + 1] = GLuint(rb_elem_indices[e_id * 3 + 1]);
-		rb_indices[e_id * 3 + 2] = GLuint(rb_elem_indices[e_id * 3 + 2]);
-		//std::cout << e_id << ", " << rb_indices[e_id * 3] << ", " << rb_indices[e_id * 3 + 1]
-		//		<< ", " << rb_indices[e_id * 3 + 2] << "\n";
-	}
-	rigid_body_data.init_array_buffer(rb_coords, rbh.node_num * 3);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
-	glEnableVertexAttribArray(0);
-	rigid_body_data.init_elem_array_buffer(rb_indices, rbh.elem_num * 3);
-	delete[] rb_coords;
-	delete[] rb_indices;
-	delete[] rb_node_coords;
-	delete[] rb_elem_indices;
-
+	
 	// material point object
 	res_file.read(reinterpret_cast<char *>(&mph), sizeof(mph));
 	if (!mp_x_data)
@@ -156,7 +119,7 @@ int GA_S2D_ME_s_RigidBody::init(const char *res_file_name)
 	return 0;
 }
 
-int GA_S2D_ME_s_RigidBody::render_frame(double xl, double xu, double yl, double yu)
+int GA_S2D_CHM_s::render_frame(double xl, double xu, double yl, double yu)
 {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -211,20 +174,6 @@ int GA_S2D_ME_s_RigidBody::render_frame(double xl, double xu, double yl, double 
 	glLineWidth(2.0f);
 	glDrawElements(GL_LINES, pcls_mem.get_bl_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
 	mp_data.clear_add_buffer(pb_ibo);
-
-	// draw rigid body
-	// position
-	glm::mat4 rb_mv_mat = glm::translate(identity_mat, glm::vec3(rbmh.x, rbmh.y, 0.0f))
-		* glm::rotate(identity_mat, GLfloat(rbmh.theta), glm::vec3(0.0f, 0.0f, 1.0f))
-		* glm::translate(identity_mat, glm::vec3(-rbh.x_mc, -rbh.y_mc, 0.0f));
-	shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(rb_mv_mat));
-	// color
-	glm::vec4 deepskyblue(0.0f, 0.74902f, 1.0f, 1.0f);
-	shader.set_uniform_vec4f(color_id, glm::value_ptr(deepskyblue));
-	// draw
-	rigid_body_data.use();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawElements(GL_TRIANGLES, rb_elem_point_num, GL_UNSIGNED_INT, (GLvoid *)0);
 
 	return 0;
 }

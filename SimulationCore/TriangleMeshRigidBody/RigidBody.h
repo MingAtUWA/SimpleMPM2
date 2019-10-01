@@ -43,7 +43,8 @@ public:
 	double Fx_con, Fy_con, M_con;
 
 	// velocity boundary conditions
-	bool vx_bc, vy_bc, vtheta_bc; // true means fix this dof
+	bool vx_bc_is_set, vy_bc_is_set, vtheta_bc_is_set; // true means fix this dof
+	double vx_bc, vy_bc, vtheta_bc;
 
 	TriangleMesh mesh;
 
@@ -55,7 +56,8 @@ public:
 		vx(0.0), vy(0.0), vtheta(0.0),
 		Fx_ext(0.0), Fy_ext(0.0), M_ext(0.0),
 		Fx_con(0.0), Fy_con(0.0), M_con(0.0),
-		vx_bc(false), vy_bc(false), vtheta_bc(false) {}
+		vx_bc_is_set(false), vy_bc_is_set(false), vtheta_bc_is_set(false),
+		vx_bc(0.0), vy_bc(0.0), vtheta_bc(0.0) {}
 	~RigidBody() {}
 	int load_and_init_mesh(const char *filename, double bg_grid_size = -1.0);
 	// called after load_and_init_mesh()
@@ -79,9 +81,12 @@ public:
 		M_ext += (posx - x) * fy - (posy - y) * fx;
 	}
 	// set boundary condition
-	inline void fix_vx(bool is_fixed = true) noexcept { vx_bc = is_fixed; }
-	inline void fix_vy(bool is_fixed = true) noexcept { vy_bc = is_fixed; }
-	inline void fix_vtheta(bool is_fixed = true) noexcept { vtheta_bc = is_fixed; }
+	inline void set_vx_bc(bool is_fixed = true, double vbc = 0.0) noexcept { vx_bc_is_set = is_fixed, vx_bc = vbc; }
+	inline void set_vy_bc(bool is_fixed = true, double vbc = 0.0) noexcept { vy_bc_is_set = is_fixed, vy_bc = vbc; }
+	inline void set_vtheta_bc(bool is_fixed = true, double vbc = 0.0) noexcept { vtheta_bc_is_set = is_fixed, vtheta_bc = vbc; }
+	inline void set_vx_bc(double vbc) noexcept { vx_bc_is_set = true, vx_bc = vbc; }
+	inline void set_vy_bc(double vbc) noexcept { vy_bc_is_set = true, vy_bc = vbc; }
+	inline void set_vtheta_bc(double vbc) noexcept { vtheta_bc_is_set = true, vtheta_bc = vbc; }
 
 protected: // for calculation
 	inline void init_calculation(void)
@@ -103,41 +108,28 @@ protected: // for calculation
 		Fy_con = 0.0;
 		M_con = 0.0;
 	}
-	inline void predict_motion_from_ext_force(double dt) // Euler - Cromer
+	// Euler - Cromer integration method
+	inline void predict_motion_from_ext_force(double dt)
 	{
-		if (vx_bc)
-		{
-			vx = 0.0;
-			ux = 0.0;
-		}
+		// vx
+		if (vx_bc_is_set)
+			vx = vx_bc;
 		else
-		{
 			vx += Fx_ext / m * dt;
-			ux += vx * dt;
-		}
-
-		if (vy_bc)
-		{
-			vy = 0.0;
-			uy = 0.0;
-		}
+		ux += vx * dt;
+		// vy
+		if (vy_bc_is_set)
+			vy = vy_bc;
 		else
-		{
 			vy += Fy_ext / m * dt;
-			uy += vy * dt;
-		}
-
-		if (vtheta_bc)
-		{
-			vtheta = 0.0;
-			utheta = 0.0;
-		}
+		uy += vy * dt;
+		// vtheta
+		if (vtheta_bc_is_set)
+			vtheta = vtheta_bc;
 		else
-		{
 			vtheta += M_ext / L * dt;
-			utheta += vtheta * dt;
-		}
-
+		utheta += vtheta * dt;
+		// update x, y, theta
 		x = x_ori + ux;
 		y = y_ori + uy;
 		theta = theta_ori + utheta;
@@ -153,31 +145,28 @@ protected: // for calculation
 	{
 		double dt_2 = dt * dt;
 		double ax_corr, ay_corr, a_theta_corr;
-		if (vx_bc)
-			vx = 0.0;
-		else
+		// vx
+		if (!vx_bc_is_set)
 		{
 			ax_corr = Fx_con / m;
 			vx += ax_corr * dt;
 			ux += ax_corr * dt_2;
 		}
-		if (vy_bc)
-			vy = 0.0;
-		else
+		// vy
+		if (!vy_bc_is_set)
 		{
 			ay_corr = Fy_con / m;
 			vy += ay_corr * dt;
 			uy += ay_corr * dt_2;
 		}
-		if (vtheta_bc)
-			vtheta = 0.0;
-		else
+		// vtheta
+		if (!vtheta_bc_is_set)
 		{
 			a_theta_corr = M_con / L;
 			vtheta += a_theta_corr * dt;
 			utheta += a_theta_corr * dt_2;
 		}
-
+		// update x, y, theta
 		x = x_ori + ux;
 		y = y_ori + uy;
 		theta = theta_ori + utheta;
@@ -185,14 +174,10 @@ protected: // for calculation
 	}
 
 protected: // helper data and functions
-		   // for transformation
-	double sin_theta, cos_theta;
+	double sin_theta, cos_theta; // for transformation
 public:
 	// called after set_init_pos()
-	inline void init_transformation(void) noexcept
-	{
-		sin_theta = sin(theta), cos_theta = cos(theta);
-	}
+	inline void init_transformation(void) noexcept { sin_theta = sin(theta), cos_theta = cos(theta); }
 	// functions below should be called after init_transformation()
 	void get_bounding_box(double &x1, double &y1, double &x2, double &y2,
 						  double &x3, double &y3, double &x4, double &y4,
@@ -200,20 +185,21 @@ public:
 	inline int distance_from_boundary(Point &p, double &dist, double &nx, double &ny,
 									  double dist_max = std::numeric_limits<double>::max())
 	{
-		// transform into local coordinates
+		// transform p.x and p.y into local coordinates
 		double x_tmp = p.x - x, y_tmp = p.y - y;
 		Point lp;
 		lp.x = x_tmp *  cos_theta + y_tmp * sin_theta + mesh.x_mc;
 		lp.y = x_tmp * -sin_theta + y_tmp * cos_theta + mesh.y_mc;
 		
 		int res = mesh.distance_to_boundary(lp, dist, nx, ny, dist_max);
-
-		// transform nx, ny into glbal coordinates
-		double nx_tmp = nx, ny_tmp = ny;
-		nx = nx_tmp * cos_theta - ny_tmp * sin_theta;
-		ny = nx_tmp * sin_theta + ny_tmp * cos_theta;
-		//std::cout << "\nPoint in global coords: (" << p.x << ", " << p.y << ").\n"
-		//		  "Distance: " << dist << ", normal: (" << nx << ", " << ny << ")\n";
+		
+		if (res > -1)
+		{
+			// transform nx and ny back to glbal coordinates
+			double nx_tmp = nx, ny_tmp = ny;
+			nx = nx_tmp * cos_theta - ny_tmp * sin_theta;
+			ny = nx_tmp * sin_theta + ny_tmp * cos_theta;
+		}
 
 		return res;
 	}

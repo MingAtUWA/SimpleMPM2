@@ -6,7 +6,8 @@
 void test_rigid_body_square(void)
 {
 	RigidBody rb;
-	rb.load_and_init_mesh("..\\..\\Asset\\square_mesh.mesh_data", 0.3);
+	//rb.load_and_init_mesh("..\\..\\Asset\\square_mesh.mesh_data", 0.3);
+	rb.load_and_init_mesh("..\\..\\Asset\\cap_mesh.mesh_data", 0.25);
 	//display_triangle_mesh(rb.mesh, true, true, true);
 
 	rb.x = 0.0;

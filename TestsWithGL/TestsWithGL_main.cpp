@@ -13,8 +13,8 @@ int main(int argc, void **argv)
 	//test_get_pcls_from_mesh();
 
 	// square
-	//test_mpm_rigidbody_square();
-	//test_mpm_rigid_animation_square();
+	test_mpm_rigidbody_square();
+	test_mpm_rigid_animation_square();
 
 	// cantilever beam
 	//test_mpm_rigidbody_cantilever();
@@ -27,8 +27,12 @@ int main(int argc, void **argv)
 	// block slide down slope
 	//test_slide_down_frictional_slope();
 	// 2
-	test_slide_down_frictional_slope2();
-	test_mpm_rigid_animation_slope_fric();
+	//test_slide_down_frictional_slope2();
+	//test_mpm_rigid_animation_slope_fric();
+
+	// bar compression
+	//test_mpm_rigidbody_bar_compression();
+	//test_mpm_rigid_animation_bar_compression();
 
 	//system("pause");
 	return 0;

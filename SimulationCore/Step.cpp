@@ -21,7 +21,7 @@ int Step::solve(void)
 	init_calculation();
 
 	// init time history
-	for (TimeHistory *pth = time_history_top; pth; pth = pth->next)
+	for (TimeHistoryOutput *pth = time_history_top; pth; pth = pth->next)
 	{
 		if (pth->need_output_init_state) pth->output();
 		pth->interval_time = step_time / double(pth->interval_num);
@@ -50,7 +50,7 @@ int Step::solve(void)
 	} while (-time_diff_tmp > time_tol);
 
 	// finalize time history
-	for (TimeHistory *pth = time_history_top; pth; pth = pth->next)
+	for (TimeHistoryOutput *pth = time_history_top; pth; pth = pth->next)
 		pth->finalize_per_step();
 
 	// finalize calculation
@@ -63,20 +63,42 @@ int solve_substep_base(void *_self) { return 0; }
 
 void Step::output_all_time_history(void)
 {
-	for (TimeHistory *pth = time_history_top; pth; pth = pth->next)
+	for (TimeHistoryOutput *pth = time_history_top; pth; pth = pth->next)
 		pth->output();
 }
 
 void Step::output_time_history(void)
 {
-	for (TimeHistory *pth = time_history_top; pth; pth = pth->next)
+	for (TimeHistoryOutput *pth = time_history_top; pth; pth = pth->next)
 	{
-		if (pth->next_time <= current_time + time_tol)
+		if (pth->next_time - time_tol <= current_time)
 		{
 			pth->output();
 			pth->next_time += pth->interval_time;
 			if (pth->next_time < current_time)
 				pth->next_time = current_time + pth->interval_time;
 		}
+	}
+}
+
+void Step::output_model_data(void)
+{
+	ModelDataOutput *pmd = model_data_top;
+	ModelDataOutput *pmd_prev = nullptr;
+	while (pmd)
+	{
+		if (pmd->time - time_tol <= current_time)
+		{
+			pmd->output();
+			// remove this model output from list
+			pmd = pmd->next;
+			if (pmd_prev)
+				pmd_prev->next = pmd;
+			else
+				model_data_top = pmd;
+			continue;
+		}
+		pmd_prev = pmd;
+		pmd = pmd->next;
 	}
 }

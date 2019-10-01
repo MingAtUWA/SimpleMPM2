@@ -232,7 +232,7 @@ int solve_substep_S2D_ME_s_RigidBody_Fric(void *_self)
 	rb.init_per_substep();
 	rb.predict_motion_from_ext_force(self.dtime);
 
-	//// Contact detection
+	// Contact detection
 	double x1, y1, x2, y2, x3, y3, x4, y4;
 	rb.init_transformation();
 	rb.get_bounding_box(x1, y1, x2, y2, x3, y3, x4, y4, md.h);

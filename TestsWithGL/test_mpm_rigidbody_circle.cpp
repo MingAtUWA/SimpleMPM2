@@ -4,8 +4,11 @@
 
 #include "Model_S2D_ME_s_RigidBody.h"
 #include "Step_S2D_ME_s_RigidBody.h"
-#include "TimeHistory_S2D_ME_s_RigidBody.h"
+#include "ModelDataOutput_S2D_ME_s_RigidBody.h"
+#include "TimeHistoryOutput_S2D_ME_s_RigidBody.h"
+
 #include "ResultFile_PlainBin.h"
+#include "ResultFile_XML.h"
 
 #include "test_sim_core.h"
 
@@ -20,9 +23,12 @@ void test_mpm_rigidbody_circle(void)
 	ResultFile_PlainBin res_file;
 	res_file.init("mpm_rb_res.bin");
 	
-	res_file.output(model);
+	ModelDataOutput_S2D_ME_s_RigidBody md;
+	md.set_model(model);
+	md.set_res_file(res_file);
+	md.output();
 
-	TimeHistory_S2D_ME_s_RigidBody out1;
+	TimeHistoryOutput_S2D_ME_s_RigidBody out1;
 	out1.set_res_file(res_file);
 	out1.set_interval_num(10);
 

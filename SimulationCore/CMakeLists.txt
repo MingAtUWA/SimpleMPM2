@@ -12,22 +12,31 @@ add_library(
     # Base Class
     Model.h
     Step.h Step.cpp
-    TimeHistory.h
-    ResultFile.h ResultFileData.h
-    # ProgressBar
-    TimeHistory_ConsoleProgressBar.h TimeHistory_ConsoleProgressBar.cpp
+    ModelDataOutput.h ModelDataOutput.cpp
+    TimeHistoryOutput.h TimeHistoryOutput.cpp
+    ResultFile.h
     # Plain binary result file
-    ResultFile_PlainBin.h ResultFile_PlainBin.cpp
-    ResultFile_XML.h ResultFile_XML.cpp
+    ResultFile_PlainBin.h ResultFile_PlainBin_DataStruct.h
+    # XML result file
+    ResultFile_XML.h
+    # ProgressBar
+    TimeHistoryOutput_ConsoleProgressBar.h TimeHistoryOutput_ConsoleProgressBar.cpp
     # Purely mechanics, material point and rigid-body smooth contact
     Model_S2D_ME_s_RigidBody.h Model_S2D_ME_s_RigidBody.cpp
     Step_S2D_ME_s_RigidBody.h Step_S2D_ME_s_RigidBody.cpp
-    TimeHistory_S2D_ME_s_RigidBody.h
+    ModelDataOutput_S2D_ME_s_RigidBody.h ModelDataOutput_S2D_ME_s_RigidBody.cpp
+    TimeHistoryOutput_S2D_ME_s_RigidBody.h  TimeHistoryOutput_S2D_ME_s_RigidBody.cpp
     # Purely mechanics, material ponit and rigid-body frictional contact
     ContactState.h # keep tract of contact state
     Model_S2D_ME_s_RigidBody_Fric.h Model_S2D_ME_s_RigidBody_Fric.cpp
     Step_S2D_ME_s_RigidBody_Fric.h Step_S2D_ME_s_RigidBody_Fric.cpp
-    TimeHistory_S2D_ME_s_RigidBody_Fric.h
+    ModelDataOutput_S2D_ME_s_RigidBody_Fric.h ModelDataOutput_S2D_ME_s_RigidBody_Fric.cpp
+    TimeHistoryOutput_S2D_ME_s_RigidBody_Fric.h TimeHistoryOutput_S2D_ME_s_RigidBody_Fric.cpp
+    # 2D CHM MPM
+    Model_S2D_CHM_s.h Model_S2D_CHM_s.cpp
+    Step_S2D_CHM_s.h Step_S2D_CHM_s.cpp
+    ModelDataOutput_S2D_CHM_s.h ModelDataOutput_S2D_CHM_s.cpp
+    TimeHistoryOutput_S2D_CHM_s.h TimeHistoryOutput_S2D_CHM_s.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

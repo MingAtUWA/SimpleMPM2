@@ -121,8 +121,8 @@ public:
 		}
 
 		// init the element where the particle lies
-		size_t e_x_id = size_t(pcl.x - x0 / h);
-		size_t e_y_id = size_t(pcl.y - y0 / h);
+		size_t e_x_id = size_t((pcl.x - x0) / h);
+		size_t e_y_id = size_t((pcl.y - y0) / h);
 		pcl.pelem = elems + elem_x_num * e_y_id + e_x_id;
 		pcl.pn1 = nodes + node_x_num * e_y_id + e_x_id;
 		pcl.pn2 = pcl.pn1 + 1;
@@ -177,6 +177,7 @@ public: // helper data and functions
 	LongLongRange y_id_range1, y_id_range2, y_id_range3, y_id_range4;
 	PreAllocIdArray x_ids_mem1, x_ids_mem2, x_ids_mem3, x_ids_mem4;
 	// get intersection point (y_id, x_id)
+	// return false is y_id is not in the range of background mesh
 	bool get_intersect_points(double x1, double y1, double x2, double y2,
 					LongLongRange &y_id_range, PreAllocIdArray &x_ids_mem);
 	// update the range of x_id for each y_id

@@ -1,37 +1,43 @@
-#ifndef _TIME_HISTORY_H_
-#define _TIME_HISTORY_H_
+#ifndef __TIME_HISTORY_OUTPUT_H__
+#define __TIME_HISTORY_OUTPUT_H__
 
 #include <string>
+
+#include "ResultFile.h"
+
 class Model;
 class Step;
-#include "ResultFile.h"
+class TimeHistoryOutput;
+typedef int (*TimeHistoryOutputFunc)(TimeHistoryOutput &_self);
+int time_history_output_func_null(TimeHistoryOutput &_self);
 
 /*=============================================================
 Class TimeHistory
-	Functions needs to be rewritten: output();
  ==============================================================*/
-class TimeHistory
+class TimeHistoryOutput
 {
 	friend Step;
 protected:
 	const char *type;
 	std::string name;
-	// number of output this step:
-	size_t interval_num;
+	size_t interval_num; // number of output this step:
 	double interval_time;
-	// output schedule
 	double next_time;
 	bool need_output_init_state; // true if output the initial state
 	
+	Model *model;
+	Step *step;
 	ResultFile *res_file;
-	OutputFunc output_func;
+	TimeHistoryOutputFunc output_func;
 
 public:
-	TimeHistory(const char *_type = "TimeHistory") :
+	TimeHistoryOutput(const char *_type = "TimeHistory",
+		TimeHistoryOutputFunc _output_func = &time_history_output_func_null) :
 		type(_type), name(20, '\0'),
-		need_output_init_state(false), interval_num(1),
-		step(nullptr), next(nullptr) {}
-	~TimeHistory() {}
+		interval_num(1), need_output_init_state(false),
+		model(nullptr), step(nullptr), res_file(nullptr),
+		output_func(_output_func), next(nullptr) {}
+	~TimeHistoryOutput() {}
 	
 	inline const char *get_type(void) const { return type; }
 	inline void set_name(const char *_name) { name = _name; }
@@ -39,21 +45,21 @@ public:
 	inline void set_interval_num(size_t num) { interval_num = num; }
 	inline size_t get_interval_num(void) const { return interval_num; }
 	inline void set_output_init_state(bool _need = true) noexcept { need_output_init_state = _need; }
+	
 	inline Model &get_model(void) const noexcept { return *model; }
 	inline Step &get_step(void) const noexcept { return *step; }
+	inline ResultFile &get_res_file(void) const noexcept { return *res_file; }
 
-	// Initialize each steps
+public:
+	// Initialize before each steps
 	virtual int init_per_step(void) { return 0; }
-	// Finalize each steps
+	// Finalize after each steps
 	virtual void finalize_per_step(void) {}
+	// Output substep
+	inline int output(void) { return (*output_func)(*this); }
 
-	// Output per substep
-	virtual int output(void) { return 0; }
-
-protected: // set and used by Step class
-	Step *step;
-	Model *model;
-	TimeHistory *next; // used by step
+protected:
+	TimeHistoryOutput *next; // used by step
 };
 
 #endif

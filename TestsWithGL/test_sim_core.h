@@ -11,14 +11,17 @@ void test_triangle_mesh_square(void);
 
 void test_rigid_body_square(void);
 
+void test_get_pcls_from_mesh(void);
+
 void test_mpm_rigidbody_circle(void);
 void test_mpm_rigidbody_square(void);
 void test_mpm_rigidbody_cantilever(void);
 void test_mpm_rigidbody_cantilever_fric(void);
-
-void test_get_pcls_from_mesh(void);
+void test_mpm_rigidbody_bar_compression(void);
 
 void test_slide_down_frictional_slope(void);
 void test_slide_down_frictional_slope2(void);
+
+void test_mpm_chm_s_1d_consolidation(void);
 
 #endif

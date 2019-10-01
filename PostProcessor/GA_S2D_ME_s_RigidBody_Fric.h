@@ -1,16 +1,14 @@
 #ifndef __GA_S2D_ME_S_RIGIDBODY_FRIC_H__
 #define __GA_S2D_ME_S_RIGIDBODY_FRIC_H__
 
-#include "ResultFileData.h"
-
 #include "GenerateAnimation.h"
 
 class GA_S2D_ME_s_RigidBody_Fric : public GenerateAnimation
 {
 protected: // model data
-	typedef ResultFileData::ME_s_RigidBody::MeshHeader MeshHeader;
-	typedef ResultFileData::ME_s_RigidBody::RigidBodyHeader RigidBodyHeader;
-	typedef ResultFileData::ME_s_RigidBody::MPObjectHeader MPObjectHeader;
+	typedef ResultFile_PlainBin_DataStruct::MeshHeader MeshHeader;
+	typedef ResultFile_PlainBin_DataStruct::RigidBodyHeader RigidBodyHeader;
+	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 	
 	MeshHeader mh;
 	GLsizei grid_line_points_num;
@@ -19,8 +17,8 @@ protected: // model data
 	MPObjectHeader mph;
 
 protected: // time history data
-	typedef ResultFileData::ME_s_RigidBody::RigidBodyMotionHeader RigidBodyMotionHeader;
-	typedef ResultFileData::ME_s_RigidBody::MPObjectHeader MPObjectHeader;
+	typedef ResultFile_PlainBin_DataStruct::RigidBodyMotionHeader RigidBodyMotionHeader;
+	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 
 	// particle data
 	double *mp_x_data, *mp_y_data, *mp_vol_data;

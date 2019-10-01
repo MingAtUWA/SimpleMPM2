@@ -115,7 +115,7 @@ int GA_S2D_ME_s_RigidBody::init(const char *res_file_name)
 	delete[] rb_elem_indices;
 
 	// material point object
-	res_file.read(reinterpret_cast<char *>(&mph), sizeof(mph));
+	res_file.read(reinterpret_cast<char *>(&mph), sizeof(mph)); // ????
 	if (!mp_x_data)
 	{
 		delete[] mp_x_data;

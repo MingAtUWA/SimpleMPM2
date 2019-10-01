@@ -4,26 +4,26 @@
 #include <ctime>
 
 #include "Step.h"
-#include "TimeHistory_ConsoleProgressBar.h"
+#include "TimeHistoryOutput_ConsoleProgressBar.h"
 
 #define DEFAULT_WIDTH 80
 #define DEFAULT_WINDTH_DIV_100 ((float)DEFAULT_WIDTH / 100.0f)
 
-TimeHistory_ConsoleProgressBar::TimeHistory_ConsoleProgressBar() :
-	TimeHistory("ConsoleProgressBar"),
+TimeHistoryOutput_ConsoleProgressBar::TimeHistoryOutput_ConsoleProgressBar() :
+	TimeHistoryOutput("ConsoleProgressBar", &time_history_output_func_console_progress_bar),
 	width (DEFAULT_WIDTH), width_div_100(DEFAULT_WINDTH_DIV_100),
 	prev_pos(0), cur_pos(0)
 {
 	interval_num = 100;
 }
 
-TimeHistory_ConsoleProgressBar::~TimeHistory_ConsoleProgressBar() {}
+TimeHistoryOutput_ConsoleProgressBar::~TimeHistoryOutput_ConsoleProgressBar() {}
 
 #define PADDING_STR "##################################################" \
 					"##################################################" \
 					"##################################################" \
 					"##################################################"
-void TimeHistory_ConsoleProgressBar::print_progress(void)
+void TimeHistoryOutput_ConsoleProgressBar::print_progress(void)
 {
 	cur_pos = (size_t)(100.0 * (step->get_current_time() + step->get_dtime())/ step->get_step_time());
 	cur_pos = cur_pos > 100 ? 100 : cur_pos;
@@ -35,7 +35,7 @@ void TimeHistory_ConsoleProgressBar::print_progress(void)
 	fflush(stdout);
 }
 
-int TimeHistory_ConsoleProgressBar::init_per_step(void)
+int TimeHistoryOutput_ConsoleProgressBar::init_per_step(void)
 {
 	prev_pos = 0;
 	print_progress();
@@ -43,13 +43,15 @@ int TimeHistory_ConsoleProgressBar::init_per_step(void)
 	return 0;
 }
 
-int TimeHistory_ConsoleProgressBar::output(void)
+int time_history_output_func_console_progress_bar(TimeHistoryOutput &_self)
 {
-	print_progress();
+	TimeHistoryOutput_ConsoleProgressBar &self
+		= static_cast<TimeHistoryOutput_ConsoleProgressBar &>(_self);
+	self.print_progress();
 	return 0;
 }
 
-void TimeHistory_ConsoleProgressBar::finalize_per_step(void)
+void TimeHistoryOutput_ConsoleProgressBar::finalize_per_step(void)
 {
 	end_time = std::chrono::system_clock::now();
 	std::chrono::milliseconds elapsed_time

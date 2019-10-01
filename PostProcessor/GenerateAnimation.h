@@ -4,7 +4,7 @@
 #include <fstream>
 #include "ItemArray.hpp"
 
-#include "ResultFileData.h"
+#include "ResultFile_PlainBin_DataStruct.h"
 #include "ShaderProgram.h"
 
 class SquareParticleSystem
@@ -149,7 +149,7 @@ protected:
 	BufferObject mp_data;
 
 protected: // time history data
-	typedef ResultFileData::TimeHistoryHeader TimeHistoryHeader;
+	typedef ResultFile_PlainBin_DataStruct::TimeHistoryHeader TimeHistoryHeader;
 	TimeHistoryHeader *time_rcds;
 	size_t time_rcd_num;
 

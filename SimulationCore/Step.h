@@ -1,12 +1,13 @@
-#ifndef _STEP_H_
-#define _STEP_H_
+#ifndef __STEP_H__
+#define __STEP_H__
 
 #include <string>
-#include "Model.h"
-#include "TimeHistory.h"
 
-// Avoid using virtual function
-typedef int(*SolveSubstepFunc)(void *_self);
+#include "Model.h"
+
+class ModelDataOutput;
+class TimeHistoryOutput;
+typedef int (*SolveSubstepFunc)(void *_self);
 
 /* ========================================================
 Class Step:
@@ -91,24 +92,43 @@ protected:
 public: // main functions
 	virtual int solve(void);
 	
-	// Time history Utilities
+	// =============== Time History Utilities ===============
 public:
-	inline void add_time_history(TimeHistory &th) noexcept
-	{
-		th.step = this;
-		th.model = model;
-		th.next = time_history_top;
-		time_history_top = &th;
-	}
-	inline void clear_time_history(void) noexcept
-	{
-		time_history_top = nullptr;
-	}
+	void add_time_history(TimeHistoryOutput &th) noexcept;
+	inline void clear_time_history(void) noexcept { time_history_top = nullptr;	}
 
 protected:
-	TimeHistory *time_history_top;
+	TimeHistoryOutput *time_history_top;
 	void output_all_time_history(void);
 	void output_time_history(void);
+
+	// ================ Model Data Utilities ================
+public:
+	void add_model_data(ModelDataOutput &md) noexcept;
+	inline void clear_model_data(void) noexcept { model_data_top = nullptr; }
+
+protected:
+	ModelDataOutput *model_data_top;
+	void output_model_data(void);
 };
+
+#include "TimeHistoryOutput.h"
+
+inline void Step::add_time_history(TimeHistoryOutput &th) noexcept
+{
+	th.step = this;
+	th.model = model;
+	th.next = time_history_top;
+	time_history_top = &th;
+}
+
+#include "ModelDataOutput.h"
+
+inline void Step::add_model_data(ModelDataOutput &md) noexcept
+{
+	md.model = model;
+	md.next = model_data_top;
+	model_data_top = &md;
+}
 
 #endif

@@ -262,6 +262,7 @@ void Model_S2D_ME_s_RigidBody_Fric::rasterize_rect_on_grid(
 	// line4
 	res4 = get_intersect_points(x4, y4, x1, y1, y_id_range4, x_ids_mem4);
 
+	// get range of y_id: [y_id_min, y_id_max]
 	y_id_min = elem_y_num;
 	long long y_id_max = 0;
 	if (res1)
@@ -322,6 +323,8 @@ void Model_S2D_ME_s_RigidBody_Fric::rasterize_rect_on_grid(
 	for (long long range_id = 0; range_id < x_range_num; ++range_id)
 	{
 		long long y_id = y_id_min + range_id;
+		//std::cout << y_id << ": [" << x_range[range_id].lower << ", "
+		//		  << x_range[range_id].upper << "]\n";
 		for (long long x_id = x_range[range_id].lower;
 			 x_id < x_range[range_id].upper; ++x_id)
 			elems[y_id * elem_x_num + x_id].has_rigid_object = true;

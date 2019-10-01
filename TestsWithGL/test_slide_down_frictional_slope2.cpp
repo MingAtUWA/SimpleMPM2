@@ -4,10 +4,12 @@
 
 #include "Model_S2D_ME_s_RigidBody_Fric.h"
 #include "Step_S2D_ME_s_RigidBody_Fric.h"
-#include "TimeHistory_S2D_ME_s_RigidBody_Fric.h"
+#include "ModelDataOutput_S2D_ME_s_RigidBody_Fric.h"
+#include "TimeHistoryOutput_S2D_ME_s_RigidBody_Fric.h"
+#include "TimeHistoryOutput_ConsoleProgressBar.h"
+
 #include "ResultFile_PlainBin.h"
 #include "ResultFile_XML.h"
-#include "TimeHistory_ConsoleProgressBar.h"
 
 #include "DisplayModel.h"
 
@@ -55,7 +57,7 @@ void test_slide_down_frictional_slope2(void)
 	// rigid body
 	RigidBody &rb = model.rigid_body;
 	rb.load_and_init_mesh("..\\..\\Asset\\square_mesh.mesh_data", 0.3);
-	rb.set_params(1.0, 0.6830127 + 0.5*dy, 5.1830127 + 0.5*dx, -0.52359877); // need to be changed
+	rb.set_params(1.0, 0.6830127 + 0.5*dy, 5.1830127 + 0.5*dx, -0.52359877);
 	rb.add_ext_force(0.0, -2.0);
 
 	//DisplayModel disp_model;
@@ -71,18 +73,22 @@ void test_slide_down_frictional_slope2(void)
 	res_file_xml.init("mpm_rb_res_slope_fric.xml");
 
 	// output model
-	res_file_pb.output(model);
-	res_file_xml.output(model);
+	ModelDataOutput_S2D_ME_s_RigidBody_Fric md;
+	md.set_model(model);
+	md.set_res_file(res_file_pb);
+	md.output();
+	md.set_res_file(res_file_xml);
+	md.output();
 
-	TimeHistory_S2D_ME_s_RigidBody_Fric out1;
+	TimeHistoryOutput_S2D_ME_s_RigidBody_Fric out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_interval_num(50);
 	out1.set_output_init_state();
-	TimeHistory_S2D_ME_s_RigidBody_Fric out2;
+	TimeHistoryOutput_S2D_ME_s_RigidBody_Fric out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_interval_num(50);
 	out2.set_output_init_state();
-	TimeHistory_ConsoleProgressBar cpb;
+	TimeHistoryOutput_ConsoleProgressBar cpb;
 
 	Step_S2D_ME_s_RigidBody_Fric step;
 	step.set_name("init_step");

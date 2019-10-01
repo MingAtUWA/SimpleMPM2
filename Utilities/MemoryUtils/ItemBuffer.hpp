@@ -1,5 +1,5 @@
-#ifndef _MEMORY_UTILITIES_ITEM_BUFFER_HPP_
-#define _MEMORY_UTILITIES_ITEM_BUFFER_HPP_
+#ifndef __MEMORY_UTILITIES_ITEM_BUFFER_HPP__
+#define __MEMORY_UTILITIES_ITEM_BUFFER_HPP__
 
 #include <string>
 
@@ -16,57 +16,58 @@
 
 namespace MemoryUtilities
 {
-	/*===============================================
+	/*===========================================================
 	Class ItemBuffer
-	-------------------------------------------------
-	1. This buffer just store item without sequence;
-	2. Use linked memory pool;
-	3. Set reasonable large page_size for efficiency;
-	4. No check to ensure the item is in this buffer
-	   when using del().
-	================================================*/
+	-------------------------------------------------------------
+	1. Store items without sequence;
+	2. Need reasonable page size for efficiency;
+	3. del() has no check to ensure the item is in this buffer.
+	============================================================*/
 	template<typename Item, size_t fold = 1, size_t pre_alloc_size = 0>
 	class ItemBuffer
 	{
-	protected:
+	protected: // assistant data structures
+		union ItemSlot
+		{
+			Item item;
+			ItemSlot *next;
+		};
 		struct MemPageHeader
 		{
 			MemPageHeader *next;
-			Item *start, *end;
+			ItemSlot *start;
+			size_t size;
 		};
-		// first in-stack memory page
-		union
+
+	protected:
+		ItemSlot *empty_slot; // list of empty slot
+		union // in-stack memory page
 		{
-			char first_page_mem[sizeof(MemPageHeader) + MEMORY_ALIGNMENT + sizeof(Item)*pre_alloc_size];
-			MemPageHeader first_page;
+			MemPageHeader in_stack_page;
 			struct
 			{
-				MemPageHeader *first_page_next;
-				Item *first_page_start, *first_page_end;
+				MemPageHeader *in_stack_page_next;
+				ItemSlot *in_stack_page_start;
+				size_t in_stack_page_size;
 			};
+			char in_stack_page_mem[sizeof(MemPageHeader) +
+								   sizeof(ItemSlot) * pre_alloc_size +
+								   MEMORY_ALIGNMENT * (pre_alloc_size ? 1 : 0)];
 		};
-		MemPageHeader *last_page;
 		size_t base_page_size, page_size;
-		bool need_optimized;
-		// current state
-		MemPageHeader *cur_page;
-		Item *cur, *start, *end;
+		MemPageHeader *cur_page; 
+		ItemSlot *cur, *end;
 		
-		struct EmptySlot { EmptySlot *next; };
-		union Slot { Item item;	EmptySlot *next; };
-		EmptySlot *empty; // head of allocated item
-
 	public:
 		ItemBuffer(size_t init_page_size = pre_alloc_size) :
-			last_page(&first_page),
-			base_page_size(init_page_size ? init_page_size : 1), page_size(base_page_size),
-			need_optimized(false),
-			first_page_next(nullptr),
-			first_page_start((Item *)MEMORY_ALIGNED_ADDRESS(size_t(first_page_mem) + sizeof(MemPageHeader))),
-			first_page_end(first_page_start + pre_alloc_size),
-			cur_page(&first_page), cur(first_page_start),
-			start(first_page_start), end(first_page_end),
-			empty(nullptr) {}
+			empty_slot(nullptr),
+			in_stack_page_next(nullptr),
+			in_stack_page_start((ItemSlot *)MEMORY_ALIGNED_ADDRESS(size_t(in_stack_page_mem) + sizeof(MemPageHeader))),
+			in_stack_page_size(pre_alloc_size),
+			base_page_size(init_page_size ? init_page_size : 1),
+			page_size(base_page_size),
+			cur_page(&in_stack_page), cur(in_stack_page_start),
+			end(in_stack_page_start + in_stack_page_size) {}
 		~ItemBuffer() { clear(); }
 		inline void set_page_size(size_t init_page_size) noexcept
 		{
@@ -74,132 +75,172 @@ namespace MemoryUtilities
 			page_size = base_page_size;
 		}
 		inline size_t get_page_size(void) const noexcept { return page_size; }
-		// allocate memory for new item
+		// allocate memory for single item
 		inline Item *alloc(void)
 		{
-			Item *tmp;
-			if (empty)
+			if (empty_slot)
 			{
-				tmp = (Item *)empty;
-				empty = empty->next;
+				Item *res = (Item *)empty_slot;
+				empty_slot = empty_slot->next;
+				return res;
 			}
 			else if (cur < end)
-			{
-				tmp = (Item *)cur;
-				++cur;
-			}
-			else
-			{
-				tmp = alloc_from_next_page();
-			}
-			return tmp;
+				return (Item *)(cur++);
+			move_to_next_page();
+			return (Item *)(cur++);
 		}
-		// no safety check if pitem is in the buffer.
+		inline Item *alloc(size_t num)
+		{
+			Item *res = (Item *)cur;
+			cur += num;
+			if (cur > end)
+			{
+				// add unused slot back
+				ItemSlot *last = end - 1;
+				last->next = empty_slot;
+				for (cur = (ItemSlot *)res; cur < last; ++cur)
+					cur->next = cur + 1;
+				empty_slot = (ItemSlot *)res;
+				// get next page for allocation
+				move_to_next_page(num);
+				res = (Item *)cur;
+				cur += num;
+			}
+			return res;
+		}
+		// may cause loss of memory in exchange for higher speed
+		inline Item *alloc_fast(size_t num)
+		{
+			Item *res = (Item *)cur;
+			cur += num;
+			if (cur > end)
+			{
+				move_to_next_page(num);
+				res = (Item *)cur;
+				cur += num;
+			}
+			return res;
+		}
 		inline void del(Item *pitem)
 		{
-			EmptySlot *tmp = (EmptySlot *)(pitem);
-			// add to empty list
-			tmp->next = empty;
-			empty = tmp;
+			ItemSlot *tmp = (ItemSlot *)(pitem);
+			tmp->next = empty_slot;
+			empty_slot = tmp;
+		}
+		inline void del(Item *pitems, size_t num)
+		{
+			ItemSlot *slots = (ItemSlot *)(pitems);
+			slots[--num].next = empty_slot;
+			for (size_t i = 0; i < num; i++)
+				slots[i].next = &slots[i + 1];
+			empty_slot = slots;
 		}
 		inline void reset(void)
 		{
-			cur_page = &first_page;
-			start = first_page_start;
-			cur = start;
-			end = first_page_end;
-		}
-		// contract allocated memory pages into one
-		void reset_optimize(size_t additional_stack_size = 0)
-		{
-			if (need_optimized)
-			{
-				// cal total allocated size
-				size_t total_size = 0;
-				for (MemPageHeader *pg_iter = first_page.next; pg_iter; pg_iter = pg_iter->next)
-					total_size += pg_iter->end - pg_iter->start;
-				total_size += additional_stack_size;
-				clear(); // clear old pages
-				// alloc new page
-				union { char *mem; MemPageHeader *mem_page; };
-				total_size += pre_alloc_size;
-				// take memory of the first page as "preallocated space"
-				size_t char_num = sizeof(MemPageHeader) + MEMORY_ALIGNMENT + sizeof(Item)*(total_size+1);
-				mem = new char[char_num];
-				// abandon original in-stack space
-				first_page_start = (Item *)MEMORY_ALIGNED_ADDRESS(size_t(mem) + sizeof(MemPageHeader));
-				first_page_end = first_page_start + total_size;
-				mem_page->start = first_page_end;
-				mem_page->end = mem_page->start + 1;
-				// add page to list
-				mem_page->next = nullptr;
-				last_page = mem_page;
-				first_page.next = mem_page;
-				// clear flag
-				need_optimized = false;
-			}
-			// reset state
-			cur_page = &first_page;
-			start = first_page_start;
-			end = first_page_end;
-			cur = start;
+			empty_slot = nullptr;
+			cur_page = &in_stack_page;
+			cur = in_stack_page_start;
+			end = in_stack_page_start + in_stack_page_size;
 		}
 		void clear(void)
 		{
 			// reset page size
 			page_size = base_page_size;
 			// clear list
-			MemPageHeader *&top_page = first_page.next;
-			MemPageHeader *tmp_page = top_page;
-			while (tmp_page)
+			MemPageHeader *&top_alloc_page = in_stack_page.next;
+			MemPageHeader *tmp_page;
+			while (top_alloc_page)
 			{
-				top_page = top_page->next;
+				tmp_page = top_alloc_page;
+				top_alloc_page = top_alloc_page->next;
 				delete[] (char*)tmp_page;
-				tmp_page = top_page;
 			}
-			first_page_start = ((Item *)MEMORY_ALIGNED_ADDRESS(size_t(first_page_mem) + sizeof(MemPageHeader)));
-			first_page_end = first_page_start + pre_alloc_size;
-			last_page = &first_page;
-			first_page.next = nullptr;
-			empty = nullptr;
-			need_optimized = false;
+			in_stack_page.next = nullptr;
+			in_stack_page_start = ((ItemSlot *)MEMORY_ALIGNED_ADDRESS(size_t(in_stack_page_mem) + sizeof(MemPageHeader)));
+			in_stack_page_size = pre_alloc_size;
 			// reset state
-			cur_page = &first_page;
-			start = first_page_start;
-			cur = start;
-			end = first_page_end;
+			empty_slot = nullptr;
+			cur_page = &in_stack_page;
+			cur = in_stack_page_start;
+			end = cur + in_stack_page_size;
 		}
-	protected:
-		// allocate memory from other memory pool
-		Item *alloc_from_next_page(void)
+		// Reset and contract all memory pages into one (if necessary)
+		inline void reset_and_optimize(void)
 		{
-			// alloc new page (if necessary)
-			if (cur_page->next == nullptr)
+			if (cur_page == &in_stack_page)
 			{
-				// alloc new page
-				union { char *mem; MemPageHeader *mem_page; };
-				size_t char_num = sizeof(MemPageHeader) + MEMORY_ALIGNMENT + sizeof(Item)*page_size;
-				mem = new char[char_num];
-				// init new page
-				mem_page->start = (Item *)MEMORY_ALIGNED_ADDRESS(size_t(mem) + sizeof(MemPageHeader));
-				mem_page->end = mem_page->start + page_size;
-				mem_page->next = nullptr;
-				// add to list
-				last_page->next = mem_page;
-				last_page = mem_page;
-				need_optimized = true;
-				// update page_size
-				page_size *= fold;
+				empty_slot = nullptr;
+				cur = in_stack_page_start;
+				return;
 			}
-			// move the next page
-			cur_page = cur_page->next;
-			start = cur_page->start;
-			cur = start;
-			end = cur_page->end;
-			return cur++;
+			_reset_and_optimize();
+		}
+		
+	protected:
+		// get the next memory pool with size > min_size_required
+		void move_to_next_page(size_t min_size_required = 1)
+		{
+			while (cur_page->next)
+			{
+				// move the next page
+				cur_page = cur_page->next;
+				if (cur_page->size < min_size_required)
+					continue;
+				cur = cur_page->start;
+				end = cur + cur_page->size;
+				return;
+			}
+			if (page_size < min_size_required)
+				page_size = min_size_required;
+			union { char *mem; MemPageHeader *mem_page; };
+			// alloc new page (if necessary)
+			mem = new char[sizeof(MemPageHeader) + page_size * sizeof(ItemSlot) + MEMORY_ALIGNMENT];
+			// init new page
+			mem_page->next = nullptr;
+			mem_page->start = (ItemSlot *)MEMORY_ALIGNED_ADDRESS(size_t(mem) + sizeof(MemPageHeader));
+			mem_page->size = page_size;
+			// add to list
+			cur_page->next = mem_page;
+			cur_page = mem_page;
+			cur = cur_page->start;
+			end = cur + page_size;
+			// update page_size
+			page_size *= fold;
+		}
+		void _reset_and_optimize(void)
+		{
+			// Calculate total allocated size
+			size_t total_size = 0;
+			for (MemPageHeader *page_iter = &in_stack_page; 
+				 page_iter; page_iter = page_iter->next)
+				total_size += page_iter->size;
+			// clear all old pages
+			MemPageHeader *&top_alloc_page = in_stack_page.next;
+			MemPageHeader *tmp_page;
+			while (top_alloc_page)
+			{
+				tmp_page = top_alloc_page;
+				top_alloc_page = top_alloc_page->next;
+				delete[] (char*)tmp_page;
+			}
+			// alloc one single page
+			union { char *mem; MemPageHeader *mem_page; };
+			mem = new char[sizeof(MemPageHeader) + sizeof(ItemSlot) * total_size + MEMORY_ALIGNMENT];
+			// abandon original in-stack space
+			in_stack_page_next = mem_page;
+			in_stack_page_start = (ItemSlot *)MEMORY_ALIGNED_ADDRESS(size_t(mem) + sizeof(MemPageHeader));
+			in_stack_page_size = total_size;
+			mem_page->next = nullptr;
+			mem_page->start = nullptr; // no need to calculate
+			mem_page->size = 0;
+			// reset state
+			empty_slot = nullptr;
+			cur_page = &in_stack_page;
+			cur = in_stack_page_start;
+			end = in_stack_page_start + in_stack_page_size;
 		}
 	};
-}
+};
 
 #undef MEMORY_ALIGNMENT
 #undef MEMORY_ALIGNMENT_PADDING

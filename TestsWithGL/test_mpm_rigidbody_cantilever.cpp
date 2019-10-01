@@ -4,7 +4,9 @@
 
 #include "Model_S2D_ME_s_RigidBody.h"
 #include "Step_S2D_ME_s_RigidBody.h"
-#include "TimeHistory_S2D_ME_s_RigidBody.h"
+#include "ModelDataOutput_S2D_ME_s_RigidBody.h"
+#include "TimeHistoryOutput_S2D_ME_s_RigidBody.h"
+
 #include "ResultFile_PlainBin.h"
 #include "ResultFile_XML.h"
 
@@ -58,20 +60,24 @@ void test_mpm_rigidbody_cantilever(void)
 	res_file_xml.init("mpm_rb_res_can.xml");
 
 	// output model
-	res_file_pb.output(model);
-	res_file_xml.output(model);
-	
+	ModelDataOutput_S2D_ME_s_RigidBody md;
+	md.set_model(model);
+	md.set_res_file(res_file_pb);
+	md.output();
+	md.set_res_file(res_file_xml);
+	md.output();
+
 	Step_S2D_ME_s_RigidBody step;
 	step.set_name("init_step");
 	step.set_model(model);
 	step.set_time(10.0);
 	step.set_dtime(0.01);
 
-	TimeHistory_S2D_ME_s_RigidBody out1;
+	TimeHistoryOutput_S2D_ME_s_RigidBody out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_interval_num(50);
 	out1.set_output_init_state();
-	TimeHistory_S2D_ME_s_RigidBody out2;
+	TimeHistoryOutput_S2D_ME_s_RigidBody out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_interval_num(50);
 	out2.set_output_init_state();

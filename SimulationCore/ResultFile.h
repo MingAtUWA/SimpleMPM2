@@ -8,7 +8,4 @@ public:
 	~ResultFile() {}
 };
 
-class TimeHistory;
-typedef int (*OutputFunc) (TimeHistory &_th, ResultFile &_rf);
-
 #endif

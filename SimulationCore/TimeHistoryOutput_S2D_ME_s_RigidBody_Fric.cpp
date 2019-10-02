@@ -20,6 +20,7 @@ int time_history_output_func_s2d_me_s_rigid_body_fric_to_plain_bin_res_file(Time
 
 	TimeHistoryHeader thh;
 	Step_S2D_ME_s_RigidBody_Fric &step = static_cast<Step_S2D_ME_s_RigidBody_Fric &>(th.get_step());
+	thh.init();
 	thh.substep_num = step.get_substep_num();
 	thh.total_substep_num = step.get_total_substep_num();
 	thh.current_time = step.get_current_time();
@@ -29,6 +30,7 @@ int time_history_output_func_s2d_me_s_rigid_body_fric_to_plain_bin_res_file(Time
 	RigidBodyMotionHeader rbmh;
 	Model_S2D_ME_s_RigidBody_Fric &model = static_cast<Model_S2D_ME_s_RigidBody_Fric &>(th.get_model());
 	RigidBody &rb = model.rigid_body;
+	rbmh.init();
 	rbmh.x = rb.x;
 	rbmh.y = rb.y;
 	rbmh.theta = rb.theta;
@@ -42,6 +44,7 @@ int time_history_output_func_s2d_me_s_rigid_body_fric_to_plain_bin_res_file(Time
 
 	// output particles data
 	MPObjectHeader mph;
+	mph.init();
 	mph.pcl_num = model.pcl_num;
 	file.write(reinterpret_cast<char *>(&mph), sizeof(mph));
 	double *pcl_data = new double[mph.pcl_num];
@@ -111,11 +114,11 @@ int time_history_output_func_s2d_me_s_rigid_body_fric_to_xml_res_file(TimeHistor
 	file.write(str_buffer, strlen(str_buffer));
 	// field data: x, y, vol
 	file << "        <field_data>\n"
-		"        <!-- x, y, vol -->\n";
+			"        <!-- x, y, vol -->\n";
 	for (size_t pcl_id = 0; pcl_id < model.pcl_num; ++pcl_id)
 	{
-		file << "            " << model.pcls[pcl_id].x << ", " << model.pcls[pcl_id].y << ", "
-			<< model.pcls[pcl_id].m / model.pcls[pcl_id].density << "\n";
+		file << "        " << model.pcls[pcl_id].x << ", " << model.pcls[pcl_id].y << ", "
+			 << model.pcls[pcl_id].m / model.pcls[pcl_id].density << "\n";
 	}
 	file << "        </field_data>\n";
 	// ending

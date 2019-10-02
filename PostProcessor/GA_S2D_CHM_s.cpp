@@ -32,7 +32,10 @@ int GA_S2D_CHM_s::init(const char *res_file_name)
 	if (proj_mat_id < 0)
 		return -2;
 
-	// mesh
+	// model data
+	res_file.read(reinterpret_cast<char *>(&mdh), sizeof(mdh));
+
+	// bg mesh
 	res_file.read(reinterpret_cast<char *>(&mh), sizeof(mh));
 	// init bg grid data
 	size_t node_x_num = mh.elem_x_num + 1;
@@ -86,9 +89,10 @@ int GA_S2D_CHM_s::init(const char *res_file_name)
 	}
 	if (mph.pcl_num)
 	{
-		mp_x_data = new double[mph.pcl_num * 3];
+		mp_x_data = new double[mph.pcl_num * 4];
 		mp_y_data = mp_x_data + mph.pcl_num;
 		mp_vol_data = mp_y_data + mph.pcl_num;
+		mp_p_data = mp_vol_data + mph.pcl_num;
 	}
 
 	// get total number of time record
@@ -96,7 +100,7 @@ int GA_S2D_CHM_s::init(const char *res_file_name)
 	first_time_rcd_file_pos = res_file.tellg();
 	res_file.seekg(0, SEEK_END);
 	file_len = res_file.tellg();
-	time_rcd_len = sizeof(TimeHistoryHeader) + sizeof(RigidBodyMotionHeader) + sizeof(MPObjectHeader) + mph.pcl_num * sizeof(double) * 3;
+	time_rcd_len = sizeof(TimeHistoryHeader) + sizeof(MPObjectHeader) + mph.pcl_num * 4 * sizeof(double);
 	time_rcd_num = (file_len - first_time_rcd_file_pos) / time_rcd_len;
 	// init time record
 	if (time_rcds)
@@ -148,12 +152,10 @@ int GA_S2D_CHM_s::render_frame(double xl, double xu, double yl, double yu)
 	glm::vec4 moccasin(1.0f, 0.894118f, 0.709804f, 1.0f); // yellow
 	shader.set_uniform_vec4f(color_id, glm::value_ptr(moccasin));
 	// init object buffer
-	RigidBodyMotionHeader rbmh;
 	MPObjectHeader mph;
 	res_file.seekg(first_time_rcd_file_pos + cur_time_rcd_id * time_rcd_len + sizeof(TimeHistoryHeader), SEEK_SET);
-	res_file.read(reinterpret_cast<char *>(&rbmh), sizeof(rbmh));
 	res_file.read(reinterpret_cast<char *>(&mph), sizeof(mph));
-	res_file.read(reinterpret_cast<char *>(mp_x_data), sizeof(double) * mph.pcl_num * 3);
+	res_file.read(reinterpret_cast<char *>(mp_x_data), sizeof(double) * mph.pcl_num * 4);
 	pcls_mem.reset();
 	for (size_t pcl_id = 0; pcl_id < mph.pcl_num; ++pcl_id)
 		pcls_mem.add_pcl(mp_x_data[pcl_id], mp_y_data[pcl_id], mp_vol_data[pcl_id]);

@@ -8,6 +8,7 @@
 class ModelDataOutput;
 class TimeHistoryOutput;
 typedef int (*SolveSubstepFunc)(void *_self);
+int solve_substep_base(void *_self);
 
 /* ========================================================
 Class Step:
@@ -16,8 +17,6 @@ Class Step:
 	2. solve_substep()
 	3. finalize()
  =========================================================== */
-int solve_substep_base(void *_self);
-
 class Step
 {
 protected:
@@ -43,7 +42,8 @@ protected:
 	Model *model;
 
 public:
-	Step(SolveSubstepFunc solve_substep_func = &solve_substep_base);
+	Step(SolveSubstepFunc solve_substep_func = &solve_substep_base,
+		 const char *_type = "Step");
 	~Step();
 	// type
 	inline const char *get_type(void) const { return type; }
@@ -52,7 +52,7 @@ public:
 	inline void set_name(const char *_name) noexcept { name = _name; }
 	// step time length
 	inline void set_time(double _time) noexcept { step_time = _time; }
-	inline void set_dtime(double _dtime, double t_tol_r = 0.01) noexcept
+	inline void set_dtime(double _dtime, double t_tol_r = 0.001) noexcept
 	{
 		dtime = _dtime, time_tol_ratio = t_tol_r, time_tol = dtime * t_tol_r;
 	}
@@ -89,27 +89,34 @@ protected:
 	// finalization after calculation
 	virtual int finalize_calculation(void) { return 0; }
 
-public: // main functions
-	virtual int solve(void);
-	
-	// =============== Time History Utilities ===============
+	// =================== main functions ===================
+protected:
+	int (Step::*solve_func)(void);
 public:
-	void add_time_history(TimeHistoryOutput &th) noexcept;
-	inline void clear_time_history(void) noexcept { time_history_top = nullptr;	}
+	// different implimentations
+	int solve_th_only(void); // only output time history
+	int solve_th_and_md(void); // output time history and model data
+	inline void use_solve_th_only(void) noexcept { solve_func = &Step::solve_th_only; }
+	inline void use_solve_th_and_md(void) noexcept { solve_func = &Step::solve_th_and_md; }
+	// there is not lower limit at dt
+	// may get dt very close to 0.0
+	inline int solve(void) { return (this->*solve_func)(); }
 
+	// =============== Time History Utilities ===============
 protected:
 	TimeHistoryOutput *time_history_top;
 	void output_all_time_history(void);
 	void output_time_history(void);
+public:
+	void add_time_history(TimeHistoryOutput &th) noexcept;
+	inline void clear_time_history(void) noexcept { time_history_top = nullptr;	}
 
 	// ================ Model Data Utilities ================
+protected:
+	ModelDataOutput *model_data_top;
 public:
 	void add_model_data(ModelDataOutput &md) noexcept;
 	inline void clear_model_data(void) noexcept { model_data_top = nullptr; }
-
-protected:
-	ModelDataOutput *model_data_top;
-	void output_model_data(void);
 };
 
 #include "TimeHistoryOutput.h"

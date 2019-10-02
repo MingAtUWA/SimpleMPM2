@@ -219,6 +219,8 @@ bool Model_S2D_CHM_s::init_pcl_standard(Particle &pcl)
 	}
 
 	ParticleCalVar &pcl_var = pcl.var;
+	pcl_var.x = pcl.x;
+	pcl_var.y = pcl.y;
 	pcl_var.vol = pcl.m_s / (pcl.density_s * (1.0 - pcl.n));
 	pcl_var.elem_x_id = size_t((pcl.x - x0) / h);
 	pcl_var.elem_y_id = size_t((pcl.y - y0) / h);

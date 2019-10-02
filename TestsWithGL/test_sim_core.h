@@ -3,6 +3,8 @@
 
 #include "TriangleMesh.h"
 
+void test_solve_functions(void);
+
 int display_triangle_mesh(TriangleMesh &tri_mesh, bool disp_tri_mesh, bool dis_bl, bool disp_bg_grid,
 						  TriangleMesh::Edge *_edge = nullptr, Point *_pt = nullptr);
 

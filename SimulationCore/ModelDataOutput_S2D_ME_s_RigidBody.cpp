@@ -15,12 +15,21 @@ int model_data_output_func_s2d_me_s_rigid_body_to_plain_bin_res_file(ModelDataOu
 	ResultFile_PlainBin &rf = static_cast<ResultFile_PlainBin &>(*md.res_file);
 	std::fstream &file = rf.get_file();
 
-	typedef ResultFile_PlainBin_DataStruct::MeshHeader MeshHeader;
+	typedef ResultFile_PlainBin_DataStruct::ModelDataHeader ModelDataHeader;
+	typedef ResultFile_PlainBin_DataStruct::BackgroundMeshHeader BackgroundMeshHeader;
 	typedef ResultFile_PlainBin_DataStruct::RigidBodyHeader RigidBodyHeader;
 	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 
+	// model data
+	ModelDataHeader mdh;
+	mdh.init();
+	mdh.current_time = md.current_time;
+	mdh.total_time = md.total_time;
+	file.write(reinterpret_cast<char *>(&mdh), sizeof(mdh));
+
 	// mesh
-	MeshHeader mh;
+	BackgroundMeshHeader mh;
+	mh.init();
 	mh.h = model.h;
 	mh.x0 = model.x0;
 	mh.xn = model.xn;
@@ -33,6 +42,7 @@ int model_data_output_func_s2d_me_s_rigid_body_to_plain_bin_res_file(ModelDataOu
 	// rigid body
 	TriangleMesh &rb_mesh = model.rigid_body.mesh;
 	RigidBodyHeader rbh;
+	rbh.init();
 	rbh.node_num = rb_mesh.get_node_num();
 	rbh.elem_num = rb_mesh.get_elem_num();
 	rbh.x_mc = rb_mesh.get_x_mc();
@@ -62,6 +72,7 @@ int model_data_output_func_s2d_me_s_rigid_body_to_plain_bin_res_file(ModelDataOu
 
 	// material point object
 	MPObjectHeader mph;
+	mph.init();
 	mph.pcl_num = model.pcl_num;
 	file.write(reinterpret_cast<char *>(&mph), sizeof(mph));
 
@@ -78,17 +89,26 @@ int model_data_output_func_s2d_me_s_rigid_body_to_xml_res_file(ModelDataOutput &
 
 	char str_buffer[512];
 
+	// model data
+	const char *model_data_info = ""
+		"<ModelData>\n"
+		"    <current_time> %16.10e </current_time>\n";
+		"    <total_time> %16.10e </total_time>\n";
+	snprintf(str_buffer, sizeof(str_buffer) / sizeof(str_buffer[0]), model_data_info,
+			 md.current_time, md.total_time);
+	file.write(str_buffer, strlen(str_buffer));
+	
 	// mesh
 	const char *mesh_info = ""
-		"<BackGroundMesh type = \"S2D\">\n"
-		"    <h> %16.10e </h>\n"
-		"    <x0> %16.10e </x0>\n"
-		"    <xn> %16.10e </xn>\n"
-		"    <y0> %16.10e </y0>\n"
-		"    <yn> %16.10e </yn>\n"
-		"    <elem_x_num> %zu </elem_x_num>\n"
-		"    <elem_y_num> %zu </elem_y_num>\n"
-		"</BackGroundMesh>\n";
+		"    <BackGroundMesh type = \"S2D\">\n"
+		"        <h> %16.10e </h>\n"
+		"        <x0> %16.10e </x0>\n"
+		"        <xn> %16.10e </xn>\n"
+		"        <y0> %16.10e </y0>\n"
+		"        <yn> %16.10e </yn>\n"
+		"        <elem_x_num> %zu </elem_x_num>\n"
+		"        <elem_y_num> %zu </elem_y_num>\n"
+		"    </BackGroundMesh>\n";
 	snprintf(str_buffer, sizeof(str_buffer) / sizeof(str_buffer[0]), mesh_info, model.h,
 		model.x0, model.xn, model.y0, model.yn,
 		model.elem_x_num, model.elem_y_num);
@@ -99,17 +119,17 @@ int model_data_output_func_s2d_me_s_rigid_body_to_xml_res_file(ModelDataOutput &
 	size_t node_num = rb_mesh.get_node_num();
 	size_t elem_num = rb_mesh.get_elem_num();
 	const char *rigid_obj_info = ""
-		"<RigidObject type = \"TriangleMesh\">\n"
-		"    <node_num> %zu </node_num>\n"
-		"    <elem_num> %zu </elem_num>\n"
-		"    <x_mc> %16.10e </x_mc>\n"
-		"    <y_mc> %16.10e </y_mc>\n";
+		"    <RigidObject type = \"TriangleMesh\">\n"
+		"        <node_num> %zu </node_num>\n"
+		"        <elem_num> %zu </elem_num>\n"
+		"        <x_mc> %16.10e </x_mc>\n"
+		"        <y_mc> %16.10e </y_mc>\n";
 	snprintf(str_buffer, sizeof(str_buffer) / sizeof(str_buffer[0]), rigid_obj_info,
 		node_num, elem_num, rb_mesh.get_x_mc(), rb_mesh.get_y_mc());
 	file.write(str_buffer, strlen(str_buffer));
 	// node coordinates
-	file << "    <nodes>\n"
-		"    <!-- index, x, y -->\n";
+	file << "        <nodes>\n"
+			"        <!-- index, x, y -->\n";
 	const TriangleMesh::Node *rb_mesh_nodes = rb_mesh.get_nodes();
 	for (size_t n_id = 0; n_id < node_num; ++n_id)
 	{
@@ -118,29 +138,32 @@ int model_data_output_func_s2d_me_s_rigid_body_to_xml_res_file(ModelDataOutput &
 			rb_mesh_nodes[n_id].x, rb_mesh_nodes[n_id].y);
 		file.write(str_buffer, strlen(str_buffer));
 	}
-	file << "    </nodes>\n";
+	file << "        </nodes>\n";
 	// element topology
-	file << "    <elements>\n"
-		"    <!-- index, node1, node2, node3 -->\n";
+	file << "        <elements>\n"
+			"        <!-- index, node1, node2, node3 -->\n";
 	const TriangleMesh::Element *rb_mesh_elems = rb_mesh.get_elems();
 	for (size_t e_id = 0; e_id < elem_num; ++e_id)
 	{
 		file << "        " << e_id
-			<< ", " << rb_mesh_elems[e_id].n1
-			<< ", " << rb_mesh_elems[e_id].n2
-			<< ", " << rb_mesh_elems[e_id].n3 << "\n";
+			 << ", " << rb_mesh_elems[e_id].n1
+			 << ", " << rb_mesh_elems[e_id].n2
+			 << ", " << rb_mesh_elems[e_id].n3 << "\n";
 	}
-	file << "    </elements>\n";
+	file << "        </elements>\n";
 	// ending
-	file << "</RigidObject>\n";
+	file << "    </RigidObject>\n";
 
 	// material point object
 	const char *mp_obj_info = ""
-		"<MaterialPointObject type = \"ME_2D\">\n"
-		"    <pcl_num> %zu </pcl_num>\n"
-		"</MaterialPointObject>\n";
+		"    <MaterialPointObject type = \"ME_2D\">\n"
+		"        <pcl_num> %zu </pcl_num>\n"
+		"    </MaterialPointObject>\n";
 	snprintf(str_buffer, sizeof(str_buffer) / sizeof(str_buffer[0]), mp_obj_info, model.pcl_num);
 	file.write(str_buffer, strlen(str_buffer));
+
+	// ending
+	file << "</ModelData>\n";
 
 	return 0;
 }

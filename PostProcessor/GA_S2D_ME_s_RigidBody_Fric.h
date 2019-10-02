@@ -6,11 +6,13 @@
 class GA_S2D_ME_s_RigidBody_Fric : public GenerateAnimation
 {
 protected: // model data
-	typedef ResultFile_PlainBin_DataStruct::MeshHeader MeshHeader;
+	typedef ResultFile_PlainBin_DataStruct::ModelDataHeader ModelDataHeader;
+	typedef ResultFile_PlainBin_DataStruct::BackgroundMeshHeader BackgroundMeshHeader;
 	typedef ResultFile_PlainBin_DataStruct::RigidBodyHeader RigidBodyHeader;
 	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 	
-	MeshHeader mh;
+	ModelDataHeader mdh;
+	BackgroundMeshHeader mh;
 	GLsizei grid_line_points_num;
 	RigidBodyHeader rbh;
 	GLsizei rb_elem_point_num;

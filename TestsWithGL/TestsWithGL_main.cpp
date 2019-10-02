@@ -7,6 +7,8 @@
 
 int main(int argc, void **argv)
 {
+	//test_solve_functions();
+
 	//test_triangle_mesh_circle();
 	//test_triangle_mesh_square();
 	//test_rigid_body_square();
@@ -35,9 +37,9 @@ int main(int argc, void **argv)
 	//test_mpm_rigid_animation_bar_compression();
 
 	// 1D consolidation
-	test_mpm_chm_s_1d_consolidation();
-	//test_animation_chm_s_1d_consolidation();
-
+	//test_mpm_chm_s_1d_consolidation();
+	test_animation_chm_s_1d_consolidation();
+	
 	//system("pause");
 	return 0;
 }

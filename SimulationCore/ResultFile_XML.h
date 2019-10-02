@@ -6,27 +6,6 @@
 #include <fstream>
 #include "ResultFile.h"
 
-class Model_S2D_ME_s_RigidBody;
-// Model: Model_S2D_ME_s_RigidBody
-// Step: Step_S2D_ME_s_RigidBody
-// TimeHistory: TimeHistory_S2D_ME_s_RigidBody
-// ResultFile: ResultFile_XML
-int rf_out_func_imp_th_MPM_RigidBody_XML(TimeHistory &_th, ResultFile &_rf);
-
-class Model_S2D_ME_s_RigidBody_Fric;
-// Model: Model_S2D_ME_s_RigidBody_Fric
-// Step: Step_S2D_ME_s_RigidBody_Fric
-// TimeHistory: TimeHistory_S2D_ME_s_RigidBody_Fric
-// ResultFile: ResultFile_XML
-int rf_out_func_imp_th_MPM_RigidBody_Fric_XML(TimeHistory &_th, ResultFile &_rf);
-
-class Model_S2D_CHM_s;
-// Model: Model_S2D_CHM_s
-// Step: Step_S2D_CHM_s
-// TimeHistory: TimeHistory_S2D_CHM_s
-// Result: ResultFile_XML
-int rf_out_func_imp_th_MPM_CHM_s(TimeHistory &_th, ResultFile &_rf);
-
 class ResultFile_XML : public ResultFile
 {
 protected:
@@ -56,21 +35,6 @@ public:
 	}
 
 	std::fstream &get_file(void) noexcept { return file; }
-
-//public: // functions output model
-//	int output(Model_S2D_ME_s_RigidBody &model);
-//	int output(Model_S2D_ME_s_RigidBody_Fric &model);
-//	int output(Model_S2D_CHM_s &model);
-//
-//public: // functions output time history
-//	friend int rf_out_func_imp_th_MPM_RigidBody_XML(TimeHistory &_th, ResultFile &_rf);
-//	static const OutputFunc out_func_th_MPM_RigidBody_XML;
-//
-//	friend int rf_out_func_imp_th_MPM_RigidBody_Fric_XML(TimeHistory &_th, ResultFile &_rf);
-//	static const OutputFunc out_func_th_MPM_RigidBody_Fric_XML;
-//
-//	friend int rf_out_func_imp_th_MPM_CHM_s(TimeHistory &_th, ResultFile &_rf);
-//	static const OutputFunc out_func_th_MPM_CHM_s_XML;
 };
 
 #endif

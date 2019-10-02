@@ -11,10 +11,10 @@ int solve_substep_S2D_CHM_s_GIMP(void *_self);
 class Step_S2D_CHM_s : public Step
 {
 protected:
-	int init(void);
+	int init_calculation(void) override;
 	friend int solve_substep_S2D_CHM_s(void *_self);
 	friend int solve_substep_S2D_CHM_s_GIMP(void *_self);
-	int finalize(void);
+	int finalize_calculation(void) override;
 
 public:
 	Step_S2D_CHM_s();

@@ -32,7 +32,9 @@ int GA_S2D_ME_s_RigidBody::init(const char *res_file_name)
 	if (proj_mat_id < 0)
 		return -2;
 
-	// mesh
+	// model data
+	res_file.read(reinterpret_cast<char *>(&mdh), sizeof(mdh));
+	// bg mesh
 	res_file.read(reinterpret_cast<char *>(&mh), sizeof(mh));
 	// init bg grid data
 	size_t node_x_num = mh.elem_x_num + 1;

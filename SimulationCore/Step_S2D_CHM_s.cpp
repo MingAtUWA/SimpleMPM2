@@ -18,7 +18,7 @@ Step_S2D_CHM_s::Step_S2D_CHM_s() :
 
 Step_S2D_CHM_s::~Step_S2D_CHM_s() {}
 
-int Step_S2D_CHM_s::init()
+int Step_S2D_CHM_s::init_calculation(void)
 {
 	if (is_first_step)
 	{
@@ -41,7 +41,7 @@ int Step_S2D_CHM_s::init()
 	return 0;
 }
 
-int Step_S2D_CHM_s::finalize(void) { return 0; }
+int Step_S2D_CHM_s::finalize_calculation(void) { return 0; }
 
 int solve_substep_S2D_CHM_s(void *_self)
 {
@@ -174,8 +174,8 @@ int solve_substep_S2D_CHM_s(void *_self)
 		{
 			ParticleCalVar_mpm &pcl_var = pcl.var;
 			// body force on particle
-			bf_m = pcl_var.vol * ((1.0 - pcl.n) * pcl.density_s + pcl.n * pcl.density_f) * bf.bf;
-			bf_tf = pcl_var.vol * pcl.density_f * bf.bf;
+			bf_m = ((1.0 - pcl.n) * pcl.density_s + pcl.n * pcl.density_f) * pcl_var.vol * bf.bf;
+			bf_tf = pcl.density_f * pcl_var.vol * bf.bf;
 			// node 1
 			Node_mpm &n1 = *pcl_var.pn1;
 			n1.fx_ext_m += pcl_var.N1 * bf_m;
@@ -224,9 +224,9 @@ int solve_substep_S2D_CHM_s(void *_self)
 	}
 
 	// surface force
-	for (size_t sf_id = 0; sf_id < model.tx_num; ++sf_id)
+	for (size_t tf_id = 0; tf_id < model.tx_num; ++tf_id)
 	{
-		TractionBC_MPM &tf = model.txs[sf_id];
+		TractionBC_MPM &tf = model.txs[tf_id];
 		Particle_mpm &pcl = model.pcls[tf.pcl_id];
 		if (pcl.elem_num)
 		{
@@ -245,9 +245,9 @@ int solve_substep_S2D_CHM_s(void *_self)
 			n4.fx_ext_m += pcl_var.N4 * tf.t;
 		}
 	}
-	for (size_t sf_id = 0; sf_id < model.ty_num; ++sf_id)
+	for (size_t tf_id = 0; tf_id < model.ty_num; ++tf_id)
 	{
-		TractionBC_MPM &tf = model.tys[sf_id];
+		TractionBC_MPM &tf = model.tys[tf_id];
 		Particle_mpm &pcl = model.pcls[tf.pcl_id];
 		if (pcl.elem_num)
 		{
@@ -317,7 +317,7 @@ int solve_substep_S2D_CHM_s(void *_self)
 
 	// calculate the inertial term of fluid in mixture formulation
 	double pcl_ax_f, pcl_ay_f;
-	double pcl_max_f, pcl_may_f;
+	double pcl_m_f, pcl_max_f, pcl_may_f;
 	for (size_t pcl_id = 0; pcl_id < model.pcl_num; ++pcl_id)
 	{
 		Particle_mpm &pcl = model.pcls[pcl_id];
@@ -333,8 +333,9 @@ int solve_substep_S2D_CHM_s(void *_self)
 					 + pcl_var.N3 * n3.ax_f + pcl_var.N4 * n4.ax_f;
 			pcl_ay_f = pcl_var.N1 * n1.ay_f + pcl_var.N2 * n2.ay_f
 					 + pcl_var.N3 * n3.ay_f + pcl_var.N4 * n4.ay_f;
-			pcl_max_f = pcl.n * pcl.density_f * pcl_ax_f * pcl_var.vol;
-			pcl_may_f = pcl.n * pcl.density_f * pcl_ay_f * pcl_var.vol;
+			pcl_m_f = pcl.n * pcl.density_f * pcl_var.vol;
+			pcl_max_f = pcl_m_f * pcl_ax_f;
+			pcl_may_f = pcl_m_f * pcl_ay_f;
 			// node 1
 			n1.fx_kin_f += pcl_var.N1 * pcl_max_f;
 			n1.fy_kin_f += pcl_var.N1 * pcl_may_f;
@@ -478,7 +479,6 @@ int solve_substep_S2D_CHM_s(void *_self)
 			ds11 = E_tmp * ((1.0 - pcl.niu) * de11 + pcl.niu * de22);
 			ds22 = E_tmp * (pcl.niu * de11 + (1.0 - pcl.niu) * de22);
 			ds12 = 2.0 * pcl.E / (2.0 * (1.0 + pcl.niu)) * de12;
-
 			/* ------------------------------------------------------------------
 			Rotate as Jaumann rate:
 			tensor_rate = tensor_Jaumann_rate + tensor * dW_T + dW * tensor

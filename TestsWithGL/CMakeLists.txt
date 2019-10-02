@@ -9,6 +9,8 @@ add_executable(
     test_sim_core.h
     test_post_processor.h
     # Test functions
+    # test Step solve
+    test_solve_functions.cpp
     # rigid body testing
     DrawTriangleMesh.h DrawTriangleMesh.cpp
     display_triangle_mesh.cpp

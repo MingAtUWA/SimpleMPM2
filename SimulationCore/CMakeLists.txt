@@ -34,9 +34,17 @@ add_library(
     TimeHistoryOutput_S2D_ME_s_RigidBody_Fric.h TimeHistoryOutput_S2D_ME_s_RigidBody_Fric.cpp
     # 2D CHM MPM
     Model_S2D_CHM_s.h Model_S2D_CHM_s.cpp
-    Step_S2D_CHM_s.h Step_S2D_CHM_s.cpp
+    Step_S2D_CHM_s.h
+    Step_S2D_CHM_s.cpp
+    Step_S2D_CHM_s_avg_stress.cpp
+    Step_S2D_CHM_s_GIMP.cpp
     ModelDataOutput_S2D_CHM_s.h ModelDataOutput_S2D_CHM_s.cpp
     TimeHistoryOutput_S2D_CHM_s.h TimeHistoryOutput_S2D_CHM_s.cpp
+    # 2D CHM FEM, u - U - p formualtion
+    MatrixCoefficientSet.hpp
+    Model_S2D_CHM_s_FEM_uUp.h Model_S2D_CHM_s_FEM_uUp.cpp
+    Step_S2D_CHM_s_FEM_uUp.h Step_S2D_CHM_s_FEM_uUp.cpp
+    TimeHistoryOutput_S2D_CHM_s_FEM_uUp.h
     )
 
 add_subdirectory(TriangleMeshRigidBody/)
@@ -46,6 +54,7 @@ target_include_directories(
     PRIVATE
         ${SIMULATIONCORE_INCLUDE_DIR}
         ${UTILITIES_INCLUDE_DIR}
+        ${EIGEN_INCLUDE_DIR}
         ${OPENGL_INCLUDE_DIR}
     )
 

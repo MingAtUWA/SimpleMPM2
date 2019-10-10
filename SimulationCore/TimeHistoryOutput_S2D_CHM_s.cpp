@@ -93,7 +93,7 @@ int time_history_output_func_s2d_chm_s_to_xml_res_file(TimeHistoryOutput &_self)
 	file.write(str_buffer, strlen(str_buffer));
 	// field data: x, y, vol
 	file << "        <field_data>\n"
-		"        <!-- x, y, vol, p -->\n";
+		"        <!-- x, y, vol, p, n, e11, e22 -->\n";
 	for (size_t pcl_id = 0; pcl_id < model.pcl_num; ++pcl_id)
 	{
 		Model_S2D_CHM_s::Particle &pcl = model.pcls[pcl_id];
@@ -105,6 +105,12 @@ int time_history_output_func_s2d_chm_s_to_xml_res_file(TimeHistoryOutput &_self)
 		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.m_s / ((1.0 - pcl.n) * pcl.density_s));
 		file << str_buffer << ", ";
 		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.p);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.n);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.e11);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.e22);
 		file << str_buffer << "\n";
 	}
 	file << "        </field_data>\n";

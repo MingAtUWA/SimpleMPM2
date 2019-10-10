@@ -31,6 +31,10 @@ add_executable(
     test_mpm_rigidbody_animation.cpp
     # Generate material points from mesh
     test_get_pcls_from_mesh.cpp
+    # GIMP
+    test_init_pcl_gimp.cpp
+    # implicit FEM or MPM
+    test_matrix_coefficient_set.cpp
     )
 
 target_include_directories(
@@ -39,6 +43,7 @@ target_include_directories(
     ${SIMULATIONCORE_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/PostProcessor
     ${UTILITIES_INCLUDE_DIR}
+    ${EIGEN_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     )
 

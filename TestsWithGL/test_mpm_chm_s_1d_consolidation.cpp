@@ -14,7 +14,7 @@
 
 static size_t elem_x_num = 2;
 static size_t elem_y_num = 10;
-static size_t pcl_per_elem_len = 2;
+static size_t pcl_per_elem_len = 3;
 
 void test_mpm_chm_s_1d_consolidation(void)
 {
@@ -22,9 +22,9 @@ void test_mpm_chm_s_1d_consolidation(void)
 	double elem_len = 1.0 / double(elem_y_num);
 	model.init_mesh(elem_len, elem_x_num, elem_y_num);
 
-	double m_s = (1.0 - 0.3) * elem_len * elem_len / (pcl_per_elem_len * pcl_per_elem_len) * 2650.0;
+	double m_s = (1.0 - 0.3) * 2650.0 * (elem_len * elem_len) / (pcl_per_elem_len * pcl_per_elem_len);
 	model.init_pcl(elem_x_num * elem_y_num * pcl_per_elem_len * pcl_per_elem_len,
-				   0.3, m_s, 2650.0, 1000.0, 100.0, 0.25, 5000.0, 1.0e-4, 1.0);
+				   0.3, m_s, 2650.0, 1000.0, 1000.0, 0.25, 5000.0, 1.0e-4, 1.0);
 	size_t pcl_x_num = elem_x_num * pcl_per_elem_len;
 	size_t pcl_y_num = elem_y_num * pcl_per_elem_len;
 	double pcl_len = elem_len / double(pcl_per_elem_len);
@@ -38,12 +38,12 @@ void test_mpm_chm_s_1d_consolidation(void)
 			++k;
 		}
 
-	model.ty_num = model.elem_x_num * 2;
+	model.ty_num = model.elem_x_num * pcl_per_elem_len;
 	model.tys = new TractionBC_MPM[model.ty_num];
 	for (size_t i = 0; i < model.ty_num; i++)
 	{
 		model.tys[i].pcl_id = (pcl_y_num - 1) * pcl_x_num + i;
-		model.tys[i].t = -10.0 * pcl_len;
+		model.tys[i].t = -100.0 * pcl_len;
 	}
 	
 	model.vsx_num = model.node_y_num * 2;
@@ -102,28 +102,34 @@ void test_mpm_chm_s_1d_consolidation(void)
 	TimeHistoryOutput_ConsoleProgressBar cpb;
 
 	Step_S2D_CHM_s step1;
+	step1.use_avg_stress1();
+	//step1.use_avg_stress_gimp();
+	//step1.use_gimp(); // use gimp
 	step1.set_name("geostatic");
 	step1.set_model(model);
 	step1.set_time(5.0);
 	step1.set_dtime(1.0e-4);
-	out1.set_interval_num(5);
+	out1.set_interval_num(10);
 	out1.set_output_init_state();
 	step1.add_time_history(out1);
-	out2.set_interval_num(5);
+	out2.set_interval_num(10);
 	out2.set_output_init_state();
 	step1.add_time_history(out2);
 	step1.add_time_history(cpb);
 	step1.solve();
 
 	Step_S2D_CHM_s step2;
+	step1.use_avg_stress1();
+	//step2.use_avg_stress_gimp();
+	//step2.use_gimp(); // use gimp
 	step2.set_name("consolidation");
 	step2.set_prev_step(step1);
 	step2.set_time(30.0);
 	step2.set_dtime(1.0e-4);
-	out1.set_interval_num(30);
+	out1.set_interval_num(60);
 	out1.set_output_init_state(false);
 	step2.add_time_history(out1);
-	out2.set_interval_num(30);
+	out2.set_interval_num(60);
 	out2.set_output_init_state(false);
 	step2.add_time_history(out2);
 	step2.add_time_history(cpb);
@@ -139,8 +145,8 @@ void test_animation_chm_s_1d_consolidation(void)
 	double elem_len = 1.0 / double(elem_y_num);
 	double soil_height = 1.0;
 	double soil_width = double(elem_x_num) * elem_len;
-	double padding_height = soil_height * 0.05;
-	double padding_width = soil_width * 0.05;
+	double padding_height = soil_height * 0.5;
+	double padding_width = soil_width * 0.5;
 	GA_S2D_CHM_s gen;
 	gen.generate(5.0, - padding_width, soil_width + padding_width,
 				 -padding_height, soil_height + padding_height,

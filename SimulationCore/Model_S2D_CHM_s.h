@@ -46,8 +46,20 @@ public: // Node, Element and Particle data structures
 		// shape function value
 		union { struct { SHAPE_FUNC_VALUE_CONTENT; }; ShapeFuncValue sf_var; };
 
-		double avg_s11, avg_s22, avg_s12;
 		double pcl_vol;
+		// for avg stress1
+		double avg_s11, avg_s22, avg_s12, avg_p;
+		// for avg stress2
+		double avg_dN1_dx_s11, avg_dN1_dx_s22, avg_dN1_dx_s12, avg_dN1_dx_p, dN1_dx_vol;
+		double avg_dN1_dy_s11, avg_dN1_dy_s22, avg_dN1_dy_s12, avg_dN1_dy_p, dN1_dy_vol;
+		double avg_dN2_dx_s11, avg_dN2_dx_s22, avg_dN2_dx_s12, avg_dN2_dx_p, dN2_dx_vol;
+		double avg_dN2_dy_s11, avg_dN2_dy_s22, avg_dN2_dy_s12, avg_dN2_dy_p, dN2_dy_vol;
+		double avg_dN3_dx_s11, avg_dN3_dx_s22, avg_dN3_dx_s12, avg_dN3_dx_p, dN3_dx_vol;
+		double avg_dN3_dy_s11, avg_dN3_dy_s22, avg_dN3_dy_s12, avg_dN3_dy_p, dN3_dy_vol;
+		double avg_dN4_dx_s11, avg_dN4_dx_s22, avg_dN4_dx_s12, avg_dN4_dx_p, dN4_dx_vol;
+		double avg_dN4_dy_s11, avg_dN4_dy_s22, avg_dN4_dy_s12, avg_dN4_dy_p, dN4_dy_vol;
+		// for GIMP
+		bool has_pcl;
 	};
 
 	// Particle calculation variables
@@ -107,6 +119,7 @@ public: // Node, Element and Particle data structures
 
 public:
 	double h, x0, xn, y0, yn;
+	double h_tol;
 	size_t node_x_num, node_y_num, node_num;
 	Node *nodes;
 	size_t elem_x_num, elem_y_num, elem_num;
@@ -136,7 +149,7 @@ public:
 	~Model_S2D_CHM_s();
 
 	void init_mesh(double _h, size_t _elem_x_num, size_t _elem_y_num,
-				   double x_start = 0.0, double y_start = 0.0);
+				   double x_start = 0.0, double y_start = 0.0, double h_tol_ratio = 0.01);
 	void clear_mesh(void);
 
 	void init_pcl(size_t num, double n, double m_s, double density_s, double density_f,

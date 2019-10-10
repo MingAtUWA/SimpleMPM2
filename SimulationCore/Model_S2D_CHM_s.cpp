@@ -100,10 +100,11 @@ Model_S2D_CHM_s::~Model_S2D_CHM_s()
 
 void Model_S2D_CHM_s::init_mesh(
 	double _h, size_t _elem_x_num, size_t _elem_y_num,
-	double x_start, double y_start)
+	double x_start, double y_start, double h_tol_ratio)
 {
 	clear_mesh();
 	h = _h;
+	h_tol = h * h_tol_ratio;
 	x0 = x_start;
 	xn = x0 + _h * double(_elem_x_num);
 	y0 = y_start;
@@ -275,15 +276,21 @@ bool Model_S2D_CHM_s::init_pcl_GIMP(Particle &pcl)
 		pos_tag = 1;
 	}
 
-	size_t xl_id = size_t((xl - x0) / h);
+	size_t xl_id = size_t((xl + h_tol - x0) / h);
 	size_t xu_id = size_t((xu - x0) / h);
-	if (xu - x0 > h * double(xu_id)) ++xu_id;
+	if (xu - x0 > h * double(xu_id) + h_tol) ++xu_id;
 	size_t x_num = xu_id - xl_id;
-	size_t yl_id = size_t((yl - y0) / h);
+	size_t yl_id = size_t((yl + h_tol - y0) / h);
 	size_t yu_id = size_t((yu - y0) / h);
-	if (yu - y0 > h * double(yu_id)) ++yu_id;
+	if (yu - y0 > h * double(yu_id) + h_tol) ++yu_id;
 	size_t y_num = yu_id - yl_id;
 	pcl.elem_num = x_num * y_num;
+
+	if (pcl.elem_num == 0)
+	{
+		pcl.vars = nullptr;
+		return false;
+	}
 
 	if (pos_tag)
 	{
@@ -359,7 +366,7 @@ bool Model_S2D_CHM_s::init_pcl_GIMP(Particle &pcl)
 			cal_pcl_shape_func_value(pcl_var2);
 			return true;
 		}
-		else
+		else if (y_num == 2)
 		{
 			y_len1 = y0 + double(yl_id + 1) * h - yl;
 			y_len2 = yu - yl - y_len1;

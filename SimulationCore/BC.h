@@ -19,9 +19,9 @@ struct TractionBC
 	size_t node_id;
 };
 
-struct TractionBC_2D
+struct TractionBC_2DFEM
 {
-	double t;
+	double t0, t1;
 	size_t elem_id;
 	double xi0, eta0;
 	double xi1, eta1;

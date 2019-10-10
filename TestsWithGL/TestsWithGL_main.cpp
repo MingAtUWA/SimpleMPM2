@@ -14,6 +14,9 @@ int main(int argc, void **argv)
 	//test_rigid_body_square();
 	//test_get_pcls_from_mesh();
 
+	test_matrix_coefficient_set();
+	//test_cal_stiffness_mat();
+
 	// square
 	//test_mpm_rigidbody_square();
 	//test_mpm_rigid_animation_square();
@@ -35,10 +38,12 @@ int main(int argc, void **argv)
 	// bar compression
 	//test_mpm_rigidbody_bar_compression();
 	//test_mpm_rigid_animation_bar_compression();
-
+	
+	// GIMP
+	//test_init_pcl_gimp();
 	// 1D consolidation
 	//test_mpm_chm_s_1d_consolidation();
-	test_animation_chm_s_1d_consolidation();
+	//test_animation_chm_s_1d_consolidation();
 	
 	//system("pause");
 	return 0;

@@ -44,8 +44,11 @@ def extract_disp_time_curve_from_file(xml_file_name):
 time, settlement = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\mpm_1d_consolidation_standard.xml")
 line1, = plot1.plot(time, settlement)
 
+time2, settlement2 = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\mpm_1d_consolidation_avg_stress2.xml")
+line2, = plot1.plot(time2, settlement2)
+
 #################################################################################################
-u0 = 10.0
+u0 = 100.0
 E = 1000.0
 niu = 0.25 # possion ratio
 kv = 1.0e-4
@@ -68,8 +71,8 @@ for i in range(data_num):
     u_list[i + 2] = con_res.calSettlement(t_list[i + 2])
     t_list[i + 2] += t_list[1]
 
-line2, = plot1.plot(t_list, u_list, 'r--')
+line3, = plot1.plot(t_list, u_list, 'r--')
 
-plt.legend(handles=[line1, line2], labels=['MPM', 'Analytical Solution'])
+plt.legend(handles=[line1, line2, line3], labels=['MPM', 'MPM avg stress2', 'Analytical Solution'])
 
 plt.show()

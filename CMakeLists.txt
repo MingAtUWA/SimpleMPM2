@@ -9,6 +9,8 @@ project(SimpleMPM2)
 
 set(VENDORS_DIR ${CMAKE_SOURCE_DIR}/Vendors/)
 
+# Eigen
+set(EIGEN_INCLUDE_DIR ${VENDORS_DIR}/Eigen/include/)
 # GLAD
 set(GLAD_INCLUDE_DIR ${VENDORS_DIR}/GLAD/include/)
 # GLFW

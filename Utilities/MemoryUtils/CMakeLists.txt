@@ -7,6 +7,7 @@ target_sources(
     Utilities
     PRIVATE
         ItemArray.hpp
+        ItemArrayFast.hpp
         ItemBuffer.hpp
         ItemStack.hpp
         MemoryBuffer.h

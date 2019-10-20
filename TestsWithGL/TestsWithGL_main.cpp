@@ -14,7 +14,7 @@ int main(int argc, void **argv)
 	//test_rigid_body_square();
 	//test_get_pcls_from_mesh();
 
-	test_matrix_coefficient_set();
+	//test_matrix_coefficient_set();
 	//test_cal_stiffness_mat();
 
 	// square
@@ -45,6 +45,12 @@ int main(int argc, void **argv)
 	//test_mpm_chm_s_1d_consolidation();
 	//test_animation_chm_s_1d_consolidation();
 	
+	// Implicit 1d bar compression
+	//test_mpm_me_s_up_1dbar();
+	//test_animation_me_s_up_1dbar();
+
+	test_mpm_me_s_fem_up_1dbar();
+
 	//system("pause");
 	return 0;
 }

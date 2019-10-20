@@ -38,18 +38,6 @@ namespace ResultFile_PlainBin_DataStruct
 			strcpy(tag, "RigidObj");
 		}
 	};
-	struct MPObjectHeader
-	{
-		char tag[32];
-		unsigned long long pcl_num;
-		unsigned long long fld_num;
-		// x coord, y coord, vol, ...
-		inline void init(void)
-		{
-			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
-			strcpy(tag, "MPObj");
-		}
-	};
 	
 	// ================= time history ================= 
 	struct TimeHistoryHeader
@@ -76,6 +64,31 @@ namespace ResultFile_PlainBin_DataStruct
 		{
 			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
 			strcpy(tag, "RigObjMotion");
+		}
+	};
+	struct MPObjectHeader
+	{
+		char tag[32];
+		unsigned long long pcl_num;
+		unsigned long long fld_num;
+		// x coord, y coord, vol, ...
+		inline void init(void)
+		{
+			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
+			strcpy(tag, "MPObj");
+		}
+	};
+	struct MeshObjectHeader_2D4R
+	{
+		char tag[32];
+		unsigned long long node_num;
+		unsigned long long node_fld_num;
+		unsigned long long elem_num;
+		unsigned long long elem_fld_num;
+		inline void init(void)
+		{
+			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
+			strcpy(tag, "MeshObj");
 		}
 	};
 };

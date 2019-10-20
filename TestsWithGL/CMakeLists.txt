@@ -35,6 +35,8 @@ add_executable(
     test_init_pcl_gimp.cpp
     # implicit FEM or MPM
     test_matrix_coefficient_set.cpp
+    test_mpm_me_s_up_1dbar.cpp
+    test_mpm_me_s_fem_up_1dbar.cpp
     )
 
 target_include_directories(

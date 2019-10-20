@@ -63,9 +63,9 @@ struct VelocityBC
 };
 
 // boundary condition of increment of displacement
-struct DisplacementIncBC
+struct DisplacementBC
 {
-	double du;
+	double u;
 	size_t node_id;
 };
 

@@ -16,13 +16,12 @@ void disp_col_coefs(double col_coefs[row_num])
 
 void test_matrix_coefficient_set(void)
 {
-	MatrixCoefficientSet<5> mat;
+	MatrixCoefficientSet<> mat;
 
+	mat.init(5);
 	for (size_t i = 0; i < 5; i++)
 		for (size_t j = 0; j < 5; j++)
-		{
 			mat.add_coefficient(i, j, double(i + j));
-		}
 	mat.add_coefficient(3, 3, 2.0);
 	mat.add_coefficient(1, 0, 3.5);
 	mat.add_coefficient(2, 2, 1.0);
@@ -45,10 +44,23 @@ void test_matrix_coefficient_set(void)
 	g_kmat.setFromTriplets(mat.begin(), mat.end());
 	std::cout << g_kmat << "\n";
 
+	mat.init(6);
+	for (size_t i = 0; i < 6; i++)
+		for (size_t j = 0; j < 6; j++)
+			mat.add_coefficient(i, j, double(i + j));
+	mat.add_coefficient(3, 3, 2.0);
+	mat.add_coefficient(1, 0, 3.5);
+	mat.add_coefficient(2, 2, 1.0);
+	mat.print();
+
+	Eigen::SparseMatrix<double> g_kmat2(6, 6);
+	g_kmat2.setFromTriplets(mat.begin(), mat.end());
+	std::cout << g_kmat2 << "\n";
+
 	system("pause");
 }
 
-extern void cal_stiffness_mat(double kmat[20][20], double E[3][3], double dN_dx[3][8]);
+//void cal_stiffness_mat(double kmat[20][20], double E[3][3], double dN_dx[3][8]);
 
 void test_cal_stiffness_mat(void)
 {
@@ -81,7 +93,7 @@ void test_cal_stiffness_mat(void)
 	Eigen::Matrix<double, 8, 8> mat88 = mat38.transpose() * mat33 * mat38;
 	std::cout << "\n" << mat88 << "\n";
 
-	cal_stiffness_mat(kmat, E, dN_dx);
+	//cal_stiffness_mat(kmat, E, dN_dx);
 	for (size_t i = 0; i < 10; i++)
 	{
 		for (size_t j = 0; j < 10; j++)

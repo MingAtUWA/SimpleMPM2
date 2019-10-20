@@ -40,11 +40,22 @@ add_library(
     Step_S2D_CHM_s_GIMP.cpp
     ModelDataOutput_S2D_CHM_s.h ModelDataOutput_S2D_CHM_s.cpp
     TimeHistoryOutput_S2D_CHM_s.h TimeHistoryOutput_S2D_CHM_s.cpp
-    # 2D CHM FEM, u - U - p formualtion
+    # Implicit matrix
     MatrixCoefficientSet.hpp
+    # 2D ME MPM, u - p formualtion # crap
+    Model_S2D_ME_s_up.h Model_S2D_ME_s_up.cpp
+    Step_S2D_ME_s_up.h Step_S2D_ME_s_up.cpp
+    ModelDataOutput_S2D_ME_s_up.h ModelDataOutput_S2D_ME_s_up.cpp
+    TimeHistoryOutput_S2D_ME_s_up.h TimeHistoryOutput_S2D_ME_s_up.cpp
+    # 2D CHM FEM, u - U - p formualtion
     Model_S2D_CHM_s_FEM_uUp.h Model_S2D_CHM_s_FEM_uUp.cpp
-    Step_S2D_CHM_s_FEM_uUp.h Step_S2D_CHM_s_FEM_uUp.cpp
+    Step_S2D_CHM_s_FEM_uUp.h Step_S2D_CHM_s_FEM_uUp.cpp Step_S2D_CHM_s_FEM_uUp_mat_and_vec.cpp
     TimeHistoryOutput_S2D_CHM_s_FEM_uUp.h
+    # 2D ME MPM # crap
+    Model_S2D_ME_s_FEM_up.h Model_S2D_ME_s_FEM_up.cpp
+    Step_S2D_ME_s_FEM_up.h Step_S2D_ME_s_FEM_up.cpp
+    ModelDataOutput_S2D_ME_s_FEM_up.h ModelDataOutput_S2D_ME_s_FEM_up.cpp
+    TimeHistoryOutput_S2D_ME_s_FEM_up.h TimeHistoryOutput_S2D_ME_s_FEM_up.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

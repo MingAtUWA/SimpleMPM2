@@ -1,61 +1,48 @@
-#ifndef __Model_S2D_CHM_S_FEM_uUp_H__
-#define __Model_S2D_CHM_S_FEM_uUp_H__
+#ifndef __Model_S2D_ME_s_FEM_up_H__
+#define __Model_S2D_ME_s_FEM_up_H__
 
 #include "BC.h"
 #include "Model.h"
 
-#define N_LOW(xi)  (1.0 - (xi)) / 2.0
-#define N_HIGH(xi) (1.0 + (xi)) / 2.0
-#define dN_dxi_LOW(xi) -0.5
-#define dN_dxi_HIGH(xi) 0.5
+#define N_LOW(xi)  ((1.0 - (xi)) * 0.5)
+#define N_HIGH(xi) ((1.0 + (xi)) * 0.5)
+#define dN_dxi_LOW(xi) (-0.5)
+#define dN_dxi_HIGH(xi) (0.5)
 
-struct Model_S2D_CHM_s_FEM_uUp : public Model
+struct Model_S2D_ME_s_FEM_up : public Model
 {
 public:
+	struct ShapeFuncValue
+	{
+		double N1, N2, N3, N4;
+		double dN1_dx, dN2_dx, dN3_dx, dN4_dx;
+		double dN1_dy, dN2_dy, dN3_dy, dN4_dy;
+	};
+
 	struct GaussPoint
 	{
-		size_t index_x, index_y;
-		
-		double n; // porosity
-		double density_s;
-		double density_f;
+		size_t index;
+		double density;
+		double x, y;
+		double ax, ay;
+		double vx, vy;
+		double ux, uy;
 
-		double ax_s, ay_s;
-		double vx_s, vy_s;
-		double ux_s, uy_s;
-		double ax_f, ay_f;
-		double vx_f, vy_f;
-		double ux_f, uy_f;
-
-		// effective stress
-		double s11, s22, s12;
-		// pore pressure
-		double p;
-		// total strain
+		double s11, s22, s12, p;
 		double e11, e22, e12;
-		
+
 		// Constitutive model
 		double E;   // Elastic modulus
 		double niu; // Poisson ratio
-		double Kf;  // Bulk modulus of water
-		double k;   // Permeability
-		double miu; // Dynamic viscosity
+		double K; // K = E / 3(1-2v)
 	};
 
 	struct Node
 	{
 		size_t index_x, index_y;
-		// solid phase
-		double ux_s, uy_s;
-		double vx_s, vy_s;
-		double ax_s, ay_s;
-		// fluid phase
-		double ux_f, uy_f;
-		double vx_f, vy_f;
-		double ax_f, ay_f;
-		double p;
+		double ux, uy, p;
 	};
-	
+
 	struct Element
 	{
 		size_t index_x, index_y;
@@ -67,50 +54,37 @@ public:
 		};
 	};
 
-	struct ShapeFuncValue
-	{
-		double N1, N2, N3, N4;
-		double dN1_dx, dN2_dx, dN3_dx, dN4_dx;
-		double dN1_dy, dN2_dy, dN3_dy, dN4_dy;
-	};
-
 public:
 	double h, x0, xn, y0, yn;
-	size_t elem_x_num, elem_y_num, elem_num;
-	Element *elems;
 	size_t node_x_num, node_y_num, node_num;
 	Node *nodes;
+	size_t elem_x_num, elem_y_num, elem_num;
+	Element *elems;
 
 	size_t dof_num;
 	ShapeFuncValue gp1_sf, gp2_sf, gp3_sf, gp4_sf;
-	double gp_w; // weight = h*h/4
+
+	// Force BCs (Naumann BCs)
+	size_t tx_num, ty_num;
+	TractionBC_2DFEM *txs, *tys;
+	//size_t bfx_num, bfy_num;
+	//BodyForce *bfxs, *bfys;
+	// Displacement BCs (Dirichlet BCs)
+	size_t ux_num, uy_num;
+	DisplacementBC *uxs, *uys;
+	//size_t pbc_num;
+	//PressureBC *pbcs;
+
 	double dN_dx_mat1[3][8], dN_dx_mat2[3][8];
 	double dN_dx_mat3[3][8], dN_dx_mat4[3][8];
 
-	// Force BCs (Naumann BCs)
-	size_t bfx_num, bfy_num;
-	BodyForce *bfxs, *bfys;
-	size_t tx_num, ty_num;
-	TractionBC_2DFEM *txs, *tys;
-	// Displacement BCs (Dirichlet BCs)
-	// solid phase
-	size_t usx_num, usy_num;
-	DisplacementBC *usxs, *usys;
-	// fluid phase
-	size_t ufx_num, ufy_num;
-	DisplacementBC *ufxs, *ufys;
-	size_t pbc_num;
-	PressureBC *pbcs;
-
 public:
-	Model_S2D_CHM_s_FEM_uUp();
-	~Model_S2D_CHM_s_FEM_uUp();
-
+	Model_S2D_ME_s_FEM_up();
+	~Model_S2D_ME_s_FEM_up();
 	void init_mesh(double _h, size_t _elem_x_num, size_t _elem_y_num,
 				   double x_start = 0.0, double y_start = 0.0);
-	void init_mat_param(double n, double density_s, double density_f,
-						double E, double niu, double Kf, double k, double miu);
 	void clear_mesh(void);
+	void init_mat_param(double density, double E, double niu, double K);
 
 public:
 	inline void cal_shape_func_value(ShapeFuncValue &sf_var, double xi, double eta)
@@ -175,19 +149,15 @@ public:
 #undef N2
 #undef N3
 #undef N4
-	
+
+public:
 	enum class DOF : size_t
 	{
-		usx = 0,
-		usy = 1,
-		ufx = 2,
-		ufy = 3,
-		p = 4
+		ux = 0,
+		uy = 1,
+		p = 2
 	};
-	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const
-	{
-		return size_t(dof_type) * node_num + n_id;
-	}
+	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const { return size_t(dof_type) * node_num + n_id; }
 };
 
 #undef N_LOW

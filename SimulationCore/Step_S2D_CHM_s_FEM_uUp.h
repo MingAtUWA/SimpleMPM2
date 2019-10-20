@@ -3,6 +3,7 @@
 
 #include "Step.h"
 #include "Model_S2D_CHM_s_FEM_uUp.h"
+#include "MatrixCoefficientSet.hpp"
 
 // standard MPM
 int solve_substep_S2D_CHM_s_FEM_uUp(void *_self);
@@ -39,30 +40,36 @@ public:
 		max_dt = _dt;
 		min_dt = max_dt * dt_max_min_raio;
 		time_tol_ratio = t_tol_r;
-		time_tol = max_dt * t_tol_r;
+		time_tol = max_dt * time_tol_ratio;
 		dtime = max_dt;
 	}
 
 protected:
 	Model_S2D_CHM_s_FEM_uUp *model;
 	double min_dt, max_dt;
-
+	MatrixCoefficientSet<> g_kmat_coefs;
+	// for applying essential bc
+	double *kmat_col;
+	
 protected:
-	enum class DOF : size_t
-	{
-		usx = 0,
-		usy = 1,
-		ufx = 2,
-		ufy = 3,
-		p = 4
-	};
-	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const
-	{
-		return size_t(dof_type) * model->node_num + n_id;
-	}
-
-	void form_elem_stiffness_mat(Model_S2D_CHM_s_FEM_uUp::Element &e, double kmat[20][20]);
-	void form_elem_force_vec(Model_S2D_CHM_s_FEM_uUp::Element &e, double dt, double fvec[20]);
+	void form_elem_stiffness_mat_and_force_vec(
+		Model_S2D_CHM_s_FEM_uUp::Element &e, double dt,
+		double kmat[20][20], double fvec[20]);
+	
+	void update_gauss_point(
+		Model_S2D_CHM_s_FEM_uUp::GaussPoint &gp,
+		Model_S2D_CHM_s_FEM_uUp::ShapeFuncValue &sf,
+		double dt, double dt2,
+		double dux_s1, double dux_s2, double dux_s3, double dux_s4,
+		double duy_s1, double duy_s2, double duy_s3, double duy_s4,
+		double dux_f1, double dux_f2, double dux_f3, double dux_f4,
+		double duy_f1, double duy_f2, double duy_f3, double duy_f4,
+		double dp1, double dp2, double dp3, double dp4);
 };
 
+#endif
+
+#ifdef Keep_Newmark_Coefficients
+#define beta 0.6
+#define gamma 0.3025
 #endif

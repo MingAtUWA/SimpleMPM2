@@ -2,9 +2,11 @@
 #define __Matrix_Coefficient_Set_hpp__
 
 #include <iostream>
-#include "ItemBuffer.hpp"
 
-template <size_t dim_num, typename Scalar = double, typename Index = size_t>
+#include "ItemBuffer.hpp"
+#include "ItemArrayFast.hpp"
+
+template <typename Scalar = double, typename Index = size_t>
 class MatrixCoefficientSet
 {
 public:
@@ -28,9 +30,12 @@ protected:
 		Coefficient *head;
 		Coefficient *first_col;
 		Coefficient *last_col;
-		RowHeader() :
-			head((Coefficient *)((char *)this + offsetof(RowHeader, first_col) - offsetof(Coefficient, next_col))),
-			first_col(nullptr), last_col(head) {}
+		inline void init(void)
+		{
+			head = (Coefficient *)((char *)this + offsetof(RowHeader, first_col) - offsetof(Coefficient, next_col));
+			first_col = nullptr;
+			last_col = head;
+		}
 		inline void add_coef(Coefficient *coef)
 		{
 			coef->next_col = nullptr;
@@ -57,9 +62,12 @@ protected:
 		Coefficient *head;
 		Coefficient *first_row;
 		Coefficient *last_row;
-		ColHeader() :
-			head((Coefficient *)((char *)this + offsetof(ColHeader, first_row) - offsetof(Coefficient, next_row))),
-			first_row(nullptr), last_row(head) {}
+		inline void init(void)
+		{
+			head = (Coefficient *)((char *)this + offsetof(ColHeader, first_row) - offsetof(Coefficient, next_row));
+			first_row = nullptr;
+			last_row = head;
+		}
 		inline void add_coef(Coefficient *coef)
 		{
 			coef->next_row = nullptr;
@@ -81,31 +89,33 @@ protected:
 			}
 		}
 	};
-	RowHeader row_header[dim_num];
-	ColHeader col_header[dim_num];
+	size_t dim_num;
+	MemoryUtilities::ItemArrayFast<RowHeader> row_header_mem;
+	RowHeader *row_header;
+	MemoryUtilities::ItemArrayFast<ColHeader> col_header_mem;
+	ColHeader *col_header;
 	MemoryUtilities::ItemBuffer<Coefficient, 2> coef_buffer;
 
 public:
-	MatrixCoefficientSet()
-	{
-		coef_buffer.set_page_size(dim_num);
-	}
+	MatrixCoefficientSet() {}
 	~MatrixCoefficientSet()
 	{
+		row_header = nullptr;
+		col_header = nullptr;
 		coef_buffer.clear();
 	}
-	void reset(void)
+	void init(size_t _dim_num)
 	{
+		dim_num = _dim_num;
+		row_header = row_header_mem.resize(dim_num);
+		col_header = col_header_mem.resize(dim_num);
 		for (size_t i = 0; i < dim_num; ++i)
 		{
-			RowHeader &rh = row_header[i];
-			rh.first_col = nullptr;
-			rh.last_col = rh.head;
-			ColHeader &ch = col_header[i];
-			ch.first_row = nullptr;
-			ch.last_row = ch.head;
+			row_header[i].init();
+			col_header[i].init();
 		}
-		coef_buffer.reset_optimzie();
+		coef_buffer.set_page_size(dim_num * 5);
+		coef_buffer.reset_and_optimize();
 	}
 	inline void add_coefficient(Index row_id, Index col_id, Scalar value)
 	{
@@ -130,9 +140,7 @@ public:
 			{
 				for (Coefficient *iter = row_header[i].first_col;
 					iter; iter = iter->next_col)
-				{
 					std::cout << "(" << iter->row() << ", " << iter->col() << ", " << iter->value() << ") ";
-				}
 				std::cout << "\n";
 			}
 		}
@@ -152,10 +160,11 @@ public:
 		}
 		std::cout << "\n";
 	}
+
 public:
 	// delete all coefficients in the idth row and col except the diagonal term
 	// return the diagonal term
-	inline Scalar del_col_and_row(Index id, double col_coefs[dim_num])
+	inline Scalar del_col_and_row(Index id, double *col_coefs)
 	{
 		Coefficient *iter, *tmp;
 		for (iter = row_header[id].first_col; iter;)
@@ -241,6 +250,7 @@ public: // iteractor
 				if (cur_coef)
 					return;
 			}
+			double dim_num = parent->dim_num;
 			for (++cur_row; cur_row < dim_num; ++cur_row)
 			{
 				cur_coef = parent->row_header[cur_row].first_col;

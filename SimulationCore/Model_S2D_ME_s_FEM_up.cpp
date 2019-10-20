@@ -1,32 +1,34 @@
 #include "SimulationCore_pcp.h"
 
-#include "Model_S2D_CHM_s_FEM_uUp.h"
+#include "Model_S2D_ME_s_FEM_up.h"
 
-Model_S2D_CHM_s_FEM_uUp::Model_S2D_CHM_s_FEM_uUp() :
-	Model("Model_S2D_CHM_s_FEM_uUp"),
+Model_S2D_ME_s_FEM_up::Model_S2D_ME_s_FEM_up() :
+	Model("Model_S2D_ME_s_FEM_up"),
 	elems(nullptr), elem_x_num(0), elem_y_num(0), elem_num(0),
 	nodes(nullptr), node_x_num(0), node_y_num(0), node_num(0),
-	bfx_num(0), bfy_num(0), bfxs(nullptr), bfys(nullptr),
-	tx_num(0),  ty_num(0),  txs(nullptr),  tys(nullptr),
-	usx_num(0), usy_num(0), usxs(nullptr), usys(nullptr),
-	ufx_num(0), ufy_num(0), ufxs(nullptr), ufys(nullptr),
-	pbc_num(0), pbcs(nullptr) {}
+	//bfxs(nullptr), bfx_num(0),
+	//bfys(nullptr), bfy_num(0),
+	txs(nullptr), tx_num(0),
+	tys(nullptr), ty_num(0),
+	//pbcs(nullptr), pbc_num(0),
+	uxs(nullptr), ux_num(0),
+	uys(nullptr), uy_num(0) {}
 
-Model_S2D_CHM_s_FEM_uUp::~Model_S2D_CHM_s_FEM_uUp()
+Model_S2D_ME_s_FEM_up::~Model_S2D_ME_s_FEM_up()
 {
 	clear_mesh();
-	if (bfxs)
-	{
-		delete[] bfxs;
-		bfxs = nullptr;
-		bfx_num = 0;
-	}
-	if (bfys)
-	{
-		delete[] bfys;
-		bfys = nullptr;
-		bfy_num = 0;
-	}
+	//if (bfxs)
+	//{
+	//	delete[] bfxs;
+	//	bfxs = nullptr;
+	//	bfx_num = 0;
+	//}
+	//if (bfys)
+	//{
+	//	delete[] bfys;
+	//	bfys = nullptr;
+	//	bfy_num = 0;
+	//}
 	if (txs)
 	{
 		delete[] txs;
@@ -39,39 +41,27 @@ Model_S2D_CHM_s_FEM_uUp::~Model_S2D_CHM_s_FEM_uUp()
 		tys = nullptr;
 		ty_num = 0;
 	}
-	if (usxs)
+	//if (pbcs)
+	//{
+	//	delete[] pbcs;
+	//	pbcs = nullptr;
+	//	pbc_num = 0;
+	//}
+	if (uxs)
 	{
-		delete[] usxs;
-		usxs = nullptr;
-		usx_num = 0;
+		delete[] uxs;
+		uxs = nullptr;
+		ux_num = 0;
 	}
-	if (usys)
+	if (uys)
 	{
-		delete[] usys;
-		usys = nullptr;
-		usy_num = 0;
-	}
-	if (ufxs)
-	{
-		delete[] ufxs;
-		ufxs = nullptr;
-		ufx_num = 0;
-	}
-	if (ufys)
-	{
-		delete[] ufys;
-		ufys = nullptr;
-		ufy_num = 0;
-	}
-	if (pbcs)
-	{
-		delete[] pbcs;
-		pbcs = nullptr;
-		pbc_num = 0;
+		delete[] uys;
+		uys = nullptr;
+		uy_num = 0;
 	}
 }
 
-void Model_S2D_CHM_s_FEM_uUp::init_mesh(
+void Model_S2D_ME_s_FEM_up::init_mesh(
 	double _h, size_t _elem_x_num, size_t _elem_y_num,
 	double x_start, double y_start)
 {
@@ -81,7 +71,20 @@ void Model_S2D_CHM_s_FEM_uUp::init_mesh(
 	xn = x0 + _h * double(_elem_x_num);
 	y0 = y_start;
 	yn = y0 + _h * double(_elem_y_num);
+
 	size_t i, j, k;
+	node_x_num = _elem_x_num + 1;
+	node_y_num = _elem_y_num + 1;
+	node_num = node_x_num * node_y_num;
+	nodes = new Node[node_num];
+	k = 0;
+	for (i = 0; i < node_y_num; ++i)
+		for (j = 0; j < node_x_num; ++j)
+		{
+			Node &n = nodes[k++];
+			n.index_x = j;
+			n.index_y = i;
+		}
 
 	elem_x_num = _elem_x_num;
 	elem_y_num = _elem_y_num;
@@ -100,25 +103,11 @@ void Model_S2D_CHM_s_FEM_uUp::init_mesh(
 			e.n4_id = e.n3_id - 1;
 		}
 
-	node_x_num = _elem_x_num + 1;
-	node_y_num = _elem_y_num + 1;
-	node_num = node_x_num * node_y_num;
-	nodes = new Node[node_num];
-	k = 0;
-	for (i = 0; i < node_y_num; ++i)
-		for (j = 0; j < node_x_num; ++j)
-		{
-			Node &n = nodes[k++];
-			n.index_x = j;
-			n.index_y = i;
-		}
-
-	dof_num = node_num * 5;
+	dof_num = node_num * 3;
 	cal_shape_func_value(gp1_sf, -0.5773502692, -0.5773502692);
 	cal_shape_func_value(gp2_sf,  0.5773502692, -0.5773502692);
 	cal_shape_func_value(gp3_sf,  0.5773502692,  0.5773502692);
 	cal_shape_func_value(gp4_sf, -0.5773502692,  0.5773502692);
-	gp_w = h * h / 4.0;
 #define Form_dN_dx_mat(id)                              \
 	dN_dx_mat ## id ## [0][0] = gp ## id ## _sf.dN1_dx; \
 	dN_dx_mat ## id ## [0][1] = 0.0;                    \
@@ -150,59 +139,7 @@ void Model_S2D_CHM_s_FEM_uUp::init_mesh(
 	Form_dN_dx_mat(4);
 }
 
-void Model_S2D_CHM_s_FEM_uUp::init_mat_param(
-	double n, double density_s, double density_f,
-	double E, double niu, double Kf, double k, double miu)
-{
-	for (size_t n_id = 0; n_id < node_num; ++n_id)
-	{
-		Node &n = nodes[n_id];
-		n.ux_s = 0.0;
-		n.uy_s = 0.0;
-		n.ux_f = 0.0;
-		n.uy_f = 0.0;
-		n.p = 0.0;
-	}
-	for (size_t e_id = 0; e_id < elem_num; ++e_id)
-	{
-		Element &e = elems[e_id];
-#define Init_Gauss_Point_Mat_Param(id)        \
-		GaussPoint &gp ## id = e.gp ## id ##; \
-		gp ## id ##.n = n;      \
-		gp ## id ##.density_s = density_s; \
-		gp ## id ##.density_f = density_f; \
-		gp ## id ##.ax_s = 0.0; \
-		gp ## id ##.ay_s = 0.0; \
-		gp ## id ##.vx_s = 0.0; \
-		gp ## id ##.vy_s = 0.0; \
-		gp ## id ##.ux_s = 0.0; \
-		gp ## id ##.uy_s = 0.0; \
-		gp ## id ##.ax_f = 0.0; \
-		gp ## id ##.ay_f = 0.0; \
-		gp ## id ##.vx_f = 0.0; \
-		gp ## id ##.vy_f = 0.0; \
-		gp ## id ##.ux_f = 0.0; \
-		gp ## id ##.uy_f = 0.0; \
-		gp ## id ##.s11 = 0.0;  \
-		gp ## id ##.s22 = 0.0;  \
-		gp ## id ##.s12 = 0.0;  \
-		gp ## id ##.p = 0.0;    \
-		gp ## id ##.e11 = 0.0;  \
-		gp ## id ##.e22 = 0.0;  \
-		gp ## id ##.e12 = 0.0;  \
-		gp ## id ##.E = E;      \
-		gp ## id ##.niu = niu;  \
-		gp ## id ##.Kf = Kf;    \
-		gp ## id ##.k = k;      \
-		gp ## id ##.miu = miu
-		Init_Gauss_Point_Mat_Param(1);
-		Init_Gauss_Point_Mat_Param(2);
-		Init_Gauss_Point_Mat_Param(3);
-		Init_Gauss_Point_Mat_Param(4);
-	}
-}
-
-void Model_S2D_CHM_s_FEM_uUp::clear_mesh(void)
+void Model_S2D_ME_s_FEM_up::clear_mesh(void)
 {
 	if (nodes)
 	{
@@ -219,5 +156,44 @@ void Model_S2D_CHM_s_FEM_uUp::clear_mesh(void)
 		elem_x_num = 0;
 		elem_y_num = 0;
 		elem_num = 0;
+	}
+}
+
+void Model_S2D_ME_s_FEM_up::init_mat_param(
+	double density, double E, double niu, double K)
+{
+	for (size_t n_id = 0; n_id < node_num; ++n_id)
+	{
+		Node &n = nodes[n_id];
+		n.ux = 0.0;
+		n.uy = 0.0;
+		n.p = 0.0;
+	}
+	for (size_t e_id = 0; e_id < elem_num; ++e_id)
+	{
+		Element &e = elems[e_id];
+#define Init_Gauss_Point_Mat_Param(id)        \
+		GaussPoint &gp ## id = e.gp ## id ##; \
+		gp ## id ##.density = density;        \
+		gp ## id ##.E = E;     \
+		gp ## id ##.niu = niu; \
+		gp ## id ##.K = K;     \
+		gp ## id ##.ax = 0.0;  \
+		gp ## id ##.ay = 0.0;  \
+		gp ## id ##.vx = 0.0;  \
+		gp ## id ##.vy = 0.0;  \
+		gp ## id ##.ux = 0.0;  \
+		gp ## id ##.uy = 0.0;  \
+		gp ## id ##.s11 = 0.0; \
+		gp ## id ##.s22 = 0.0; \
+		gp ## id ##.s12 = 0.0; \
+		gp ## id ##.p = 0.0;   \
+		gp ## id ##.e11 = 0.0; \
+		gp ## id ##.e22 = 0.0; \
+		gp ## id ##.e12 = 0.0
+		Init_Gauss_Point_Mat_Param(1);
+		Init_Gauss_Point_Mat_Param(2);
+		Init_Gauss_Point_Mat_Param(3);
+		Init_Gauss_Point_Mat_Param(4);
 	}
 }

@@ -1,14 +1,16 @@
 #ifndef __STEP_S2D_ME_s_up_H__
 #define __STEP_S2D_ME_s_up_H__
 
+#include <fstream>
+
 #include "ItemArrayFast.hpp"
 #include "MatrixCoefficientSet.hpp"
 
 #include "Step.h"
 #include "Model_S2D_ME_s_up.h"
 
-// standard MPM
 int solve_substep_S2D_ME_s_up(void *_self);
+int solve_substep_S2D_ME_s_up_pure(void *_self);
 
 // for single object only
 class Step_S2D_ME_s_up : public Step
@@ -16,6 +18,7 @@ class Step_S2D_ME_s_up : public Step
 protected:
 	int init_calculation(void) override;
 	friend int solve_substep_S2D_ME_s_up(void *_self);
+	friend int solve_substep_S2D_ME_s_up_pure(void *_self);
 	int finalize_calculation(void) override;
 
 public:
@@ -50,24 +53,21 @@ protected:
 	Model_S2D_ME_s_up *model;
 	double min_dt, max_dt;
 
-protected:
 	MatrixCoefficientSet<> g_kmat_coefs;
 	MemoryUtilities::ItemArrayFast<size_t> node_g_id_map_mem;
 	// for Dirichlet boundary conditions
 	MemoryUtilities::ItemArrayFast<double> kmat_col_mem;
-
-	enum class DOF : size_t
-	{
-		ux = 0,
-		uy = 1,
-		p = 2
-	};
-	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const
-	{
-		return size_t(dof_type) * model->node_num + n_id;
-	}
-
+	
 	void form_elem_stiffness_mat_and_force_vec(Model_S2D_ME_s_up::Element &e, double kmat[12][12], double fvec[12]);
+	void form_elem_stiffness_mat_and_force_vec_pure(Model_S2D_ME_s_up::Element &e, double kmat[12][12], double fvec[12]);
+
+public: // for debugging
+	std::fstream out_file;
 };
 
+#endif
+#ifdef KEEP_NEWMARK_BETA_COEFFICIENT
+// constant of Newmark-beta method
+#define beta 0.25
+#define gamma 0.5
 #endif

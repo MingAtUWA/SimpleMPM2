@@ -108,30 +108,31 @@ void Model_S2D_ME_s_FEM_up::init_mesh(
 	cal_shape_func_value(gp2_sf,  0.5773502692, -0.5773502692);
 	cal_shape_func_value(gp3_sf,  0.5773502692,  0.5773502692);
 	cal_shape_func_value(gp4_sf, -0.5773502692,  0.5773502692);
+	gp_w = h * h * 0.25;
 #define Form_dN_dx_mat(id)                              \
 	dN_dx_mat ## id ## [0][0] = gp ## id ## _sf.dN1_dx; \
-	dN_dx_mat ## id ## [0][1] = 0.0;                    \
-	dN_dx_mat ## id ## [0][2] = gp ## id ## _sf.dN2_dx; \
-	dN_dx_mat ## id ## [0][3] = 0.0;                    \
-	dN_dx_mat ## id ## [0][4] = gp ## id ## _sf.dN3_dx; \
+	dN_dx_mat ## id ## [0][1] = gp ## id ## _sf.dN2_dx; \
+	dN_dx_mat ## id ## [0][2] = gp ## id ## _sf.dN3_dx; \
+	dN_dx_mat ## id ## [0][3] = gp ## id ## _sf.dN4_dx; \
+	dN_dx_mat ## id ## [0][4] = 0.0;                    \
 	dN_dx_mat ## id ## [0][5] = 0.0;                    \
-	dN_dx_mat ## id ## [0][6] = gp ## id ## _sf.dN4_dx; \
+	dN_dx_mat ## id ## [0][6] = 0.0;                    \
 	dN_dx_mat ## id ## [0][7] = 0.0;                    \
 	dN_dx_mat ## id ## [1][0] = 0.0;                    \
-	dN_dx_mat ## id ## [1][1] = gp ## id ## _sf.dN1_dy; \
+	dN_dx_mat ## id ## [1][1] = 0.0;                    \
 	dN_dx_mat ## id ## [1][2] = 0.0;                    \
-	dN_dx_mat ## id ## [1][3] = gp ## id ## _sf.dN2_dy; \
-	dN_dx_mat ## id ## [1][4] = 0.0;                    \
-	dN_dx_mat ## id ## [1][5] = gp ## id ## _sf.dN3_dy; \
-	dN_dx_mat ## id ## [1][6] = 0.0;                    \
+	dN_dx_mat ## id ## [1][3] = 0.0;                    \
+	dN_dx_mat ## id ## [1][4] = gp ## id ## _sf.dN1_dy; \
+	dN_dx_mat ## id ## [1][5] = gp ## id ## _sf.dN2_dy; \
+	dN_dx_mat ## id ## [1][6] = gp ## id ## _sf.dN3_dy; \
 	dN_dx_mat ## id ## [1][7] = gp ## id ## _sf.dN4_dy; \
 	dN_dx_mat ## id ## [2][0] = gp ## id ## _sf.dN1_dy; \
-	dN_dx_mat ## id ## [2][1] = gp ## id ## _sf.dN1_dx; \
-	dN_dx_mat ## id ## [2][2] = gp ## id ## _sf.dN2_dy; \
-	dN_dx_mat ## id ## [2][3] = gp ## id ## _sf.dN2_dx; \
-	dN_dx_mat ## id ## [2][4] = gp ## id ## _sf.dN3_dy; \
-	dN_dx_mat ## id ## [2][5] = gp ## id ## _sf.dN3_dx; \
-	dN_dx_mat ## id ## [2][6] = gp ## id ## _sf.dN4_dy; \
+	dN_dx_mat ## id ## [2][1] = gp ## id ## _sf.dN2_dy; \
+	dN_dx_mat ## id ## [2][2] = gp ## id ## _sf.dN3_dy; \
+	dN_dx_mat ## id ## [2][3] = gp ## id ## _sf.dN4_dy; \
+	dN_dx_mat ## id ## [2][4] = gp ## id ## _sf.dN1_dx; \
+	dN_dx_mat ## id ## [2][5] = gp ## id ## _sf.dN2_dx; \
+	dN_dx_mat ## id ## [2][6] = gp ## id ## _sf.dN3_dx; \
 	dN_dx_mat ## id ## [2][7] = gp ## id ## _sf.dN4_dx
 	Form_dN_dx_mat(1);
 	Form_dN_dx_mat(2);

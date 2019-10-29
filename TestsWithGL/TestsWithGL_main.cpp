@@ -46,10 +46,11 @@ int main(int argc, void **argv)
 	//test_animation_chm_s_1d_consolidation();
 	
 	// Implicit 1d bar compression
-	//test_mpm_me_s_up_1dbar();
+	test_mpm_me_s_up_1dbar();
 	//test_animation_me_s_up_1dbar();
 
-	test_mpm_me_s_fem_up_1dbar();
+	//test_fem_me_s_up_1dbar();
+	//test_fem_chm_s_1d_consolidation();
 
 	//system("pause");
 	return 0;

@@ -2,7 +2,6 @@
 
 #include "Model_S2D_ME_s_FEM_up.h"
 #include "Step_S2D_ME_s_FEM_up.h"
-
 #include "ModelDataOutput_S2D_ME_s_FEM_up.h"
 #include "TimeHistoryOutput_S2D_ME_s_FEM_up.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
@@ -10,11 +9,11 @@
 #include "test_sim_core.h"
 #include "test_post_processor.h"
 
-static double bgm_h = 1.0;
+static double bgm_h = 0.25;
 static size_t len = 1;
 
 // implicit 1d bar compression
-void test_mpm_me_s_fem_up_1dbar(void)
+void test_fem_me_s_up_1dbar(void)
 {
 	Model_S2D_ME_s_FEM_up model;
 	
@@ -41,18 +40,19 @@ void test_mpm_me_s_fem_up_1dbar(void)
 	// traction bc
 	model.ty_num = 1;
 	model.tys = new TractionBC_2DFEM[model.ty_num];
-	model.tys[0].elem_id = len - 1;
-	model.tys[0].xi0 = -1.0;
-	model.tys[0].xi1 = 1.0;
-	model.tys[0].eta0 = 1.0;
-	model.tys[0].eta1 = 1.0;
-	model.tys[0].t0 = -1.0;
-	model.tys[0].t1 = -1.0;
+	TractionBC_2DFEM &ty = model.tys[0];
+	ty.elem_id = len - 1;
+	ty.xi0 = -1.0;
+	ty.xi1 = 1.0;
+	ty.eta0 = 1.0;
+	ty.eta1 = 1.0;
+	ty.t0 = -1.0;
+	ty.t1 = -1.0;
 
 	//ResultFile_PlainBin res_file_pb;
-	//res_file_pb.init("mpm_me_up_res_1dbar.bin");
+	//res_file_pb.init("fem_me_up_res_1dbar.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("mpm_me_up_res_1dbar.xml");
+	res_file_xml.init("fem_me_up_res_1dbar.xml");
 
 	// output model
 	ModelDataOutput_S2D_ME_s_FEM_up md;
@@ -75,7 +75,7 @@ void test_mpm_me_s_fem_up_1dbar(void)
 	Step_S2D_ME_s_FEM_up step;
 	step.set_name("init_step");
 	step.set_model(model);
-	step.set_time(1.0);
+	step.set_time(0.01);
 	step.set_dtime(0.01);
 	//step.add_time_history(out1);
 	step.add_time_history(out2);

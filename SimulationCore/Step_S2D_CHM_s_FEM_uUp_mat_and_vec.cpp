@@ -11,19 +11,32 @@ namespace
 	typedef Model_S2D_CHM_s_FEM_uUp::Node Node_fem;
 	typedef Model_S2D_CHM_s_FEM_uUp::DOF DOF;
 
+	void print_mat(double mat[20][20],
+				   std::fstream &out_file,
+				   const char *mat_name = nullptr)
+	{
+		if (mat_name)
+			out_file << mat_name << "\n";
+		for (size_t i = 0; i < 20; i++)
+		{
+			for (size_t j = 0; j < 20; j++)
+				out_file << mat[i][j] << ", ";
+			out_file << "\n";
+		}
+	}
+	
 	void form_E_mat(GaussPoint_fem &gp, double E_mat[3][3])
 	{
-		double lambda = gp.miu * gp.E / ((1.0 + gp.miu) * (1.0 - 2.0 * gp.miu));
-		double miu = gp.E / (2.0 * (1.0 + gp.miu));
-		E_mat[0][0] = lambda + 2.0 * miu;
-		E_mat[0][1] = lambda;
+		double E_tmp = gp.E / (1.0 + gp.niu) / (1.0 - 2.0 * gp.niu);
+		E_mat[0][0] = E_tmp * (1.0 - gp.niu);
+		E_mat[0][1] = E_tmp * gp.niu;
 		E_mat[0][2] = 0.0;
-		E_mat[1][0] = lambda;
-		E_mat[1][1] = lambda + 2.0 * miu;
+		E_mat[1][0] = E_tmp * gp.niu;
+		E_mat[1][1] = E_tmp * (1.0 - gp.niu);
 		E_mat[1][2] = 0.0;
 		E_mat[2][0] = 0.0;
 		E_mat[2][1] = 0.0;
-		E_mat[2][2] = miu;
+		E_mat[2][2] = gp.E / (2.0 * (1.0 + gp.niu));
 	}
 
 	void cal_stiffness_mat(double kmat[20][20], 
@@ -44,7 +57,7 @@ namespace
 };
 
 void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
-	Element_fem &e, double dt, double kmat[20][20], double fvec[20])
+	Element_fem &e, double kmat[20][20], double fvec[20])
 {
 	ShapeFuncValue &sf1 = model->gp1_sf;
 	ShapeFuncValue &sf2 = model->gp2_sf;
@@ -59,6 +72,7 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 	double coef;
 
 	memset(kmat, 0, sizeof(double) * 20 * 20);
+
 	// mass matrix
 	coef = 1.0 / (beta * dtime * dtime);
 	// solid
@@ -208,6 +222,9 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 	kmat[11][11] = mat_term;
 	kmat[15][15] = mat_term;
 
+	//print_mat(kmat, out_file);
+	//memset(kmat, 0, sizeof(double) * 20 * 20);
+
 	// damping matrix
 	coef = gamma / (beta * dtime);
 	double sp_f1 = gp1.n * gp1.n * gp1.miu / gp1.k;
@@ -271,6 +288,9 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 	mat_term = (sf1.N4 * sp_f1 * sf1.N4 + sf2.N4 * sp_f2 * sf2.N4
 			  + sf3.N4 * sp_f3 * sf3.N4 + sf4.N4 * sp_f4 * sf4.N4) * gp_w * coef;
 	FILL_SEEP_MAT(3, 3);
+
+	//print_mat(kmat, out_file);
+	//memset(kmat, 0, sizeof(double) * 20 * 20);
 
 	// stiffness matrix
 	double E_mat[3][3];
@@ -544,47 +564,48 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 	kmat[15][19] += mat_term;
 	kmat[19][15] += mat_term;
 	// P
-	mat_term = (sf1.N1 / gp1.Kf * sf1.N1 + sf2.N1 / gp2.Kf * sf2.N1
-			  + sf3.N1 / gp3.Kf * sf3.N1 + sf4.N1 / gp4.Kf * sf4.N1) * -gp_w;
+	mat_term = (sf1.N1 * gp1.n / gp1.Kf * sf1.N1 + sf2.N1 * gp2.n / gp2.Kf * sf2.N1
+			  + sf3.N1 * gp3.n / gp3.Kf * sf3.N1 + sf4.N1 * gp4.n / gp4.Kf * sf4.N1) * -gp_w;
 	kmat[16][16] += mat_term;
-	mat_term = (sf1.N1 / gp1.Kf * sf1.N2 + sf2.N1 / gp2.Kf * sf2.N2
-			  + sf3.N1 / gp3.Kf * sf3.N2 + sf4.N1 / gp4.Kf * sf4.N2) * -gp_w;
+	mat_term = (sf1.N1 * gp1.n / gp1.Kf * sf1.N2 + sf2.N1 * gp2.n / gp2.Kf * sf2.N2
+			  + sf3.N1 * gp3.n / gp3.Kf * sf3.N2 + sf4.N1 * gp4.n / gp4.Kf * sf4.N2) * -gp_w;
 	kmat[16][17] += mat_term;
 	kmat[17][16] += mat_term;
-	mat_term = (sf1.N1 / gp1.Kf * sf1.N3 + sf2.N1 / gp2.Kf * sf2.N3
-			  + sf3.N1 / gp3.Kf * sf3.N3 + sf4.N1 / gp4.Kf * sf4.N3) * -gp_w;
+	mat_term = (sf1.N1 * gp1.n / gp1.Kf * sf1.N3 + sf2.N1 * gp2.n / gp2.Kf * sf2.N3
+			  + sf3.N1 * gp3.n / gp3.Kf * sf3.N3 + sf4.N1 * gp4.n / gp4.Kf * sf4.N3) * -gp_w;
 	kmat[16][18] += mat_term;
 	kmat[18][16] += mat_term;
-	mat_term = (sf1.N1 / gp1.Kf * sf1.N4 + sf2.N1 / gp2.Kf * sf2.N4
-			  + sf3.N1 / gp3.Kf * sf3.N4 + sf4.N1 / gp4.Kf * sf4.N4) * -gp_w;
+	mat_term = (sf1.N1 * gp1.n / gp1.Kf * sf1.N4 + sf2.N1 * gp2.n / gp2.Kf * sf2.N4
+			  + sf3.N1 * gp3.n / gp3.Kf * sf3.N4 + sf4.N1 * gp4.n / gp4.Kf * sf4.N4) * -gp_w;
 	kmat[16][19] += mat_term;
 	kmat[19][16] += mat_term;
-	mat_term = (sf1.N2 / gp1.Kf * sf1.N2 + sf2.N2 / gp2.Kf * sf2.N2
-			  + sf3.N2 / gp3.Kf * sf3.N2 + sf4.N2 / gp4.Kf * sf4.N2) * -gp_w;
+	mat_term = (sf1.N2 * gp1.n / gp1.Kf * sf1.N2 + sf2.N2 * gp2.n / gp2.Kf * sf2.N2
+			  + sf3.N2 * gp3.n / gp3.Kf * sf3.N2 + sf4.N2 * gp4.n / gp4.Kf * sf4.N2) * -gp_w;
 	kmat[17][17] += mat_term;
-	mat_term = (sf1.N2 / gp1.Kf * sf1.N3 + sf2.N2 / gp2.Kf * sf2.N3
-			  + sf3.N2 / gp3.Kf * sf3.N3 + sf4.N2 / gp4.Kf * sf4.N3) * -gp_w;
+	mat_term = (sf1.N2 * gp1.n / gp1.Kf * sf1.N3 + sf2.N2 * gp2.n / gp2.Kf * sf2.N3
+			  + sf3.N2 * gp3.n / gp3.Kf * sf3.N3 + sf4.N2 * gp4.n / gp4.Kf * sf4.N3) * -gp_w;
 	kmat[17][18] += mat_term;
 	kmat[18][17] += mat_term;
-	mat_term = (sf1.N2 / gp1.Kf * sf1.N4 + sf2.N2 / gp2.Kf * sf2.N4
-			  + sf3.N2 / gp3.Kf * sf3.N4 + sf4.N2 / gp4.Kf * sf4.N4) * -gp_w;
+	mat_term = (sf1.N2 * gp1.n / gp1.Kf * sf1.N4 + sf2.N2 * gp2.n / gp2.Kf * sf2.N4
+			  + sf3.N2 * gp3.n / gp3.Kf * sf3.N4 + sf4.N2 * gp4.n / gp4.Kf * sf4.N4) * -gp_w;
 	kmat[17][19] += mat_term;
 	kmat[19][17] += mat_term;
-	mat_term = (sf1.N3 / gp1.Kf * sf1.N3 + sf2.N3 / gp2.Kf * sf2.N3
-			  + sf3.N3 / gp3.Kf * sf3.N3 + sf4.N3 / gp4.Kf * sf4.N3) * -gp_w;
+	mat_term = (sf1.N3 * gp1.n / gp1.Kf * sf1.N3 + sf2.N3 * gp2.n / gp2.Kf * sf2.N3
+			  + sf3.N3 * gp3.n / gp3.Kf * sf3.N3 + sf4.N3 * gp4.n / gp4.Kf * sf4.N3) * -gp_w;
 	kmat[18][18] += mat_term;
-	kmat[18][18] += mat_term;
-	mat_term = (sf1.N3 / gp1.Kf * sf1.N4 + sf2.N3 / gp2.Kf * sf2.N4
-			  + sf3.N3 / gp3.Kf * sf3.N4 + sf4.N3 / gp4.Kf * sf4.N4) * -gp_w;
+	mat_term = (sf1.N3 * gp1.n / gp1.Kf * sf1.N4 + sf2.N3 * gp2.n / gp2.Kf * sf2.N4
+			  + sf3.N3 * gp3.n / gp3.Kf * sf3.N4 + sf4.N3 * gp4.n / gp4.Kf * sf4.N4) * -gp_w;
 	kmat[18][19] += mat_term;
 	kmat[19][18] += mat_term;
-	mat_term = (sf1.N4 / gp1.Kf * sf1.N4 + sf2.N4 / gp2.Kf * sf2.N4
-			  + sf3.N4 / gp3.Kf * sf3.N4 + sf4.N4 / gp4.Kf * sf4.N4) * -gp_w;
-	kmat[19][19] += mat_term;
+	mat_term = (sf1.N4 * gp1.n / gp1.Kf * sf1.N4 + sf2.N4 * gp2.n / gp2.Kf * sf2.N4
+			  + sf3.N4 * gp3.n / gp3.Kf * sf3.N4 + sf4.N4 * gp4.n / gp4.Kf * sf4.N4) * -gp_w;
 	kmat[19][19] += mat_term;
 
-	// form_elem_force_vec
+	//print_mat(kmat, out_file);
+
+	// Form elem force vector
 	// f_int
+	// solid x
 	fvec[0] = (sf1.dN1_dx * (gp1.s11 - (1.0 - gp1.n) * gp1.p) + sf1.dN1_dy * gp1.s12
 			 + sf2.dN1_dx * (gp2.s11 - (1.0 - gp2.n) * gp2.p) + sf2.dN1_dy * gp2.s12
 			 + sf3.dN1_dx * (gp3.s11 - (1.0 - gp3.n) * gp3.p) + sf3.dN1_dy * gp3.s12
@@ -593,76 +614,373 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 			 + sf2.dN2_dx * (gp2.s11 - (1.0 - gp2.n) * gp2.p) + sf2.dN2_dy * gp2.s12
 			 + sf3.dN2_dx * (gp3.s11 - (1.0 - gp3.n) * gp3.p) + sf3.dN2_dy * gp3.s12
 			 + sf4.dN2_dx * (gp4.s11 - (1.0 - gp4.n) * gp4.p) + sf4.dN2_dy * gp4.s12) * -gp_w;
-	fvec[2] = (e.dN3_dx * (e.s11 - (1.0 - e.n) * elem_p) + e.dN3_dy * e.s12) * elem_vol;
-	fvec[3] = (e.dN4_dx * (e.s11 - (1.0 - e.n) * elem_p) + e.dN4_dy * e.s12) * elem_vol;
-	fvec[4] = (e.dN1_dx * e.s12 + e.dN1_dy * (e.s22 - (1.0 - e.n) * elem_p)) * elem_vol;
-	fvec[5] = (e.dN2_dx * e.s12 + e.dN2_dy * (e.s22 - (1.0 - e.n) * elem_p)) * elem_vol;
-	fvec[6] = (e.dN3_dx * e.s12 + e.dN3_dy * (e.s22 - (1.0 - e.n) * elem_p)) * elem_vol;
-	fvec[7] = (e.dN4_dx * e.s12 + e.dN4_dy * (e.s22 - (1.0 - e.n) * elem_p)) * elem_vol;
-	fvec[8] = e.dN1_dx * e.n * -elem_p * elem_vol;
-	fvec[9] = e.dN2_dx * e.n * -elem_p * elem_vol;
-	fvec[10] = e.dN3_dx * e.n * -elem_p * elem_vol;
-	fvec[11] = e.dN4_dx * e.n * -elem_p * elem_vol;
-	fvec[12] = e.dN1_dy * e.n * -elem_p * elem_vol;
-	fvec[13] = e.dN2_dy * e.n * -elem_p * elem_vol;
-	fvec[14] = e.dN3_dy * e.n * -elem_p * elem_vol;
-	fvec[15] = e.dN4_dy * e.n * -elem_p * elem_vol;
+	fvec[2] = (sf1.dN3_dx * (gp1.s11 - (1.0 - gp1.n) * gp1.p) + sf1.dN3_dy * gp1.s12
+			 + sf2.dN3_dx * (gp2.s11 - (1.0 - gp2.n) * gp2.p) + sf2.dN3_dy * gp2.s12
+			 + sf3.dN3_dx * (gp3.s11 - (1.0 - gp3.n) * gp3.p) + sf3.dN3_dy * gp3.s12
+			 + sf4.dN3_dx * (gp4.s11 - (1.0 - gp4.n) * gp4.p) + sf4.dN3_dy * gp4.s12) * -gp_w;
+	fvec[3] = (sf1.dN4_dx * (gp1.s11 - (1.0 - gp1.n) * gp1.p) + sf1.dN4_dy * gp1.s12
+			 + sf2.dN4_dx * (gp2.s11 - (1.0 - gp2.n) * gp2.p) + sf2.dN4_dy * gp2.s12
+			 + sf3.dN4_dx * (gp3.s11 - (1.0 - gp3.n) * gp3.p) + sf3.dN4_dy * gp3.s12
+			 + sf4.dN4_dx * (gp4.s11 - (1.0 - gp4.n) * gp4.p) + sf4.dN4_dy * gp4.s12) * -gp_w;
+	// solid y
+	fvec[4] = (sf1.dN1_dx * gp1.s12 + sf1.dN1_dy * (gp1.s22 - (1.0 - gp1.n) * gp1.p)
+			 + sf2.dN1_dx * gp2.s12 + sf2.dN1_dy * (gp2.s22 - (1.0 - gp2.n) * gp2.p)
+			 + sf3.dN1_dx * gp3.s12 + sf3.dN1_dy * (gp3.s22 - (1.0 - gp3.n) * gp3.p)
+			 + sf4.dN1_dx * gp4.s12 + sf4.dN1_dy * (gp4.s22 - (1.0 - gp4.n) * gp4.p)) * -gp_w;
+	fvec[5] = (sf1.dN2_dx * gp1.s12 + sf1.dN2_dy * (gp1.s22 - (1.0 - gp1.n) * gp1.p)
+			 + sf2.dN2_dx * gp2.s12 + sf2.dN2_dy * (gp2.s22 - (1.0 - gp2.n) * gp2.p)
+			 + sf3.dN2_dx * gp3.s12 + sf3.dN2_dy * (gp3.s22 - (1.0 - gp3.n) * gp3.p)
+			 + sf4.dN2_dx * gp4.s12 + sf4.dN2_dy * (gp4.s22 - (1.0 - gp4.n) * gp4.p)) * -gp_w;
+	fvec[6] = (sf1.dN3_dx * gp1.s12 + sf1.dN3_dy * (gp1.s22 - (1.0 - gp1.n) * gp1.p)
+			 + sf2.dN3_dx * gp2.s12 + sf2.dN3_dy * (gp2.s22 - (1.0 - gp2.n) * gp2.p)
+			 + sf3.dN3_dx * gp3.s12 + sf3.dN3_dy * (gp3.s22 - (1.0 - gp3.n) * gp3.p)
+			 + sf4.dN3_dx * gp4.s12 + sf4.dN3_dy * (gp4.s22 - (1.0 - gp4.n) * gp4.p)) * -gp_w;
+	fvec[7] = (sf1.dN4_dx * gp1.s12 + sf1.dN4_dy * (gp1.s22 - (1.0 - gp1.n) * gp1.p)
+			 + sf2.dN4_dx * gp2.s12 + sf2.dN4_dy * (gp2.s22 - (1.0 - gp2.n) * gp2.p)
+			 + sf3.dN4_dx * gp3.s12 + sf3.dN4_dy * (gp3.s22 - (1.0 - gp3.n) * gp3.p)
+			 + sf4.dN4_dx * gp4.s12 + sf4.dN4_dy * (gp4.s22 - (1.0 - gp4.n) * gp4.p)) * -gp_w;
+	// fluid x
+	fvec[8] = (sf1.dN1_dx * gp1.n * -gp1.p
+			 + sf2.dN1_dx * gp2.n * -gp2.p
+			 + sf3.dN1_dx * gp3.n * -gp3.p
+			 + sf4.dN1_dx * gp4.n * -gp4.p) * -gp_w;
+	fvec[9] = (sf1.dN2_dx * gp1.n * -gp1.p
+			 + sf2.dN2_dx * gp2.n * -gp2.p
+			 + sf3.dN2_dx * gp3.n * -gp3.p
+			 + sf4.dN2_dx * gp4.n * -gp4.p) * -gp_w;
+	fvec[10] = (sf1.dN3_dx * gp1.n * -gp1.p
+			  + sf2.dN3_dx * gp2.n * -gp2.p
+			  + sf3.dN3_dx * gp3.n * -gp3.p
+			  + sf4.dN3_dx * gp4.n * -gp4.p) * -gp_w;
+	fvec[11] = (sf1.dN4_dx * gp1.n * -gp1.p
+			  + sf2.dN4_dx * gp2.n * -gp2.p
+			  + sf3.dN4_dx * gp3.n * -gp3.p
+			  + sf4.dN4_dx * gp4.n * -gp4.p) * -gp_w;
+	// fluid y
+	fvec[12] = (sf1.dN1_dy * gp1.n * -gp1.p
+			  + sf2.dN1_dy * gp2.n * -gp2.p
+			  + sf3.dN1_dy * gp3.n * -gp3.p
+			  + sf4.dN1_dy * gp4.n * -gp4.p) * -gp_w;
+	fvec[13] = (sf1.dN2_dy * gp1.n * -gp1.p
+			  + sf2.dN2_dy * gp2.n * -gp2.p
+			  + sf3.dN2_dy * gp3.n * -gp3.p
+			  + sf4.dN2_dy * gp4.n * -gp4.p) * -gp_w;
+	fvec[14] = (sf1.dN3_dy * gp1.n * -gp1.p
+			  + sf2.dN3_dy * gp2.n * -gp2.p
+			  + sf3.dN3_dy * gp3.n * -gp3.p
+			  + sf4.dN3_dy * gp4.n * -gp4.p) * -gp_w;
+	fvec[15] = (sf1.dN4_dy * gp1.n * -gp1.p
+			  + sf2.dN4_dy * gp2.n * -gp2.p
+			  + sf3.dN4_dy * gp3.n * -gp3.p
+			  + sf4.dN4_dy * gp4.n * -gp4.p) * -gp_w;
+	// p
 	fvec[16] = 0.0;
 	fvec[17] = 0.0;
 	fvec[18] = 0.0;
 	fvec[19] = 0.0;
-	
+
+	double coef1, coef2, tmp1, tmp2;
 	// a
-	double elem_a;
-	// solid
-	tmp = ((1.0 / (2.0 * beta) - 1.0) * (1.0 - e.n) * e.density_s - dt * (1.0 - gamma / (2.0 * beta)) * e.n * e.n * e.miu / e.k) * elem_vol;
-	elem_a = n1.ax_s * e.N1 + n2.ax_s * e.N2 + n3.ax_s * e.N3 + n4.ax_s * e.N4;
-	fvec[0] += e.N1 * tmp * elem_a;
-	fvec[1] += e.N2 * tmp * elem_a;
-	fvec[2] += e.N3 * tmp * elem_a;
-	fvec[3] += e.N4 * tmp * elem_a;
-	elem_a = n1.ay_s * e.N1 + n2.ay_s * e.N2 + n3.ay_s * e.N3 + n4.ay_s * e.N4;
-	fvec[4] += e.N1 * tmp * elem_a;
-	fvec[5] += e.N2 * tmp * elem_a;
-	fvec[6] += e.N3 * tmp * elem_a;
-	fvec[7] += e.N4 * tmp * elem_a;
-	// fluid
-	tmp = ((1.0 / (2.0 * beta) - 1.0) * e.n * e.density_f - dt * (1.0 - gamma / (2.0 * beta)) * e.n * e.n * e.miu / e.k) * elem_vol;
-	elem_a = n1.ax_f * e.N1 + n2.ax_f * e.N2 + n3.ax_f * e.N3 + n4.ax_f * e.N4;
-	fvec[8] += e.N1 * tmp * elem_a;
-	fvec[9] += e.N2 * tmp * elem_a;
-	fvec[10] += e.N3 * tmp * elem_a;
-	fvec[11] += e.N4 * tmp * elem_a;
-	elem_a = n1.ay_f * e.N1 + n2.ay_f * e.N2 + n3.ay_f * e.N3 + n4.ay_f * e.N4;
-	fvec[12] += e.N1 * tmp * elem_a;
-	fvec[13] += e.N2 * tmp * elem_a;
-	fvec[14] += e.N3 * tmp * elem_a;
-	fvec[15] += e.N4 * tmp * elem_a;
+	coef1 = 1.0 / (2.0 * beta) - 1.0;
+	coef2 = - dtime * (1.0 - gamma / (2.0 * beta));
+	// solid x
+	tmp1 = (sf1.N1 * (1.0 - gp1.n) * gp1.density_s * gp1.ax_s
+		  + sf2.N1 * (1.0 - gp2.n) * gp2.density_s * gp2.ax_s
+		  + sf3.N1 * (1.0 - gp3.n) * gp3.density_s * gp3.ax_s
+		  + sf4.N1 * (1.0 - gp4.n) * gp4.density_s * gp4.ax_s) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_s - gp1.ax_f)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_s - gp2.ax_f)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_s - gp3.ax_f)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_s - gp4.ax_f)) * gp_w;
+	fvec[0] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * (1.0 - gp1.n) * gp1.density_s * gp1.ax_s
+		  + sf2.N2 * (1.0 - gp2.n) * gp2.density_s * gp2.ax_s
+		  + sf3.N2 * (1.0 - gp3.n) * gp3.density_s * gp3.ax_s
+		  + sf4.N2 * (1.0 - gp4.n) * gp4.density_s * gp4.ax_s) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_s - gp1.ax_f)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_s - gp2.ax_f)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_s - gp3.ax_f)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_s - gp4.ax_f)) * gp_w;
+	fvec[1] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * (1.0 - gp1.n) * gp1.density_s * gp1.ax_s
+		  + sf2.N3 * (1.0 - gp2.n) * gp2.density_s * gp2.ax_s
+		  + sf3.N3 * (1.0 - gp3.n) * gp3.density_s * gp3.ax_s
+		  + sf4.N3 * (1.0 - gp4.n) * gp4.density_s * gp4.ax_s) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_s - gp1.ax_f)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_s - gp2.ax_f)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_s - gp3.ax_f)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_s - gp4.ax_f)) * gp_w;
+	fvec[2] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * (1.0 - gp1.n) * gp1.density_s * gp1.ax_s
+		  + sf2.N4 * (1.0 - gp2.n) * gp2.density_s * gp2.ax_s
+		  + sf3.N4 * (1.0 - gp3.n) * gp3.density_s * gp3.ax_s
+		  + sf4.N4 * (1.0 - gp4.n) * gp4.density_s * gp4.ax_s) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_s - gp1.ax_f)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_s - gp2.ax_f)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_s - gp3.ax_f)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_s - gp4.ax_f)) * gp_w;
+	fvec[3] += coef1 * tmp1 + coef2 * tmp2;
+	// solid y
+	tmp1 = (sf1.N1 * (1.0 - gp1.n) * gp1.density_s * gp1.ay_s
+		  + sf2.N1 * (1.0 - gp2.n) * gp2.density_s * gp2.ay_s
+		  + sf3.N1 * (1.0 - gp3.n) * gp3.density_s * gp3.ay_s
+		  + sf4.N1 * (1.0 - gp4.n) * gp4.density_s * gp4.ay_s) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_s - gp1.ay_f)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_s - gp2.ay_f)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_s - gp3.ay_f)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_s - gp4.ay_f)) * gp_w;
+	fvec[4] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * (1.0 - gp1.n) * gp1.density_s * gp1.ay_s
+		  + sf2.N2 * (1.0 - gp2.n) * gp2.density_s * gp2.ay_s
+		  + sf3.N2 * (1.0 - gp3.n) * gp3.density_s * gp3.ay_s
+		  + sf4.N2 * (1.0 - gp4.n) * gp4.density_s * gp4.ay_s) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_s - gp1.ay_f)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_s - gp2.ay_f)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_s - gp3.ay_f)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_s - gp4.ay_f)) * gp_w;
+	fvec[5] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * (1.0 - gp1.n) * gp1.density_s * gp1.ay_s
+		  + sf2.N3 * (1.0 - gp2.n) * gp2.density_s * gp2.ay_s
+		  + sf3.N3 * (1.0 - gp3.n) * gp3.density_s * gp3.ay_s
+		  + sf4.N3 * (1.0 - gp4.n) * gp4.density_s * gp4.ay_s) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_s - gp1.ay_f)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_s - gp2.ay_f)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_s - gp3.ay_f)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_s - gp4.ay_f)) * gp_w;
+	fvec[6] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * (1.0 - gp1.n) * gp1.density_s * gp1.ay_s
+		  + sf2.N4 * (1.0 - gp2.n) * gp2.density_s * gp2.ay_s
+		  + sf3.N4 * (1.0 - gp3.n) * gp3.density_s * gp3.ay_s
+		  + sf4.N4 * (1.0 - gp4.n) * gp4.density_s * gp4.ay_s) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_s - gp1.ay_f)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_s - gp2.ay_f)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_s - gp3.ay_f)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_s - gp4.ay_f)) * gp_w;
+	fvec[7] += coef1 * tmp1 + coef2 * tmp2;
+	// fluid x
+	tmp1 = (sf1.N1 * gp1.n * gp1.density_f * gp1.ax_f
+		  + sf2.N1 * gp2.n * gp2.density_f * gp2.ax_f
+		  + sf3.N1 * gp3.n * gp3.density_f * gp3.ax_f
+		  + sf4.N1 * gp4.n * gp4.density_f * gp4.ax_f) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_f - gp1.ax_s)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_f - gp2.ax_s)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_f - gp3.ax_s)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_f - gp4.ax_s)) * gp_w;
+	fvec[8] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * gp1.n * gp1.density_f * gp1.ax_f
+		  + sf2.N2 * gp2.n * gp2.density_f * gp2.ax_f
+		  + sf3.N2 * gp3.n * gp3.density_f * gp3.ax_f
+		  + sf4.N2 * gp4.n * gp4.density_f * gp4.ax_f) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_f - gp1.ax_s)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_f - gp2.ax_s)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_f - gp3.ax_s)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_f - gp4.ax_s)) * gp_w;
+	fvec[9] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * gp1.n * gp1.density_f * gp1.ax_f
+		  + sf2.N3 * gp2.n * gp2.density_f * gp2.ax_f
+		  + sf3.N3 * gp3.n * gp3.density_f * gp3.ax_f
+		  + sf4.N3 * gp4.n * gp4.density_f * gp4.ax_f) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_f - gp1.ax_s)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_f - gp2.ax_s)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_f - gp3.ax_s)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_f - gp4.ax_s)) * gp_w;
+	fvec[10] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * gp1.n * gp1.density_f * gp1.ax_f
+		  + sf2.N4 * gp2.n * gp2.density_f * gp2.ax_f
+		  + sf3.N4 * gp3.n * gp3.density_f * gp3.ax_f
+		  + sf4.N4 * gp4.n * gp4.density_f * gp4.ax_f) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ax_f - gp1.ax_s)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ax_f - gp2.ax_s)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ax_f - gp3.ax_s)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ax_f - gp4.ax_s)) * gp_w;
+	fvec[11] += coef1 * tmp1 + coef2 * tmp2;
+	// fluid y
+	tmp1 = (sf1.N1 * gp1.n * gp1.density_f * gp1.ay_f
+		  + sf2.N1 * gp2.n * gp2.density_f * gp2.ay_f
+		  + sf3.N1 * gp3.n * gp3.density_f * gp3.ay_f
+		  + sf4.N1 * gp4.n * gp4.density_f * gp4.ay_f) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_f - gp1.ay_s)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_f - gp2.ay_s)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_f - gp3.ay_s)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_f - gp4.ay_s)) * gp_w;
+	fvec[12] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * gp1.n * gp1.density_f * gp1.ay_f
+		  + sf2.N2 * gp2.n * gp2.density_f * gp2.ay_f
+		  + sf3.N2 * gp3.n * gp3.density_f * gp3.ay_f
+		  + sf4.N2 * gp4.n * gp4.density_f * gp4.ay_f) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_f - gp1.ay_s)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_f - gp2.ay_s)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_f - gp3.ay_s)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_f - gp4.ay_s)) * gp_w;
+	fvec[13] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * gp1.n * gp1.density_f * gp1.ay_f
+		  + sf2.N3 * gp2.n * gp2.density_f * gp2.ay_f
+		  + sf3.N3 * gp3.n * gp3.density_f * gp3.ay_f
+		  + sf4.N3 * gp4.n * gp4.density_f * gp4.ay_f) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_f - gp1.ay_s)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_f - gp2.ay_s)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_f - gp3.ay_s)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_f - gp4.ay_s)) * gp_w;
+	fvec[14] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * gp1.n * gp1.density_f * gp1.ay_f
+		  + sf2.N4 * gp2.n * gp2.density_f * gp2.ay_f
+		  + sf3.N4 * gp3.n * gp3.density_f * gp3.ay_f
+		  + sf4.N4 * gp4.n * gp4.density_f * gp4.ay_f) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.ay_f - gp1.ay_s)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.ay_f - gp2.ay_s)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.ay_f - gp3.ay_s)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.ay_f - gp4.ay_s)) * gp_w;
+	fvec[15] += coef1 * tmp1 + coef2 * tmp2;
 
 	// v
-	double elem_v;
-	// solid
-	tmp = (1.0 / (beta * dt) * (1.0 - e.n) * e.density_s + (gamma / beta - 1.0) * e.n * e.n * e.miu / e.k) * elem_vol;
-	elem_v = n1.vx_s * e.N1 + n2.vx_s * e.N2 + n3.vx_s * e.N3 + n4.vx_s * e.N4;
-	fvec[0] += e.N1 * tmp * elem_v;
-	fvec[1] += e.N2 * tmp * elem_v;
-	fvec[2] += e.N3 * tmp * elem_v;
-	fvec[3] += e.N4 * tmp * elem_v;
-	elem_v = n1.vy_s * e.N1 + n2.vy_s * e.N2 + n3.vy_s * e.N3 + n4.vy_s * e.N4;
-	fvec[4] += e.N1 * tmp * elem_v;
-	fvec[5] += e.N2 * tmp * elem_v;
-	fvec[6] += e.N3 * tmp * elem_v;
-	fvec[7] += e.N4 * tmp * elem_v;
-	// fluid
-	tmp = (1.0 / (beta * dt) * e.n * e.density_f + (gamma / beta - 1.0) * e.n * e.n * e.miu / e.k) * elem_vol;
-	elem_v = n1.vx_f * e.N1 + n2.vx_f * e.N2 + n3.vx_f * e.N3 + n4.vx_f * e.N4;
-	fvec[8] += e.N1 * tmp * elem_v;
-	fvec[9] += e.N2 * tmp * elem_v;
-	fvec[10] += e.N3 * tmp * elem_v;
-	fvec[11] += e.N4 * tmp * elem_v;
-	elem_v = n1.vy_f * e.N1 + n2.vy_f * e.N2 + n3.vy_f * e.N3 + n4.vy_f * e.N4;
-	fvec[12] += e.N1 * tmp * elem_v;
-	fvec[13] += e.N2 * tmp * elem_v;
-	fvec[14] += e.N3 * tmp * elem_v;
-	fvec[15] += e.N4 * tmp * elem_v;
+	coef1 = 1.0 / (beta * dtime);
+	coef2 = gamma / beta - 1.0;
+	// solid x
+	tmp1 = (sf1.N1 * (1.0 - gp1.n) * gp1.density_s * gp1.vx_s
+		  + sf2.N1 * (1.0 - gp2.n) * gp2.density_s * gp2.vx_s
+		  + sf3.N1 * (1.0 - gp3.n) * gp3.density_s * gp3.vx_s
+		  + sf4.N1 * (1.0 - gp4.n) * gp4.density_s * gp4.vx_s) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_s - gp1.vx_f)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_s - gp2.vx_f)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_s - gp3.vx_f)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_s - gp4.vx_f)) * gp_w;
+	fvec[0] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * (1.0 - gp1.n) * gp1.density_s * gp1.vx_s
+		  + sf2.N2 * (1.0 - gp2.n) * gp2.density_s * gp2.vx_s
+		  + sf3.N2 * (1.0 - gp3.n) * gp3.density_s * gp3.vx_s
+		  + sf4.N2 * (1.0 - gp4.n) * gp4.density_s * gp4.vx_s) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_s - gp1.vx_f)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_s - gp2.vx_f)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_s - gp3.vx_f)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_s - gp4.vx_f)) * gp_w;
+	fvec[1] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * (1.0 - gp1.n) * gp1.density_s * gp1.vx_s
+		  + sf2.N3 * (1.0 - gp2.n) * gp2.density_s * gp2.vx_s
+		  + sf3.N3 * (1.0 - gp3.n) * gp3.density_s * gp3.vx_s
+		  + sf4.N3 * (1.0 - gp4.n) * gp4.density_s * gp4.vx_s) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_s - gp1.vx_f)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_s - gp2.vx_f)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_s - gp3.vx_f)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_s - gp4.vx_f)) * gp_w;
+	fvec[2] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * (1.0 - gp1.n) * gp1.density_s * gp1.vx_s
+		  + sf2.N4 * (1.0 - gp2.n) * gp2.density_s * gp2.vx_s
+		  + sf3.N4 * (1.0 - gp3.n) * gp3.density_s * gp3.vx_s
+		  + sf4.N4 * (1.0 - gp4.n) * gp4.density_s * gp4.vx_s) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_s - gp1.vx_f)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_s - gp2.vx_f)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_s - gp3.vx_f)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_s - gp4.vx_f)) * gp_w;
+	fvec[3] += coef1 * tmp1 + coef2 * tmp2;
+	// solid y
+	tmp1 = (sf1.N1 * (1.0 - gp1.n) * gp1.density_s * gp1.vy_s
+		  + sf2.N1 * (1.0 - gp2.n) * gp2.density_s * gp2.vy_s
+		  + sf3.N1 * (1.0 - gp3.n) * gp3.density_s * gp3.vy_s
+		  + sf4.N1 * (1.0 - gp4.n) * gp4.density_s * gp4.vy_s) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_s - gp1.vy_f)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_s - gp2.vy_f)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_s - gp3.vy_f)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_s - gp4.vy_f)) * gp_w;
+	fvec[4] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * (1.0 - gp1.n) * gp1.density_s * gp1.vy_s
+		  + sf2.N2 * (1.0 - gp2.n) * gp2.density_s * gp2.vy_s
+		  + sf3.N2 * (1.0 - gp3.n) * gp3.density_s * gp3.vy_s
+		  + sf4.N2 * (1.0 - gp4.n) * gp4.density_s * gp4.vy_s) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_s - gp1.vy_f)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_s - gp2.vy_f)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_s - gp3.vy_f)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_s - gp4.vy_f)) * gp_w;
+	fvec[5] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * (1.0 - gp1.n) * gp1.density_s * gp1.vy_s
+		  + sf2.N3 * (1.0 - gp2.n) * gp2.density_s * gp2.vy_s
+		  + sf3.N3 * (1.0 - gp3.n) * gp3.density_s * gp3.vy_s
+		  + sf4.N3 * (1.0 - gp4.n) * gp4.density_s * gp4.vy_s) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_s - gp1.vy_f)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_s - gp2.vy_f)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_s - gp3.vy_f)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_s - gp4.vy_f)) * gp_w;
+	fvec[6] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * (1.0 - gp1.n) * gp1.density_s * gp1.vy_s
+		  + sf2.N4 * (1.0 - gp2.n) * gp2.density_s * gp2.vy_s
+		  + sf3.N4 * (1.0 - gp3.n) * gp3.density_s * gp3.vy_s
+		  + sf4.N4 * (1.0 - gp4.n) * gp4.density_s * gp4.vy_s) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_s - gp1.vy_f)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_s - gp2.vy_f)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_s - gp3.vy_f)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_s - gp4.vy_f)) * gp_w;
+	fvec[7] += coef1 * tmp1 + coef2 * tmp2;
+	// fluid x
+	tmp1 = (sf1.N1 * gp1.n * gp1.density_f * gp1.vx_f
+		  + sf2.N1 * gp2.n * gp2.density_f * gp2.vx_f
+		  + sf3.N1 * gp3.n * gp3.density_f * gp3.vx_f
+		  + sf4.N1 * gp4.n * gp4.density_f * gp4.vx_f) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_f - gp1.vx_s)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_f - gp2.vx_s)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_f - gp3.vx_s)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_f - gp4.vx_s)) * gp_w;
+	fvec[8] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * gp1.n * gp1.density_f * gp1.vx_f
+		  + sf2.N2 * gp2.n * gp2.density_f * gp2.vx_f
+		  + sf3.N2 * gp3.n * gp3.density_f * gp3.vx_f
+		  + sf4.N2 * gp4.n * gp4.density_f * gp4.vx_f) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_f - gp1.vx_s)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_f - gp2.vx_s)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_f - gp3.vx_s)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_f - gp4.vx_s)) * gp_w;
+	fvec[9] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * gp1.n * gp1.density_f * gp1.vx_f
+		  + sf2.N3 * gp2.n * gp2.density_f * gp2.vx_f
+		  + sf3.N3 * gp3.n * gp3.density_f * gp3.vx_f
+		  + sf4.N3 * gp4.n * gp4.density_f * gp4.vx_f) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_f - gp1.vx_s)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_f - gp2.vx_s)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_f - gp3.vx_s)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_f - gp4.vx_s)) * gp_w;
+	fvec[10] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * gp1.n * gp1.density_f * gp1.vx_f
+		  + sf2.N4 * gp2.n * gp2.density_f * gp2.vx_f
+		  + sf3.N4 * gp3.n * gp3.density_f * gp3.vx_f
+		  + sf4.N4 * gp4.n * gp4.density_f * gp4.vx_f) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vx_f - gp1.vx_s)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vx_f - gp2.vx_s)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vx_f - gp3.vx_s)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vx_f - gp4.vx_s)) * gp_w;
+	fvec[11] += coef1 * tmp1 + coef2 * tmp2;
+	// fluid y
+	tmp1 = (sf1.N1 * gp1.n * gp1.density_f * gp1.vy_f
+		  + sf2.N1 * gp2.n * gp2.density_f * gp2.vy_f
+		  + sf3.N1 * gp3.n * gp3.density_f * gp3.vy_f
+		  + sf4.N1 * gp4.n * gp4.density_f * gp4.vy_f) * gp_w;
+	tmp2 = (sf1.N1 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_f - gp1.vy_s)
+		  + sf2.N1 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_f - gp2.vy_s)
+		  + sf3.N1 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_f - gp3.vy_s)
+		  + sf4.N1 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_f - gp4.vy_s)) * gp_w;
+	fvec[12] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N2 * gp1.n * gp1.density_f * gp1.vy_f
+		  + sf2.N2 * gp2.n * gp2.density_f * gp2.vy_f
+		  + sf3.N2 * gp3.n * gp3.density_f * gp3.vy_f
+		  + sf4.N2 * gp4.n * gp4.density_f * gp4.vy_f) * gp_w;
+	tmp2 = (sf1.N2 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_f - gp1.vy_s)
+		  + sf2.N2 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_f - gp2.vy_s)
+		  + sf3.N2 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_f - gp3.vy_s)
+		  + sf4.N2 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_f - gp4.vy_s)) * gp_w;
+	fvec[13] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N3 * gp1.n * gp1.density_f * gp1.vy_f
+		  + sf2.N3 * gp2.n * gp2.density_f * gp2.vy_f
+		  + sf3.N3 * gp3.n * gp3.density_f * gp3.vy_f
+		  + sf4.N3 * gp4.n * gp4.density_f * gp4.vy_f) * gp_w;
+	tmp2 = (sf1.N3 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_f - gp1.vy_s)
+		  + sf2.N3 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_f - gp2.vy_s)
+		  + sf3.N3 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_f - gp3.vy_s)
+		  + sf4.N3 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_f - gp4.vy_s)) * gp_w;
+	fvec[14] += coef1 * tmp1 + coef2 * tmp2;
+	tmp1 = (sf1.N4 * gp1.n * gp1.density_f * gp1.vy_f
+		  + sf2.N4 * gp2.n * gp2.density_f * gp2.vy_f
+		  + sf3.N4 * gp3.n * gp3.density_f * gp3.vy_f
+		  + sf4.N4 * gp4.n * gp4.density_f * gp4.vy_f) * gp_w;
+	tmp2 = (sf1.N4 * gp1.n * gp1.n * gp1.miu / gp1.k * (gp1.vy_f - gp1.vy_s)
+		  + sf2.N4 * gp2.n * gp2.n * gp2.miu / gp2.k * (gp2.vy_f - gp2.vy_s)
+		  + sf3.N4 * gp3.n * gp3.n * gp3.miu / gp3.k * (gp3.vy_f - gp3.vy_s)
+		  + sf4.N4 * gp4.n * gp4.n * gp4.miu / gp4.k * (gp4.vy_f - gp4.vy_s)) * gp_w;
+	fvec[15] += coef1 * tmp1 + coef2 * tmp2;
 }

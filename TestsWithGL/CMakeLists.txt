@@ -36,7 +36,8 @@ add_executable(
     # implicit FEM or MPM
     test_matrix_coefficient_set.cpp
     test_mpm_me_s_up_1dbar.cpp
-    test_mpm_me_s_fem_up_1dbar.cpp
+    test_fem_me_s_up_1dbar.cpp
+    test_fem_chm_s_1d_consolidation.cpp
     )
 
 target_include_directories(

@@ -22,69 +22,79 @@ namespace Model_S2D_ME_s_up_Internal
 	inline double N4(double xi, double eta) noexcept { return N_LOW(xi)  * N_HIGH(eta); }
 };
 
+class Step_S2D_ME_s_up;
+int solve_substep_S2D_ME_s_up(void *_self);
 struct Model_S2D_ME_s_up : public Model
 {
-protected:
+	friend Step_S2D_ME_s_up;
+	friend int solve_substep_S2D_ME_s_up(void *_self);
+public:
 	struct ShapeFuncValue { SHAPE_FUNC_VALUE_CONTENT; };
-
-public: // Particle, Node and Element
-	struct Node;
 	struct Element;
 	struct Particle
 	{
 		size_t index;
-		double m;
-		double density;
 		double x, y;
+		double m, density;
 		double ax, ay;
 		double vx, vy;
 		double ux, uy;
 
 		double s11, s22, s12, p;
 		double e11, e22, e12;
-
-		// Constitutive model
-		double E;   // Elastic modulus
-		double niu; // Poisson ratio
-		double K; // Bulk modulus may = E / ()
-
+		
 		double x_ori, y_ori;
 		double vol;
+		union
+		{
+			ShapeFuncValue sf;
+			struct { SHAPE_FUNC_VALUE_CONTENT; };
+		};
 		Element *pe;
-		size_t n1_id, n2_id, n3_id, n4_id;
-		// shape function value
-		union { struct { SHAPE_FUNC_VALUE_CONTENT; }; ShapeFuncValue sf_var; };
-
-		// use by element
-		Particle *next;
+		Particle *next; // use by element
 	};
 
 	struct Node
 	{
 		size_t index_x, index_y;
 		size_t g_id;
+		double vol, density;
+		double s11, s22, s12, p;
+	};
+
+	struct GaussPoint
+	{
+		double density;
+		double s11, s22, s12, p;
 	};
 
 	struct Element
 	{
 		size_t index_x, index_y;
-
-		size_t n1_id, n2_id, n3_id, n4_id;
-		// particle list
-		Particle *pcls;
+		// node
+		size_t n1_id, n2_id, n3_id, n4_id; // node id
+		// gauss point
+		GaussPoint gp1, gp2, gp3, gp4;
+		// particle
+		double vf; // volume fraction
+		Particle *pcls; // particle list
 		inline void add_pcl(Particle &pcl) { pcl.next = pcls; pcls = &pcl; }
 	};
 
 public:
-	double h, x0, xn, y0, yn, elem_vol;
+	double h, x0, xn, y0, yn;
 	size_t node_x_num, node_y_num, node_num;
 	Node *nodes;
 	size_t elem_x_num, elem_y_num, elem_num;
 	Element *elems;
-
+	
 	size_t pcl_num;
 	Particle *pcls;
-
+	// Constitutive model
+	double E;   // Elastic modulus
+	double niu; // Poisson ratio
+	double K; // Bulk modulus may = E / 3(1-2v)
+	
 	// Force BCs (Naumann BCs)
 	size_t bfx_num, bfy_num;
 	BodyForce *bfxs, *bfys;
@@ -104,8 +114,17 @@ public:
 				   double x_start = 0.0, double y_start = 0.0);
 	void clear_mesh(void);
 
-	void init_pcl(size_t num, double m, double density, double E, double niu, double K);
+	void init_pcl(size_t num, double m, double density, 
+				  double _E, double _niu, double _K);
 	void clear_pcl(void);
+
+protected:
+	double elem_vol;
+	size_t dof_num;
+	double gp_w; // weight = h*h/4
+	ShapeFuncValue sf1, sf2, sf3, sf4;
+	double dN_dx_mat1[3][8], dN_dx_mat2[3][8];
+	double dN_dx_mat3[3][8], dN_dx_mat4[3][8];
 
 public:
 	inline void cal_shape_func_value(ShapeFuncValue &sf_var, double xi, double eta)
@@ -141,17 +160,27 @@ public:
 			pcl.pe = nullptr;
 			return false;
 		}
-		size_t elem_x_id = size_t((pcl.x - x0) / h);
-		size_t elem_y_id = size_t((pcl.y - y0) / h);
+		double xi  = (pcl.x - x0) / h;
+		double eta = (pcl.y - y0) / h;
+		size_t elem_x_id = size_t(xi);
+		size_t elem_y_id = size_t(eta);
 		pcl.pe = elems + elem_x_num * elem_y_id + elem_x_id;
-		pcl.n1_id = node_x_num * elem_y_id + elem_x_id;
-		pcl.n2_id = pcl.n1_id + 1;
-		pcl.n3_id = pcl.n2_id + node_x_num;
-		pcl.n4_id = pcl.n3_id - 1;
-		double xi  = 2.0 * ((pcl.x - x0) / h - double(elem_x_id)) - 1.0;
-		double eta = 2.0 * ((pcl.y - y0) / h - double(elem_y_id)) - 1.0;
-		cal_shape_func_value(pcl.sf_var, xi, eta);
+		xi  = 2.0 * (xi  - double(elem_x_id)) - 1.0;
+		eta = 2.0 * (eta - double(elem_y_id)) - 1.0;
+		cal_shape_func_value(pcl.sf, xi, eta);
 		return true;
+	}
+
+public:
+	enum class DOF : size_t
+	{
+		ux = 0,
+		uy = 1,
+		p = 2
+	};
+	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const
+	{
+		return size_t(dof_type) * node_num + n_id;
 	}
 };
 

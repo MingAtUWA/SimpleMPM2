@@ -1,6 +1,6 @@
 #include "SimulationCore_pcp.h"
 
-#include <Eigen/Sparse>
+#include <Eigen/SparseLU>
 
 #define Keep_Newmark_Coefficients
 #include "Step_S2D_CHM_s_FEM_uUp.h"
@@ -12,24 +12,24 @@ namespace
 	typedef Model_S2D_CHM_s_FEM_uUp::Element Element_fem;
 	typedef Model_S2D_CHM_s_FEM_uUp::Node Node_fem;
 	typedef Model_S2D_CHM_s_FEM_uUp::DOF DOF;
-
-	void print_mat(double mat[12][12])
+	
+	void print_sparse_mat(Eigen::SparseMatrix<double> &mat,
+		std::fstream &out_file, const char *mat_name = nullptr)
 	{
-		std::cout << "mat\n";
-		for (size_t i = 0; i < 12; i++)
+		if (mat_name)
+			out_file << mat_name << "\n";
+		size_t row_num = mat.rows();
+		size_t col_num = mat.cols();
+		double value;
+		for (size_t i = 0; i < row_num; ++i)
 		{
-			for (size_t j = 0; j < 12; j++)
-				printf("%+8.2e ", mat[i][j]);
-			std::cout << "\n";
+			for (size_t j = 0; j < col_num; ++j)
+			{
+				value = mat.coeff(i, j);
+				out_file << value << ", ";
+			}
+			out_file << "\n";
 		}
-	}
-
-	void print_vec(double *vec, size_t num)
-	{
-		std::cout << "vec\n";
-		for (size_t i = 0; i < num; i++)
-			printf("%+8.2e ", vec[i]);
-		std::cout << "\n";
 	}
 };
 
@@ -45,6 +45,9 @@ int Step_S2D_CHM_s_FEM_uUp::init_calculation(void)
 
 	kmat_col = new double[model->dof_num];
 
+	// for debug
+	out_file.open("debug_mat_out.csv", std::ios::binary | std::ios::out);
+	
 	return 0;
 }
 
@@ -56,11 +59,17 @@ int Step_S2D_CHM_s_FEM_uUp::finalize_calculation(void)
 		kmat_col = nullptr;
 	}
 	
+	// for debug
+	out_file.close();
+
 	return 0;
 }
 
 int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 {
+	// for debug
+	//static std::fstream out_f2("out_f2.txt", std::ios::binary | std::ios::out);
+
 	Step_S2D_CHM_s_FEM_uUp &self = *(Step_S2D_CHM_s_FEM_uUp *)(_self);
 	Model_S2D_CHM_s_FEM_uUp &model = *self.model;
 	double dt = self.dtime;
@@ -69,8 +78,8 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 	// list of non-zeros coefficients
 	MatrixCoefficientSet<> &g_kmat_coefs = self.g_kmat_coefs;
 	g_kmat_coefs.init(model.dof_num);
-	Eigen::SparseMatrix<double> g_kmat(model.dof_num, model.dof_num);
-	Eigen::VectorXd g_fvec = Eigen::VectorXd::Zero(model.dof_num);
+	Eigen::VectorXd g_fvec(model.dof_num);
+	g_fvec.setZero();
 
 	size_t l2g_dof_id_map[20];
 	double e_kmat[20][20], e_fvec[20];
@@ -78,10 +87,8 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 	{
 		Element_fem &e = model.elems[e_id];
 		// form elemental stiffness matrix and force vector
-		self.form_elem_stiffness_mat_and_force_vec(e, dt, e_kmat, e_fvec);
-		//print_mat(e_kmat);
-		//print_vec(e_fvec);
-
+		self.form_elem_stiffness_mat_and_force_vec(e, e_kmat, e_fvec);
+		
 		// map from local dof id to global dof id
 		// solid phase ux
 		l2g_dof_id_map[0] = model.n_id_to_dof_id(e.n1_id, DOF::usx);
@@ -94,8 +101,8 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 		l2g_dof_id_map[6] = model.n_id_to_dof_id(e.n3_id, DOF::usy);
 		l2g_dof_id_map[7] = model.n_id_to_dof_id(e.n4_id, DOF::usy);
 		// fluid phase ux
-		l2g_dof_id_map[8] = model.n_id_to_dof_id(e.n1_id, DOF::ufx);
-		l2g_dof_id_map[9] = model.n_id_to_dof_id(e.n2_id, DOF::ufx);
+		l2g_dof_id_map[8]  = model.n_id_to_dof_id(e.n1_id, DOF::ufx);
+		l2g_dof_id_map[9]  = model.n_id_to_dof_id(e.n2_id, DOF::ufx);
 		l2g_dof_id_map[10] = model.n_id_to_dof_id(e.n3_id, DOF::ufx);
 		l2g_dof_id_map[11] = model.n_id_to_dof_id(e.n4_id, DOF::ufx);
 		// fluid phase uy
@@ -113,18 +120,15 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 		size_t g_dof_id1, g_dof_id2;
 		for (size_t l_id1 = 0; l_id1 < 20; ++l_id1)
 		{
+			// add to global matrix
 			g_dof_id1 = l2g_dof_id_map[l_id1];
 			for (size_t l_id2 = 0; l_id2 < 20; ++l_id2)
 			{
 				g_dof_id2 = l2g_dof_id_map[l_id2];
 				g_kmat_coefs.add_coefficient(g_dof_id1, g_dof_id2, e_kmat[l_id1][l_id2]);
 			}
-		}
-		size_t g_dof_id;
-		for (size_t l_id = 0; l_id < 20; ++l_id)
-		{
-			g_dof_id = l2g_dof_id_map[l_id];
-			g_fvec[g_dof_id] += e_fvec[l_id];
+			// add to global force vector
+			g_fvec[g_dof_id1] += e_fvec[l_id1];
 		}
 	}
 
@@ -211,10 +215,12 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 	}
 	
 	// solve
+	//g_kmat_coefs.print_with_iter();
+	Eigen::SparseMatrix<double> g_kmat(model.dof_num, model.dof_num);
 	g_kmat.setFromTriplets(g_kmat_coefs.begin(), g_kmat_coefs.end());
+	//print_sparse_mat(g_kmat, self.out_file,nullptr);
 	Eigen::SparseLU<Eigen::SparseMatrix<double> > solver(g_kmat);
 	Eigen::VectorXd g_du_vec = solver.solve(g_fvec);
-	//std::cout << g_kmat << "\n";
 	//std::cout << g_fvec << "\n";
 	//std::cout << g_du_vec << "\n";
 
@@ -261,7 +267,7 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 		n.ux_s += du;
 		dv = gamma / (beta * dt) * du - gamma / beta * n.vx_s + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_s;
 		n.vx_s += dv;
-		da = 1.0 / (gamma * dt2) * du - 1.0 / (gamma * dt) * n.vx_s - 1.0 / (2.0 * gamma) * n.ax_s;
+		da = du / (gamma * dt2) - n.vx_s / (gamma * dt) - n.ax_s / (2.0 * gamma);
 		n.ax_s += da;
 		// sy
 		dof_id = model.n_id_to_dof_id(n_id, DOF::usy);
@@ -269,7 +275,7 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 		n.uy_s += du;
 		dv = gamma / (beta * dt) * du - gamma / beta * n.vy_s + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_s;
 		n.vy_s += dv;
-		da = 1.0 / (gamma * dt2) * du - 1.0 / (gamma * dt) * n.vy_s - 1.0 / (2.0 * gamma) * n.ay_s;
+		da = du / (gamma * dt2) -  n.vy_s / (gamma * dt) - n.ay_s / (2.0 * gamma);
 		n.ay_s += da;
 		// fx
 		dof_id = model.n_id_to_dof_id(n_id, DOF::ufx);
@@ -325,34 +331,30 @@ int solve_substep_S2D_CHM_s_FEM_uUp(void *_self)
 		duy_f4 = g_du_vec[model.n_id_to_dof_id(e.n4_id, DOF::ufy)];
 		dp4    = g_du_vec[model.n_id_to_dof_id(e.n4_id, DOF::p)];
 
-		self.update_gauss_point(e.gp1, sf1,
-			dt, dt2,
+		self.update_gauss_point(e.gp1, sf1, dt, dt2,
 			dux_s1, dux_s2, dux_s3, dux_s4,
-			duy_s1, duy_s2, duy_s3, duy_f4,
+			duy_s1, duy_s2, duy_s3, duy_s4,
 			dux_f1, dux_f2, dux_f3, dux_f4,
 			duy_f1, duy_f2, duy_f3, duy_f4,
 			dp1, dp2, dp3, dp4);
 
-		self.update_gauss_point(e.gp2, sf2,
-			dt, dt2,
+		self.update_gauss_point(e.gp2, sf2, dt, dt2,
 			dux_s1, dux_s2, dux_s3, dux_s4,
-			duy_s1, duy_s2, duy_s3, duy_f4,
+			duy_s1, duy_s2, duy_s3, duy_s4,
 			dux_f1, dux_f2, dux_f3, dux_f4,
 			duy_f1, duy_f2, duy_f3, duy_f4,
 			dp1, dp2, dp3, dp4);
 
-		self.update_gauss_point(e.gp3, sf3,
-			dt, dt2,
+		self.update_gauss_point(e.gp3, sf3, dt, dt2,
 			dux_s1, dux_s2, dux_s3, dux_s4,
-			duy_s1, duy_s2, duy_s3, duy_f4,
+			duy_s1, duy_s2, duy_s3, duy_s4,
 			dux_f1, dux_f2, dux_f3, dux_f4,
 			duy_f1, duy_f2, duy_f3, duy_f4,
 			dp1, dp2, dp3, dp4);
 
-		self.update_gauss_point(e.gp4, sf4,
-			dt, dt2,
+		self.update_gauss_point(e.gp4, sf4, dt, dt2,
 			dux_s1, dux_s2, dux_s3, dux_s4,
-			duy_s1, duy_s2, duy_s3, duy_f4,
+			duy_s1, duy_s2, duy_s3, duy_s4,
 			dux_f1, dux_f2, dux_f3, dux_f4,
 			duy_f1, duy_f2, duy_f3, duy_f4,
 			dp1, dp2, dp3, dp4);
@@ -372,8 +374,9 @@ void Step_S2D_CHM_s_FEM_uUp::update_gauss_point(
 	double dp1, double dp2, double dp3, double dp4)
 {
 	double dux_s, duy_s, dux_f, duy_f, dp;
-	double de11, de22, de12;
-	double ds11, ds22, ds12;
+	double dvx_s, dvy_s, dvx_f, dvy_f;
+	double dax_s, day_s, dax_f, day_f;
+	double de11, de22, de12, ds11, ds22, ds12;
 	double de_vol_s, de_vol_f;
 
 	// displacement
@@ -381,36 +384,32 @@ void Step_S2D_CHM_s_FEM_uUp::update_gauss_point(
 	duy_s = duy_s1 * sf.N1 + duy_s2 * sf.N2 + duy_s3 * sf.N3 + duy_s4 * sf.N4;
 	dux_f = dux_f1 * sf.N1 + dux_f2 * sf.N2 + dux_f3 * sf.N3 + dux_f4 * sf.N4;
 	duy_f = duy_f1 * sf.N1 + duy_f2 * sf.N2 + duy_f3 * sf.N3 + duy_f4 * sf.N4;
+	// velocity
+	dvx_s = gamma / (beta * dt) * dux_s - gamma / beta * gp.vx_s
+		  + dt * (1.0 - gamma / (2.0 * beta)) * gp.ax_s;
+	dvy_s = gamma / (beta * dt) * duy_s - gamma / beta * gp.vy_s
+		  + dt * (1.0 - gamma / (2.0 * beta)) * gp.ay_s;
+	dvx_f = gamma / (beta * dt) * dux_f - gamma / beta * gp.vx_f
+		  + dt * (1.0 - gamma / (2.0 * beta)) * gp.ax_f;
+	dvy_f = gamma / (beta * dt) * duy_f - gamma / beta * gp.vy_f
+		  + dt * (1.0 - gamma / (2.0 * beta)) * gp.ay_f;
+	// acceleration
+	dax_s = dux_s / (beta * dt2) - gp.vx_s / (beta * dt) - gp.ax_s / (2.0 * beta);
+	day_s = duy_s / (beta * dt2) - gp.vy_s / (beta * dt) - gp.ay_s / (2.0 * beta);
+	dax_f = dux_f / (beta * dt2) - gp.vx_f / (beta * dt) - gp.ax_f / (2.0 * beta);
+	day_f = duy_f / (beta * dt2) - gp.vy_f / (beta * dt) - gp.ay_f / (2.0 * beta);
 	gp.ux_s += dux_s;
 	gp.uy_s += duy_s;
 	gp.ux_f += dux_f;
 	gp.uy_f += duy_f;
-	// velocity
-	gp.vx_s += gamma / (beta * dt) * dux_s
-			 - gamma / beta * gp.vx_s
-			 + dt * (1.0 - gamma / (2.0 * beta)) * gp.ax_s;
-	gp.vy_s += gamma / (beta * dt) * duy_s
-			 - gamma / beta * gp.vy_s
-			 + dt * (1.0 - gamma / (2.0 * beta)) * gp.ay_s;
-	gp.vx_f += gamma / (beta * dt) * dux_f
-			 - gamma / beta * gp.vx_f
-			 + dt * (1.0 - gamma / (2.0 * beta)) * gp.ax_f;
-	gp.vy_f += gamma / (beta * dt) * duy_f
-			 - gamma / beta * gp.vy_f
-			 + dt * (1.0 - gamma / (2.0 * beta)) * gp.ay_f;
-	// acceleration
-	gp.ax_s += 1.0 / (gamma * dt2) * dux_s
-			 - 1.0 / (gamma * dt) * gp.vx_s
-			 - 1.0 / (2.0 * gamma) * gp.ax_s;
-	gp.ay_s += 1.0 / (gamma * dt2) * duy_s
-			 - 1.0 / (gamma * dt) * gp.vy_s
-			 - 1.0 / (2.0 * gamma) * gp.ay_s;
-	gp.ax_f += 1.0 / (gamma * dt2) * dux_f
-			 - 1.0 / (gamma * dt) * gp.vx_f
-			 - 1.0 / (2.0 * gamma) * gp.ax_f;
-	gp.ay_f += 1.0 / (gamma * dt2) * duy_f
-			 - 1.0 / (gamma * dt) * gp.vy_f
-			 - 1.0 / (2.0 * gamma) * gp.ay_f;
+	gp.vx_s += dvx_s;
+	gp.vy_s += dvy_s;
+	gp.vx_f += dvx_f;
+	gp.vy_f += dvy_f;
+	gp.ax_s += dax_s;
+	gp.ay_s += day_s;
+	gp.ax_f += dax_f;
+	gp.ay_f += day_f;
 
 	// pore pressure
 	gp.p += dp1 * sf.N1 + dp2 * sf.N2 + dp3 * sf.N3 + dp4 * sf.N4;
@@ -443,6 +442,7 @@ void Step_S2D_CHM_s_FEM_uUp::update_gauss_point(
 	de_vol_f = -(1.0 - gp.n) / gp.n * de_vol_s
 		- (dux_f1 * sf.dN1_dx + dux_f2 * sf.dN2_dx + dux_f3 * sf.dN3_dx + dux_f4 * sf.dN4_dx)
 		- (duy_f1 * sf.dN1_dy + duy_f2 * sf.dN2_dy + duy_f3 * sf.dN3_dy + duy_f4 * sf.dN4_dy);
+	
 	// porosity
 	//gp.n = (de_vol_s + gp.n) / (1.0 + de_vol_s);
 	// fluid density

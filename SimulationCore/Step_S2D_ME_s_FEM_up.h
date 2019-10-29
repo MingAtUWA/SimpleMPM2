@@ -1,6 +1,8 @@
 #ifndef __STEP_S2D_ME_s_FEM_up_H__
 #define __STEP_S2D_ME_s_FEM_up_H__
 
+#include <fstream>
+
 #include "MatrixCoefficientSet.hpp"
 
 #include "Step.h"
@@ -51,10 +53,12 @@ protected:
 	
 	double *kmat_col;
 	MatrixCoefficientSet<> g_kmat_coefs;
-	bool is_first_substep;
 
 protected:
 	void form_elem_stiffness_mat_and_force_vec(Model_S2D_ME_s_FEM_up::Element &e, double kmat[12][12], double fvec[12]);
+
+public: // for debugging
+	std::fstream out_file;
 };
 
 #endif

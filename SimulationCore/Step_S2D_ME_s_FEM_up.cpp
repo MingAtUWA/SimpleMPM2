@@ -1,7 +1,6 @@
 #include "SimulationCore_pcp.h"
 
 #include <cstdio>
-#include <Eigen/Sparse>
 #include <Eigen/SparseLU>
 
 #include "Step_S2D_ME_s_FEM_up.h"
@@ -18,14 +17,17 @@ namespace
 	typedef Model_S2D_ME_s_FEM_up::ShapeFuncValue ShapeFuncValue;
 	typedef Model_S2D_ME_s_FEM_up::DOF DOF;
 
-	void print_mat(double mat[12][12])
+	void print_mat(double mat[12][12],
+		std::fstream &out_file,
+		const char *mat_name = nullptr)
 	{
-		std::cout << "mat\n";
+		if (mat_name)
+			out_file << mat_name << "\n";
 		for (size_t i = 0; i < 12; i++)
 		{
 			for (size_t j = 0; j < 12; j++)
-				printf("%+8.2e ", mat[i][j]);
-			std::cout << "\n";
+				out_file << mat[i][j] << ", ";
+			out_file << "\n";
 		}
 	}
 
@@ -45,8 +47,27 @@ namespace
 		std::cout << "\n";
 	}
 
+	void print_sparse_mat(Eigen::SparseMatrix<double> &mat,
+		std::fstream &out_file, const char *mat_name = nullptr)
+	{
+		if (mat_name)
+			out_file << mat_name << "\n";
+		size_t row_num = mat.rows();
+		size_t col_num = mat.cols();
+		double value;
+		for (size_t i = 0; i < row_num; ++i)
+		{
+			for (size_t j = 0; j < col_num; ++j)
+			{
+				value = mat.coeff(i, j);
+				out_file << value << ", ";
+			}
+			out_file << "\n";
+		}
+	}
+
 	void update_gauss_point(GaussPoint_fem &gp,
-			ShapeFuncValue &sf, double dt,
+			ShapeFuncValue &sf, double dt, double dt2,
 			double dux1, double dux2, double dux3, double dux4,
 			double duy1, double duy2, double duy3, double duy4,
 			double dp1, double dp2, double dp3, double dp4)
@@ -55,7 +76,6 @@ namespace
 		double de11, de22, de12;
 		double ds11, ds22, ds12;
 		double de_vol;
-		double dt2 = dt * dt;
 		// displacement increment
 		dux = dux1 * sf.N1 + dux2 * sf.N2 + dux3 * sf.N3 + dux4 * sf.N4;
 		duy = duy1 * sf.N1 + duy2 * sf.N2 + duy3 * sf.N3 + duy4 * sf.N4;
@@ -64,10 +84,8 @@ namespace
 			+ dt * (1.0 - gamma / (2.0 * beta)) * gp.ax;
 		dvy = gamma / (beta * dt) * duy - gamma / beta * gp.vy
 			+ dt * (1.0 - gamma / (2.0 * beta)) * gp.ay;
-		dax = 1.0 / (beta * dt2) * dux - 1.0 / (beta * dt) * gp.vx
-			- 1.0 / (2.0 * beta) * gp.ax;
-		day = 1.0 / (beta * dt2) * duy - 1.0 / (beta * dt) * gp.vy
-			- 1.0 / (2.0 * beta) * gp.ay;
+		dax = dux / (beta * dt2) - gp.vx / (beta * dt) - gp.ax / (2.0 * beta);
+		day = duy / (beta * dt2) - gp.vy / (beta * dt) - gp.ay / (2.0 * beta);
 		// displacement
 		gp.ux += dux;
 		gp.uy += duy;
@@ -97,7 +115,7 @@ namespace
 		gp.p += dp1 * sf.N1 + dp2 * sf.N2 + dp3 * sf.N3 + dp4 * sf.N4;
 		// density
 		de_vol = de11 + de22;
-		gp.density /= (1.0 + de_vol);
+		//gp.density /= (1.0 + de_vol);
 	}
 };
 
@@ -113,7 +131,8 @@ int Step_S2D_ME_s_FEM_up::init_calculation(void)
 
 	kmat_col = new double[model->dof_num];
 
-	is_first_substep = true;
+	// for debug
+	out_file.open("debug_mat_out_ME_s_FEM_up.csv", std::ios::binary | std::ios::out);
 
 	return 0;
 }
@@ -125,6 +144,9 @@ int Step_S2D_ME_s_FEM_up::finalize_calculation(void)
 		delete[] kmat_col;
 		kmat_col = nullptr;
 	}
+
+	// for debug
+	out_file.close();
 
 	return 0;
 }
@@ -139,8 +161,8 @@ int solve_substep_S2D_ME_s_FEM_up(void *_self)
 	// list of non-zeros coefficients
 	MatrixCoefficientSet<> &g_kmat_coefs = self.g_kmat_coefs;
 	g_kmat_coefs.init(model.dof_num);
-	Eigen::SparseMatrix<double> g_kmat(model.dof_num, model.dof_num);
-	Eigen::VectorXd g_fvec = Eigen::VectorXd::Zero(model.dof_num);
+	Eigen::VectorXd g_fvec(model.dof_num);
+	g_fvec.setZero();
 
 	size_t l2g_dof_id_map[12];
 	double e_kmat[12][12], e_fvec[12];
@@ -179,12 +201,7 @@ int solve_substep_S2D_ME_s_FEM_up(void *_self)
 				g_dof_id2 = l2g_dof_id_map[l_id2];
 				g_kmat_coefs.add_coefficient(g_dof_id1, g_dof_id2, e_kmat[l_id1][l_id2]);
 			}
-		}
-		size_t g_dof_id;
-		for (size_t l_id = 0; l_id < 12; ++l_id)
-		{
-			g_dof_id = l2g_dof_id_map[l_id];
-			g_fvec[g_dof_id] += e_fvec[l_id];
+			g_fvec[g_dof_id1] += e_fvec[l_id1];
 		}
 	}
 
@@ -192,39 +209,35 @@ int solve_substep_S2D_ME_s_FEM_up(void *_self)
 	// traction force
 	size_t dof_g_id;
 	double nfs[4];
-	if (self.is_first_substep)
+	for (size_t t_id = 0; t_id < model.tx_num; ++t_id)
 	{
-		self.is_first_substep = false;
-		for (size_t t_id = 0; t_id < model.tx_num; ++t_id)
-		{
-			TractionBC_2DFEM &tx = model.txs[t_id];
-			model.cal_traction_bc(tx, nfs);
-			Element_fem &e = model.elems[tx.elem_id];
-			dof_g_id = model.n_id_to_dof_id(e.n1_id, DOF::ux);
-			g_fvec[dof_g_id] += nfs[0];
-			dof_g_id = model.n_id_to_dof_id(e.n2_id, DOF::ux);
-			g_fvec[dof_g_id] += nfs[1];
-			dof_g_id = model.n_id_to_dof_id(e.n3_id, DOF::ux);
-			g_fvec[dof_g_id] += nfs[2];
-			dof_g_id = model.n_id_to_dof_id(e.n4_id, DOF::ux);
-			g_fvec[dof_g_id] += nfs[3];
-		}
-		for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-		{
-			TractionBC_2DFEM &ty = model.tys[t_id];
-			model.cal_traction_bc(ty, nfs);
-			Element_fem &e = model.elems[ty.elem_id];
-			dof_g_id = model.n_id_to_dof_id(e.n1_id, DOF::uy);
-			g_fvec[dof_g_id] += nfs[0];
-			dof_g_id = model.n_id_to_dof_id(e.n2_id, DOF::uy);
-			g_fvec[dof_g_id] += nfs[1];
-			dof_g_id = model.n_id_to_dof_id(e.n3_id, DOF::uy);
-			g_fvec[dof_g_id] += nfs[2];
-			dof_g_id = model.n_id_to_dof_id(e.n4_id, DOF::uy);
-			g_fvec[dof_g_id] += nfs[3];
-		}
-		// body force to be finished...
+		TractionBC_2DFEM &tx = model.txs[t_id];
+		model.cal_traction_bc(tx, nfs);
+		Element_fem &e = model.elems[tx.elem_id];
+		dof_g_id = model.n_id_to_dof_id(e.n1_id, DOF::ux);
+		g_fvec[dof_g_id] += nfs[0];
+		dof_g_id = model.n_id_to_dof_id(e.n2_id, DOF::ux);
+		g_fvec[dof_g_id] += nfs[1];
+		dof_g_id = model.n_id_to_dof_id(e.n3_id, DOF::ux);
+		g_fvec[dof_g_id] += nfs[2];
+		dof_g_id = model.n_id_to_dof_id(e.n4_id, DOF::ux);
+		g_fvec[dof_g_id] += nfs[3];
 	}
+	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	{
+		TractionBC_2DFEM &ty = model.tys[t_id];
+		model.cal_traction_bc(ty, nfs);
+		Element_fem &e = model.elems[ty.elem_id];
+		dof_g_id = model.n_id_to_dof_id(e.n1_id, DOF::uy);
+		g_fvec[dof_g_id] += nfs[0];
+		dof_g_id = model.n_id_to_dof_id(e.n2_id, DOF::uy);
+		g_fvec[dof_g_id] += nfs[1];
+		dof_g_id = model.n_id_to_dof_id(e.n3_id, DOF::uy);
+		g_fvec[dof_g_id] += nfs[2];
+		dof_g_id = model.n_id_to_dof_id(e.n4_id, DOF::uy);
+		g_fvec[dof_g_id] += nfs[3];
+	}
+	// body force to be finished...
 	//std::cout << "f:\n" << g_fvec << "\n";
 
 	// apply displacement boundary condition
@@ -257,7 +270,9 @@ int solve_substep_S2D_ME_s_FEM_up(void *_self)
 	//	g_fvec[dof_g_id] = dig_term * pbc.p;
 	//}
 
+	Eigen::SparseMatrix<double> g_kmat(model.dof_num, model.dof_num);
 	g_kmat.setFromTriplets(g_kmat_coefs.begin(), g_kmat_coefs.end());
+	//print_sparse_mat(g_kmat, self.out_file, nullptr);
 	Eigen::SparseLU<Eigen::SparseMatrix<double> > solver(g_kmat);
 	Eigen::VectorXd g_du_vec = solver.solve(g_fvec);
 	//std::cout << g_kmat << "\n";
@@ -321,18 +336,22 @@ int solve_substep_S2D_ME_s_FEM_up(void *_self)
 		dp3 = g_du_vec[model.n_id_to_dof_id(e.n3_id, DOF::p)];
 		dp4 = g_du_vec[model.n_id_to_dof_id(e.n4_id, DOF::p)];
 
-		update_gauss_point(e.gp1, sf1, self.dtime,
-			dux1, dux2, dux3, dux4, duy1, duy2, duy3, duy4,
-			dp1, dp2, dp3, dp4);
-		update_gauss_point(e.gp2, sf2, self.dtime,
-			dux1, dux2, dux3, dux4, duy1, duy2, duy3, duy4,
-			dp1, dp2, dp3, dp4);
-		update_gauss_point(e.gp3, sf3, self.dtime,
-			dux1, dux2, dux3, dux4, duy1, duy2, duy3, duy4,
-			dp1, dp2, dp3, dp4);
-		update_gauss_point(e.gp4, sf4, self.dtime,
-			dux1, dux2, dux3, dux4, duy1, duy2, duy3, duy4,
-			dp1, dp2, dp3, dp4);
+		update_gauss_point(e.gp1, sf1, dt, dt2,
+						   dux1, dux2, dux3, dux4,
+						   duy1, duy2, duy3, duy4,
+						   dp1, dp2, dp3, dp4);
+		update_gauss_point(e.gp2, sf2, dt, dt2,
+						   dux1, dux2, dux3, dux4,
+						   duy1, duy2, duy3, duy4,
+						   dp1, dp2, dp3, dp4);
+		update_gauss_point(e.gp3, sf3, dt, dt2,
+						   dux1, dux2, dux3, dux4,
+						   duy1, duy2, duy3, duy4,
+						   dp1, dp2, dp3, dp4);
+		update_gauss_point(e.gp4, sf4, dt, dt2,
+						   dux1, dux2, dux3, dux4,
+						   duy1, duy2, duy3, duy4,
+						   dp1, dp2, dp3, dp4);
 	}
 
 	return 0;
@@ -381,74 +400,65 @@ void Step_S2D_ME_s_FEM_up::form_elem_stiffness_mat_and_force_vec(
 	GaussPoint_fem &gp2 = e.gp2;
 	GaussPoint_fem &gp3 = e.gp3;
 	GaussPoint_fem &gp4 = e.gp4;
-	double det_dx_dxi = model->h * model->h * 0.25;
-	double mat_term;
-	union
-	{
-		struct
-		{
-			double m_mat[12][12];
-			double k_mat[12][12];
-			double f_a[8];
-			double f_v[8];
-		};
-		char tmp_mem[1];
-	};
+	double gp_w = model->gp_w;
+	double coef, mat_term;
+	
+	memset(kmat, 0, sizeof(double) * 12 * 12);
 
-	memset(tmp_mem, 0, sizeof(m_mat) + sizeof(k_mat) + sizeof(f_a) + sizeof(f_v));
 	// mass matrix
+	coef = 1.0 / (beta * dtime * dtime);
 	mat_term = (sf1.N1 * gp1.density * sf1.N1 + sf2.N1 * gp2.density * sf2.N1
-			  + sf3.N1 * gp3.density * sf3.N1 + sf4.N1 * gp4.density * sf4.N1) * det_dx_dxi;
-	m_mat[0][0] = mat_term;
-	m_mat[4][4] = mat_term;
+			  + sf3.N1 * gp3.density * sf3.N1 + sf4.N1 * gp4.density * sf4.N1) * gp_w * coef;
+	kmat[0][0] = mat_term;
+	kmat[4][4] = mat_term;
 	mat_term = (sf1.N1 * gp1.density * sf1.N2 + sf2.N1 * gp2.density * sf2.N2
-			  + sf3.N1 * gp3.density * sf3.N2 + sf4.N1 * gp4.density * sf4.N2) * det_dx_dxi;
-	m_mat[0][1] = mat_term;
-	m_mat[1][0] = mat_term;
-	m_mat[4][5] = mat_term;
-	m_mat[5][4] = mat_term;
+			  + sf3.N1 * gp3.density * sf3.N2 + sf4.N1 * gp4.density * sf4.N2) * gp_w * coef;
+	kmat[0][1] = mat_term;
+	kmat[1][0] = mat_term;
+	kmat[4][5] = mat_term;
+	kmat[5][4] = mat_term;
 	mat_term = (sf1.N1 * gp1.density * sf1.N3 + sf2.N1 * gp2.density * sf2.N3
-			  + sf3.N1 * gp3.density * sf3.N3 + sf4.N1 * gp4.density * sf4.N3) * det_dx_dxi;
-	m_mat[0][2] = mat_term;
-	m_mat[2][0] = mat_term;
-	m_mat[4][6] = mat_term;
-	m_mat[6][4] = mat_term;
+			  + sf3.N1 * gp3.density * sf3.N3 + sf4.N1 * gp4.density * sf4.N3) * gp_w * coef;
+	kmat[0][2] = mat_term;
+	kmat[2][0] = mat_term;
+	kmat[4][6] = mat_term;
+	kmat[6][4] = mat_term;
 	mat_term = (sf1.N1 * gp1.density * sf1.N4 + sf2.N1 * gp2.density * sf2.N4
-			  + sf3.N1 * gp3.density * sf3.N4 + sf4.N1 * gp4.density * sf4.N4) * det_dx_dxi;
-	m_mat[0][3] = mat_term;
-	m_mat[3][0] = mat_term;
-	m_mat[4][7] = mat_term;
-	m_mat[7][4] = mat_term;
+			  + sf3.N1 * gp3.density * sf3.N4 + sf4.N1 * gp4.density * sf4.N4) * gp_w * coef;
+	kmat[0][3] = mat_term;
+	kmat[3][0] = mat_term;
+	kmat[4][7] = mat_term;
+	kmat[7][4] = mat_term;
 	mat_term = (sf1.N2 * gp1.density * sf1.N2 + sf2.N2 * gp2.density * sf2.N2
-			  + sf3.N2 * gp3.density * sf3.N2 + sf4.N2 * gp4.density * sf4.N2) * det_dx_dxi;
-	m_mat[1][1] = mat_term;
-	m_mat[5][5] = mat_term;
+			  + sf3.N2 * gp3.density * sf3.N2 + sf4.N2 * gp4.density * sf4.N2) * gp_w * coef;
+	kmat[1][1] = mat_term;
+	kmat[5][5] = mat_term;
 	mat_term = (sf1.N2 * gp1.density * sf1.N3 + sf2.N2 * gp2.density * sf2.N3
-			  + sf3.N2 * gp3.density * sf3.N3 + sf4.N2 * gp4.density * sf4.N3) * det_dx_dxi;
-	m_mat[1][2] = mat_term;
-	m_mat[2][1] = mat_term;
-	m_mat[5][6] = mat_term;
-	m_mat[6][5] = mat_term;
+			  + sf3.N2 * gp3.density * sf3.N3 + sf4.N2 * gp4.density * sf4.N3) * gp_w * coef;
+	kmat[1][2] = mat_term;
+	kmat[2][1] = mat_term;
+	kmat[5][6] = mat_term;
+	kmat[6][5] = mat_term;
 	mat_term = (sf1.N2 * gp1.density * sf1.N4 + sf2.N2 * gp2.density * sf2.N4
-			  + sf3.N2 * gp3.density * sf3.N4 + sf4.N2 * gp4.density * sf4.N4) * det_dx_dxi;
-	m_mat[1][3] = mat_term;
-	m_mat[3][1] = mat_term;
-	m_mat[5][7] = mat_term;
-	m_mat[7][5] = mat_term;
+			  + sf3.N2 * gp3.density * sf3.N4 + sf4.N2 * gp4.density * sf4.N4) * gp_w * coef;
+	kmat[1][3] = mat_term;
+	kmat[3][1] = mat_term;
+	kmat[5][7] = mat_term;
+	kmat[7][5] = mat_term;
 	mat_term = (sf1.N3 * gp1.density * sf1.N3 + sf2.N3 * gp2.density * sf2.N3
-			  + sf3.N3 * gp3.density * sf3.N3 + sf4.N3 * gp4.density * sf4.N3) * det_dx_dxi;
-	m_mat[2][2] = mat_term;
-	m_mat[6][6] = mat_term;
+			  + sf3.N3 * gp3.density * sf3.N3 + sf4.N3 * gp4.density * sf4.N3) * gp_w * coef;
+	kmat[2][2] = mat_term;
+	kmat[6][6] = mat_term;
 	mat_term = (sf1.N3 * gp1.density * sf1.N4 + sf2.N3 * gp2.density * sf2.N4
-			  + sf3.N3 * gp3.density * sf3.N4 + sf4.N3 * gp4.density * sf4.N4) * det_dx_dxi;
-	m_mat[2][3] = mat_term;
-	m_mat[3][2] = mat_term;
-	m_mat[6][7] = mat_term;
-	m_mat[7][6] = mat_term;
+			  + sf3.N3 * gp3.density * sf3.N4 + sf4.N3 * gp4.density * sf4.N4) * gp_w * coef;
+	kmat[2][3] = mat_term;
+	kmat[3][2] = mat_term;
+	kmat[6][7] = mat_term;
+	kmat[7][6] = mat_term;
 	mat_term = (sf1.N4 * gp1.density * sf1.N4 + sf2.N4 * gp2.density * sf2.N4
-			  + sf3.N4 * gp3.density * sf3.N4 + sf4.N4 * gp4.density * sf4.N4) * det_dx_dxi;
-	m_mat[3][3] = mat_term;
-	m_mat[7][7] = mat_term;
+			  + sf3.N4 * gp3.density * sf3.N4 + sf4.N4 * gp4.density * sf4.N4) * gp_w * coef;
+	kmat[3][3] = mat_term;
+	kmat[7][7] = mat_term;
 
 	//print_mat(m_mat);
 
@@ -457,230 +467,259 @@ void Step_S2D_ME_s_FEM_up::form_elem_stiffness_mat_and_force_vec(
 	double E_mat[3][3];
 	// gauss point 1
 	form_E_matrix(E_mat, gp1);
-	cal_stiffness_mat(k_mat, E_mat, model->dN_dx_mat1, det_dx_dxi);
+	cal_stiffness_mat(kmat, E_mat, model->dN_dx_mat1, gp_w);
 	// gauss point 2
 	form_E_matrix(E_mat, gp2);
-	cal_stiffness_mat(k_mat, E_mat, model->dN_dx_mat2, det_dx_dxi);
+	cal_stiffness_mat(kmat, E_mat, model->dN_dx_mat2, gp_w);
 	// gauss point 3
 	form_E_matrix(E_mat, gp3);
-	cal_stiffness_mat(k_mat, E_mat, model->dN_dx_mat3, det_dx_dxi);
+	cal_stiffness_mat(kmat, E_mat, model->dN_dx_mat3, gp_w);
 	// gauss point 4
 	form_E_matrix(E_mat, gp4);
-	cal_stiffness_mat(k_mat, E_mat, model->dN_dx_mat4, det_dx_dxi);
+	cal_stiffness_mat(kmat, E_mat, model->dN_dx_mat4, gp_w);
 	
 	// dNi_dx * Nj
 	mat_term = (sf1.dN1_dx * sf1.N1 + sf2.dN1_dx * sf2.N1
-			  + sf3.dN1_dx * sf3.N1 + sf4.dN1_dx * sf4.N1) * det_dx_dxi;
-	k_mat[0][8] = mat_term;
-	k_mat[8][0] = mat_term;
+			  + sf3.dN1_dx * sf3.N1 + sf4.dN1_dx * sf4.N1) * gp_w;
+	kmat[0][8] += mat_term;
+	kmat[8][0] += mat_term;
 	mat_term = (sf1.dN1_dx * sf1.N2 + sf2.dN1_dx * sf2.N2
-			  + sf3.dN1_dx * sf3.N2 + sf4.dN1_dx * sf4.N2) * det_dx_dxi;
-	k_mat[0][9] = mat_term;
-	k_mat[9][0] = mat_term;
+			  + sf3.dN1_dx * sf3.N2 + sf4.dN1_dx * sf4.N2) * gp_w;
+	kmat[0][9] += mat_term;
+	kmat[9][0] += mat_term;
 	mat_term = (sf1.dN1_dx * sf1.N3 + sf2.dN1_dx * sf2.N3
-			  + sf3.dN1_dx * sf3.N3 + sf4.dN1_dx * sf4.N3) * det_dx_dxi;
-	k_mat[0][10] = mat_term;
-	k_mat[10][0] = mat_term;
+			  + sf3.dN1_dx * sf3.N3 + sf4.dN1_dx * sf4.N3) * gp_w;
+	kmat[0][10] += mat_term;
+	kmat[10][0] += mat_term;
 	mat_term = (sf1.dN1_dx * sf1.N4 + sf2.dN1_dx * sf2.N4
-			  + sf3.dN1_dx * sf3.N4 + sf4.dN1_dx * sf4.N4) * det_dx_dxi;
-	k_mat[0][11] = mat_term;
-	k_mat[11][0] = mat_term;
+			  + sf3.dN1_dx * sf3.N4 + sf4.dN1_dx * sf4.N4) * gp_w;
+	kmat[0][11] += mat_term;
+	kmat[11][0] += mat_term;
 	mat_term = (sf1.dN2_dx * sf1.N1 + sf2.dN2_dx * sf2.N1
-			  + sf3.dN2_dx * sf3.N1 + sf4.dN2_dx * sf4.N1) * det_dx_dxi;
-	k_mat[1][8] = mat_term;
-	k_mat[8][1] = mat_term;
+			  + sf3.dN2_dx * sf3.N1 + sf4.dN2_dx * sf4.N1) * gp_w;
+	kmat[1][8] += mat_term;
+	kmat[8][1] += mat_term;
 	mat_term = (sf1.dN2_dx * sf1.N2 + sf2.dN2_dx * sf2.N2
-			  + sf3.dN2_dx * sf3.N2 + sf4.dN2_dx * sf4.N2) * det_dx_dxi;
-	k_mat[1][9] = mat_term;
-	k_mat[9][1] = mat_term;
+			  + sf3.dN2_dx * sf3.N2 + sf4.dN2_dx * sf4.N2) * gp_w;
+	kmat[1][9] += mat_term;
+	kmat[9][1] += mat_term;
 	mat_term = (sf1.dN2_dx * sf1.N3 + sf2.dN2_dx * sf2.N3
-			  + sf3.dN2_dx * sf3.N3 + sf4.dN2_dx * sf4.N3) * det_dx_dxi;
-	k_mat[1][10] = mat_term;
-	k_mat[10][1] = mat_term;
+			  + sf3.dN2_dx * sf3.N3 + sf4.dN2_dx * sf4.N3) * gp_w;
+	kmat[1][10] += mat_term;
+	kmat[10][1] += mat_term;
 	mat_term = (sf1.dN2_dx * sf1.N4 + sf2.dN2_dx * sf2.N4
-			  + sf3.dN2_dx * sf3.N4 + sf4.dN2_dx * sf4.N4) * det_dx_dxi;
-	k_mat[1][11] = mat_term;
-	k_mat[11][1] = mat_term;
+			  + sf3.dN2_dx * sf3.N4 + sf4.dN2_dx * sf4.N4) * gp_w;
+	kmat[1][11] += mat_term;
+	kmat[11][1] += mat_term;
 	mat_term = (sf1.dN3_dx * sf1.N1 + sf2.dN3_dx * sf2.N1
-			  + sf3.dN3_dx * sf3.N1 + sf4.dN3_dx * sf4.N1) * det_dx_dxi;
-	k_mat[2][8] = mat_term;
-	k_mat[8][2] = mat_term;
+			  + sf3.dN3_dx * sf3.N1 + sf4.dN3_dx * sf4.N1) * gp_w;
+	kmat[2][8] += mat_term;
+	kmat[8][2] += mat_term;
 	mat_term = (sf1.dN3_dx * sf1.N2 + sf2.dN3_dx * sf2.N2
-			  + sf3.dN3_dx * sf3.N2 + sf4.dN3_dx * sf4.N2) * det_dx_dxi;
-	k_mat[2][9] = mat_term;
-	k_mat[9][2] = mat_term;
+			  + sf3.dN3_dx * sf3.N2 + sf4.dN3_dx * sf4.N2) * gp_w;
+	kmat[2][9] += mat_term;
+	kmat[9][2] += mat_term;
 	mat_term = (sf1.dN3_dx * sf1.N3 + sf2.dN3_dx * sf2.N3
-			  + sf3.dN3_dx * sf3.N3 + sf4.dN3_dx * sf4.N3) * det_dx_dxi;
-	k_mat[2][10] = mat_term;
-	k_mat[10][2] = mat_term;
+			  + sf3.dN3_dx * sf3.N3 + sf4.dN3_dx * sf4.N3) * gp_w;
+	kmat[2][10] += mat_term;
+	kmat[10][2] += mat_term;
 	mat_term = (sf1.dN3_dx * sf1.N4 + sf2.dN3_dx * sf2.N4
-			  + sf3.dN3_dx * sf3.N4 + sf4.dN3_dx * sf4.N4) * det_dx_dxi;
-	k_mat[2][11] = mat_term;
-	k_mat[11][2] = mat_term;
+			  + sf3.dN3_dx * sf3.N4 + sf4.dN3_dx * sf4.N4) * gp_w;
+	kmat[2][11] += mat_term;
+	kmat[11][2] += mat_term;
 	mat_term = (sf1.dN4_dx * sf1.N1 + sf2.dN4_dx * sf2.N1
-			  + sf3.dN4_dx * sf3.N1 + sf4.dN4_dx * sf4.N1) * det_dx_dxi;
-	k_mat[3][8] = mat_term;
-	k_mat[8][3] = mat_term;
+			  + sf3.dN4_dx * sf3.N1 + sf4.dN4_dx * sf4.N1) * gp_w;
+	kmat[3][8] += mat_term;
+	kmat[8][3] += mat_term;
 	mat_term = (sf1.dN4_dx * sf1.N2 + sf2.dN4_dx * sf2.N2
-			  + sf3.dN4_dx * sf3.N2 + sf4.dN4_dx * sf4.N2) * det_dx_dxi;
-	k_mat[3][9] = mat_term;
-	k_mat[9][3] = mat_term;
+			  + sf3.dN4_dx * sf3.N2 + sf4.dN4_dx * sf4.N2) * gp_w;
+	kmat[3][9] += mat_term;
+	kmat[9][3] += mat_term;
 	mat_term = (sf1.dN4_dx * sf1.N3 + sf2.dN4_dx * sf2.N3
-			  + sf3.dN4_dx * sf3.N3 + sf4.dN4_dx * sf4.N3) * det_dx_dxi;
-	k_mat[3][10] = mat_term;
-	k_mat[10][3] = mat_term;
+			  + sf3.dN4_dx * sf3.N3 + sf4.dN4_dx * sf4.N3) * gp_w;
+	kmat[3][10] += mat_term;
+	kmat[10][3] += mat_term;
 	mat_term = (sf1.dN4_dx * sf1.N4 + sf2.dN4_dx * sf2.N4
-			  + sf3.dN4_dx * sf3.N4 + sf4.dN4_dx * sf4.N4) * det_dx_dxi;
-	k_mat[3][11] = mat_term;
-	k_mat[11][3] = mat_term;
+			  + sf3.dN4_dx * sf3.N4 + sf4.dN4_dx * sf4.N4) * gp_w;
+	kmat[3][11] += mat_term;
+	kmat[11][3] += mat_term;
 	// dNi_dy * Nj
 	mat_term = (sf1.dN1_dy * sf1.N1 + sf2.dN1_dy * sf2.N1
-			  + sf3.dN1_dy * sf3.N1 + sf4.dN1_dy * sf4.N1) * det_dx_dxi;
-	k_mat[4][8] = mat_term;
-	k_mat[8][4] = mat_term;
+			  + sf3.dN1_dy * sf3.N1 + sf4.dN1_dy * sf4.N1) * gp_w;
+	kmat[4][8] += mat_term;
+	kmat[8][4] += mat_term;
 	mat_term = (sf1.dN1_dy * sf1.N2 + sf2.dN1_dy * sf2.N2
-			  + sf3.dN1_dy * sf3.N2 + sf4.dN1_dy * sf4.N2) * det_dx_dxi;
-	k_mat[4][9] = mat_term;
-	k_mat[9][4] = mat_term;
+			  + sf3.dN1_dy * sf3.N2 + sf4.dN1_dy * sf4.N2) * gp_w;
+	kmat[4][9] += mat_term;
+	kmat[9][4] += mat_term;
 	mat_term = (sf1.dN1_dy * sf1.N3 + sf2.dN1_dy * sf2.N3
-			  + sf3.dN1_dy * sf3.N3 + sf4.dN1_dy * sf4.N3) * det_dx_dxi;
-	k_mat[4][10] = mat_term;
-	k_mat[10][4] = mat_term;
+			  + sf3.dN1_dy * sf3.N3 + sf4.dN1_dy * sf4.N3) * gp_w;
+	kmat[4][10] += mat_term;
+	kmat[10][4] += mat_term;
 	mat_term = (sf1.dN1_dy * sf1.N4 + sf2.dN1_dy * sf2.N4
-			  + sf3.dN1_dy * sf3.N4 + sf4.dN1_dy * sf4.N4) * det_dx_dxi;
-	k_mat[4][11] = mat_term;
-	k_mat[11][4] = mat_term;
+			  + sf3.dN1_dy * sf3.N4 + sf4.dN1_dy * sf4.N4) * gp_w;
+	kmat[4][11] += mat_term;
+	kmat[11][4] += mat_term;
 	mat_term = (sf1.dN2_dy * sf1.N1 + sf2.dN2_dy * sf2.N1
-			  + sf3.dN2_dy * sf3.N1 + sf4.dN2_dy * sf4.N1) * det_dx_dxi;
-	k_mat[5][8] = mat_term;
-	k_mat[8][5] = mat_term;
+			  + sf3.dN2_dy * sf3.N1 + sf4.dN2_dy * sf4.N1) * gp_w;
+	kmat[5][8] += mat_term;
+	kmat[8][5] += mat_term;
 	mat_term = (sf1.dN2_dy * sf1.N2 + sf2.dN2_dy * sf2.N2
-			  + sf3.dN2_dy * sf3.N2 + sf4.dN2_dy * sf4.N2) * det_dx_dxi;
-	k_mat[5][9] = mat_term;
-	k_mat[9][5] = mat_term;
+			  + sf3.dN2_dy * sf3.N2 + sf4.dN2_dy * sf4.N2) * gp_w;
+	kmat[5][9] += mat_term;
+	kmat[9][5] += mat_term;
 	mat_term = (sf1.dN2_dy * sf1.N3 + sf2.dN2_dy * sf2.N3
-			  + sf3.dN2_dy * sf3.N3 + sf4.dN2_dy * sf4.N3) * det_dx_dxi;
-	k_mat[5][10] = mat_term;
-	k_mat[10][5] = mat_term;
+			  + sf3.dN2_dy * sf3.N3 + sf4.dN2_dy * sf4.N3) * gp_w;
+	kmat[5][10] += mat_term;
+	kmat[10][5] += mat_term;
 	mat_term = (sf1.dN2_dy * sf1.N4 + sf2.dN2_dy * sf2.N4
-			  + sf3.dN2_dy * sf3.N4 + sf4.dN2_dy * sf4.N4) * det_dx_dxi;
-	k_mat[5][11] = mat_term;
-	k_mat[11][5] = mat_term;
+			  + sf3.dN2_dy * sf3.N4 + sf4.dN2_dy * sf4.N4) * gp_w;
+	kmat[5][11] += mat_term;
+	kmat[11][5] += mat_term;
 	mat_term = (sf1.dN3_dy * sf1.N1 + sf2.dN3_dy * sf2.N1
-			  + sf3.dN3_dy * sf3.N1 + sf4.dN3_dy * sf4.N1) * det_dx_dxi;
-	k_mat[6][8] = mat_term;
-	k_mat[8][6] = mat_term;
+			  + sf3.dN3_dy * sf3.N1 + sf4.dN3_dy * sf4.N1) * gp_w;
+	kmat[6][8] += mat_term;
+	kmat[8][6] += mat_term;
 	mat_term = (sf1.dN3_dy * sf1.N2 + sf2.dN3_dy * sf2.N2
-			  + sf3.dN3_dy * sf3.N2 + sf4.dN3_dy * sf4.N2) * det_dx_dxi;
-	k_mat[6][9] = mat_term;
-	k_mat[9][6] = mat_term;
+			  + sf3.dN3_dy * sf3.N2 + sf4.dN3_dy * sf4.N2) * gp_w;
+	kmat[6][9] += mat_term;
+	kmat[9][6] += mat_term;
 	mat_term = (sf1.dN3_dy * sf1.N3 + sf2.dN3_dy * sf2.N3
-			  + sf3.dN3_dy * sf3.N3 + sf4.dN3_dy * sf4.N3) * det_dx_dxi;
-	k_mat[6][10] = mat_term;
-	k_mat[10][6] = mat_term;
+			  + sf3.dN3_dy * sf3.N3 + sf4.dN3_dy * sf4.N3) * gp_w;
+	kmat[6][10] += mat_term;
+	kmat[10][6] += mat_term;
 	mat_term = (sf1.dN3_dy * sf1.N4 + sf2.dN3_dy * sf2.N4
-			  + sf3.dN3_dy * sf3.N4 + sf4.dN3_dy * sf4.N4) * det_dx_dxi;
-	k_mat[6][11] = mat_term;
-	k_mat[11][6] = mat_term;
+			  + sf3.dN3_dy * sf3.N4 + sf4.dN3_dy * sf4.N4) * gp_w;
+	kmat[6][11] += mat_term;
+	kmat[11][6] += mat_term;
 	mat_term = (sf1.dN4_dy * sf1.N1 + sf2.dN4_dy * sf2.N1
-			  + sf3.dN4_dy * sf3.N1 + sf4.dN4_dy * sf4.N1) * det_dx_dxi;
-	k_mat[7][8] = mat_term;
-	k_mat[8][7] = mat_term;
+			  + sf3.dN4_dy * sf3.N1 + sf4.dN4_dy * sf4.N1) * gp_w;
+	kmat[7][8] += mat_term;
+	kmat[8][7] += mat_term;
 	mat_term = (sf1.dN4_dy * sf1.N2 + sf2.dN4_dy * sf2.N2
-			  + sf3.dN4_dy * sf3.N2 + sf4.dN4_dy * sf4.N2) * det_dx_dxi;
-	k_mat[7][9] = mat_term;
-	k_mat[9][7] = mat_term;
+			  + sf3.dN4_dy * sf3.N2 + sf4.dN4_dy * sf4.N2) * gp_w;
+	kmat[7][9] += mat_term;
+	kmat[9][7] += mat_term;
 	mat_term = (sf1.dN4_dy * sf1.N3 + sf2.dN4_dy * sf2.N3
-			  + sf3.dN4_dy * sf3.N3 + sf4.dN4_dy * sf4.N3) * det_dx_dxi;
-	k_mat[7][10] = mat_term;
-	k_mat[10][7] = mat_term;
+			  + sf3.dN4_dy * sf3.N3 + sf4.dN4_dy * sf4.N3) * gp_w;
+	kmat[7][10] += mat_term;
+	kmat[10][7] += mat_term;
 	mat_term = (sf1.dN4_dy * sf1.N4 + sf2.dN4_dy * sf2.N4
-			  + sf3.dN4_dy * sf3.N4 + sf4.dN4_dy * sf4.N4) * det_dx_dxi;
-	k_mat[7][11] = mat_term;
-	k_mat[11][7] = mat_term;
+			  + sf3.dN4_dy * sf3.N4 + sf4.dN4_dy * sf4.N4) * gp_w;
+	kmat[7][11] += mat_term;
+	kmat[11][7] += mat_term;
 	// Ni * Nj / K
 	mat_term = (sf1.N1 * sf1.N1 / gp1.K + sf2.N1 * sf2.N1 / gp2.K
-			  + sf3.N1 * sf3.N1 / gp3.K + sf4.N1 * sf4.N1 / gp4.K) * -det_dx_dxi;
-	k_mat[8][8] = mat_term;
+			  + sf3.N1 * sf3.N1 / gp3.K + sf4.N1 * sf4.N1 / gp4.K) * -gp_w;
+	kmat[8][8] += mat_term;
 	mat_term = (sf1.N1 * sf1.N2 / gp1.K + sf2.N1 * sf2.N2 / gp2.K
-			  + sf3.N1 * sf3.N2 / gp3.K + sf4.N1 * sf4.N2 / gp4.K) * -det_dx_dxi;
-	k_mat[8][9] = mat_term;
-	k_mat[9][8] = mat_term;
+			  + sf3.N1 * sf3.N2 / gp3.K + sf4.N1 * sf4.N2 / gp4.K) * -gp_w;
+	kmat[8][9] += mat_term;
+	kmat[9][8] += mat_term;
 	mat_term = (sf1.N1 * sf1.N3 / gp1.K + sf2.N1 * sf2.N3 / gp2.K
-			  + sf3.N1 * sf3.N3 / gp3.K + sf4.N1 * sf4.N3 / gp4.K) * -det_dx_dxi;
-	k_mat[8][10] = mat_term;
-	k_mat[10][8] = mat_term;
+			  + sf3.N1 * sf3.N3 / gp3.K + sf4.N1 * sf4.N3 / gp4.K) * -gp_w;
+	kmat[8][10] += mat_term;
+	kmat[10][8] += mat_term;
 	mat_term = (sf1.N1 * sf1.N4 / gp1.K + sf2.N1 * sf2.N4 / gp2.K
-			  + sf3.N1 * sf3.N4 / gp3.K + sf4.N1 * sf4.N4 / gp4.K) * -det_dx_dxi;
-	k_mat[8][11] = mat_term;
-	k_mat[11][8] = mat_term;
+			  + sf3.N1 * sf3.N4 / gp3.K + sf4.N1 * sf4.N4 / gp4.K) * -gp_w;
+	kmat[8][11] += mat_term;
+	kmat[11][8] += mat_term;
 	mat_term = (sf1.N2 * sf1.N2 / gp1.K + sf2.N2 * sf2.N2 / gp2.K
-			  + sf3.N2 * sf3.N2 / gp3.K + sf4.N2 * sf4.N2 / gp4.K) * -det_dx_dxi;
-	k_mat[9][9] = mat_term;
+			  + sf3.N2 * sf3.N2 / gp3.K + sf4.N2 * sf4.N2 / gp4.K) * -gp_w;
+	kmat[9][9] = mat_term;
 	mat_term = (sf1.N2 * sf1.N3 / gp1.K + sf2.N2 * sf2.N3 / gp2.K
-			  + sf3.N2 * sf3.N3 / gp3.K + sf4.N2 * sf4.N3 / gp4.K) * -det_dx_dxi;
-	k_mat[9][10] = mat_term;
-	k_mat[10][9] = mat_term;
+			  + sf3.N2 * sf3.N3 / gp3.K + sf4.N2 * sf4.N3 / gp4.K) * -gp_w;
+	kmat[9][10] += mat_term;
+	kmat[10][9] += mat_term;
 	mat_term = (sf1.N2 * sf1.N4 / gp1.K + sf2.N2 * sf2.N4 / gp2.K
-			  + sf3.N2 * sf3.N4 / gp3.K + sf4.N2 * sf4.N4 / gp4.K) * -det_dx_dxi;
-	k_mat[9][11] = mat_term;
-	k_mat[11][9] = mat_term;
+			  + sf3.N2 * sf3.N4 / gp3.K + sf4.N2 * sf4.N4 / gp4.K) * -gp_w;
+	kmat[9][11] += mat_term;
+	kmat[11][9] += mat_term;
 	mat_term = (sf1.N3 * sf1.N3 / gp1.K + sf2.N3 * sf2.N3 / gp2.K
-			  + sf3.N3 * sf3.N3 / gp3.K + sf4.N3 * sf4.N3 / gp4.K) * -det_dx_dxi;
-	k_mat[10][10] = mat_term;
+			  + sf3.N3 * sf3.N3 / gp3.K + sf4.N3 * sf4.N3 / gp4.K) * -gp_w;
+	kmat[10][10] += mat_term;
 	mat_term = (sf1.N3 * sf1.N4 / gp1.K + sf2.N3 * sf2.N4 / gp2.K
-			  + sf3.N3 * sf3.N4 / gp3.K + sf4.N3 * sf4.N4 / gp4.K) * -det_dx_dxi;
-	k_mat[10][11] = mat_term;
-	k_mat[11][10] = mat_term;
+			  + sf3.N3 * sf3.N4 / gp3.K + sf4.N3 * sf4.N4 / gp4.K) * -gp_w;
+	kmat[10][11] += mat_term;
+	kmat[11][10] += mat_term;
 	mat_term = (sf1.N4 * sf1.N4 / gp1.K + sf2.N4 * sf2.N4 / gp2.K
-			  + sf3.N4 * sf3.N4 / gp3.K + sf4.N4 * sf4.N4 / gp4.K) * -det_dx_dxi;
-	k_mat[11][11] = mat_term;
+			  + sf3.N4 * sf3.N4 / gp3.K + sf4.N4 * sf4.N4 / gp4.K) * -gp_w;
+	kmat[11][11] += mat_term;
 
-	//print_mat(k_mat);
+	//print_mat(kmat, out_file);
 
 	// force vector
-	f_a[0] = (sf1.N1 * gp1.density * gp1.ax + sf2.N1 * gp2.density * gp2.ax
-			+ sf3.N1 * gp3.density * gp3.ax + sf4.N1 * gp4.density * gp4.ax) * det_dx_dxi;
-	f_a[1] = (sf1.N2 * gp1.density * gp1.ax + sf2.N2 * gp2.density * gp2.ax
-			+ sf3.N2 * gp3.density * gp3.ax + sf4.N2 * gp4.density * gp4.ax) * det_dx_dxi;
-	f_a[2] = (sf1.N3 * gp1.density * gp1.ax + sf2.N3 * gp2.density * gp2.ax
-			+ sf3.N3 * gp3.density * gp3.ax + sf4.N3 * gp4.density * gp4.ax) * det_dx_dxi;
-	f_a[3] = (sf1.N4 * gp1.density * gp1.ax + sf2.N4 * gp2.density * gp2.ax
-			+ sf3.N4 * gp3.density * gp3.ax + sf4.N4 * gp4.density * gp4.ax) * det_dx_dxi;
-	f_a[4] = (sf1.N1 * gp1.density * gp1.ay + sf2.N1 * gp2.density * gp2.ay
-			+ sf3.N1 * gp3.density * gp3.ay + sf4.N1 * gp4.density * gp4.ay) * det_dx_dxi;
-	f_a[5] = (sf1.N2 * gp1.density * gp1.ay + sf2.N2 * gp2.density * gp2.ay
-			+ sf3.N2 * gp3.density * gp3.ay + sf4.N2 * gp4.density * gp4.ay) * det_dx_dxi;
-	f_a[6] = (sf1.N3 * gp1.density * gp1.ay + sf2.N3 * gp2.density * gp2.ay
-			+ sf3.N3 * gp3.density * gp3.ay + sf4.N3 * gp4.density * gp4.ay) * det_dx_dxi;
-	f_a[7] = (sf1.N4 * gp1.density * gp1.ay + sf2.N4 * gp2.density * gp2.ay
-			+ sf3.N4 * gp3.density * gp3.ay + sf4.N4 * gp4.density * gp4.ay) * det_dx_dxi;
-
-	f_v[0] = (sf1.N1 * gp1.density * gp1.vx + sf2.N1 * gp2.density * gp2.vx
-			+ sf3.N1 * gp3.density * gp3.vx + sf4.N1 * gp4.density * gp4.vx) * det_dx_dxi;
-	f_v[1] = (sf1.N2 * gp1.density * gp1.vx + sf2.N2 * gp2.density * gp2.vx
-			+ sf3.N2 * gp3.density * gp3.vx + sf4.N2 * gp4.density * gp4.vx) * det_dx_dxi;
-	f_v[2] = (sf1.N3 * gp1.density * gp1.vx + sf2.N3 * gp2.density * gp2.vx
-			+ sf3.N3 * gp3.density * gp3.vx + sf4.N3 * gp4.density * gp4.vx) * det_dx_dxi;
-	f_v[3] = (sf1.N4 * gp1.density * gp1.vx + sf2.N4 * gp2.density * gp2.vx
-			+ sf3.N4 * gp3.density * gp3.vx + sf4.N4 * gp4.density * gp4.vx) * det_dx_dxi;
-	f_v[4] = (sf1.N1 * gp1.density * gp1.vy + sf2.N1 * gp2.density * gp2.vy
-			+ sf3.N1 * gp3.density * gp3.vy + sf4.N1 * gp4.density * gp4.vy) * det_dx_dxi;
-	f_v[5] = (sf1.N2 * gp1.density * gp1.vy + sf2.N2 * gp2.density * gp2.vy
-			+ sf3.N2 * gp3.density * gp3.vy + sf4.N2 * gp4.density * gp4.vy) * det_dx_dxi;
-	f_v[6] = (sf1.N3 * gp1.density * gp1.vy + sf2.N3 * gp2.density * gp2.vy
-			+ sf3.N3 * gp3.density * gp3.vy + sf4.N3 * gp4.density * gp4.vy) * det_dx_dxi;
-	f_v[7] = (sf1.N4 * gp1.density * gp1.vy + sf2.N4 * gp2.density * gp2.vy
-			+ sf3.N4 * gp3.density * gp3.vy + sf4.N4 * gp4.density * gp4.vy) * det_dx_dxi;
-
-	for (size_t i = 0; i < 12; ++i)
-		for (size_t j = 0; j < 12; ++j)
-			kmat[i][j] = m_mat[i][j] / (beta * dtime * dtime) + k_mat[i][j];
-
-	for (size_t i = 0; i < 8; ++i)
-		fvec[i] = f_a[i] / (2.0 * beta) + f_v[i] / (beta * dtime);
+	// f_int
+	fvec[0] = (sf1.dN1_dx * (gp1.s11 + gp1.p) + sf1.dN1_dy * gp1.s12
+			 + sf2.dN1_dx * (gp2.s11 + gp2.p) + sf2.dN1_dy * gp2.s12
+			 + sf3.dN1_dx * (gp3.s11 + gp3.p) + sf3.dN1_dy * gp3.s12
+			 + sf4.dN1_dx * (gp4.s11 + gp4.p) + sf4.dN1_dy * gp4.s12) * -gp_w;
+	fvec[1] = (sf1.dN2_dx * (gp1.s11 + gp1.p) + sf1.dN2_dy * gp1.s12
+			 + sf2.dN2_dx * (gp2.s11 + gp2.p) + sf2.dN2_dy * gp2.s12
+			 + sf3.dN2_dx * (gp3.s11 + gp3.p) + sf3.dN2_dy * gp3.s12
+			 + sf4.dN2_dx * (gp4.s11 + gp4.p) + sf4.dN2_dy * gp4.s12) * -gp_w;
+	fvec[2] = (sf1.dN3_dx * (gp1.s11 + gp1.p) + sf1.dN3_dy * gp1.s12
+			 + sf2.dN3_dx * (gp2.s11 + gp2.p) + sf2.dN3_dy * gp2.s12
+			 + sf3.dN3_dx * (gp3.s11 + gp3.p) + sf3.dN3_dy * gp3.s12
+			 + sf4.dN3_dx * (gp4.s11 + gp4.p) + sf4.dN3_dy * gp4.s12) * -gp_w;
+	fvec[3] = (sf1.dN4_dx * (gp1.s11 + gp1.p) + sf1.dN4_dy * gp1.s12
+			 + sf2.dN4_dx * (gp2.s11 + gp2.p) + sf2.dN4_dy * gp2.s12
+			 + sf3.dN4_dx * (gp3.s11 + gp3.p) + sf3.dN4_dy * gp3.s12
+			 + sf4.dN4_dx * (gp4.s11 + gp4.p) + sf4.dN4_dy * gp4.s12) * -gp_w;
+	fvec[4] = (sf1.dN1_dx * gp1.s12 + sf1.dN1_dy * (gp1.s22 + gp1.p)
+			 + sf2.dN1_dx * gp2.s12 + sf2.dN1_dy * (gp2.s22 + gp2.p)
+			 + sf3.dN1_dx * gp3.s12 + sf3.dN1_dy * (gp3.s22 + gp3.p)
+			 + sf4.dN1_dx * gp4.s12 + sf4.dN1_dy * (gp4.s22 + gp4.p)) * -gp_w;
+	fvec[5] = (sf1.dN2_dx * gp1.s12 + sf1.dN2_dy * (gp1.s22 + gp1.p)
+			 + sf2.dN2_dx * gp2.s12 + sf2.dN2_dy * (gp2.s22 + gp2.p)
+			 + sf3.dN2_dx * gp3.s12 + sf3.dN2_dy * (gp3.s22 + gp3.p)
+			 + sf4.dN2_dx * gp4.s12 + sf4.dN2_dy * (gp4.s22 + gp4.p)) * -gp_w;
+	fvec[6] = (sf1.dN3_dx * gp1.s12 + sf1.dN3_dy * (gp1.s22 + gp1.p)
+			 + sf2.dN3_dx * gp2.s12 + sf2.dN3_dy * (gp2.s22 + gp2.p)
+			 + sf3.dN3_dx * gp3.s12 + sf3.dN3_dy * (gp3.s22 + gp3.p)
+			 + sf4.dN3_dx * gp4.s12 + sf4.dN3_dy * (gp4.s22 + gp4.p)) * -gp_w;
+	fvec[7] = (sf1.dN4_dx * gp1.s12 + sf1.dN4_dy * (gp1.s22 + gp1.p)
+			 + sf2.dN4_dx * gp2.s12 + sf2.dN4_dy * (gp2.s22 + gp2.p)
+			 + sf3.dN4_dx * gp3.s12 + sf3.dN4_dy * (gp3.s22 + gp3.p)
+			 + sf4.dN4_dx * gp4.s12 + sf4.dN4_dy * (gp4.s22 + gp4.p)) * -gp_w;
 	fvec[8] = 0.0;
 	fvec[9] = 0.0;
 	fvec[10] = 0.0;
 	fvec[11] = 0.0;
+	//  f_a
+	coef = 1.0 / (2.0 * beta) - 1.0;
+	fvec[0] += (sf1.N1 * gp1.density * gp1.ax + sf2.N1 * gp2.density * gp2.ax
+			  + sf3.N1 * gp3.density * gp3.ax + sf4.N1 * gp4.density * gp4.ax) * gp_w * coef;
+	fvec[1] += (sf1.N2 * gp1.density * gp1.ax + sf2.N2 * gp2.density * gp2.ax
+			  + sf3.N2 * gp3.density * gp3.ax + sf4.N2 * gp4.density * gp4.ax) * gp_w * coef;
+	fvec[2] += (sf1.N3 * gp1.density * gp1.ax + sf2.N3 * gp2.density * gp2.ax
+			  + sf3.N3 * gp3.density * gp3.ax + sf4.N3 * gp4.density * gp4.ax) * gp_w * coef;
+	fvec[3] += (sf1.N4 * gp1.density * gp1.ax + sf2.N4 * gp2.density * gp2.ax
+			  + sf3.N4 * gp3.density * gp3.ax + sf4.N4 * gp4.density * gp4.ax) * gp_w * coef;
+	fvec[4] += (sf1.N1 * gp1.density * gp1.ay + sf2.N1 * gp2.density * gp2.ay
+			  + sf3.N1 * gp3.density * gp3.ay + sf4.N1 * gp4.density * gp4.ay) * gp_w * coef;
+	fvec[5] += (sf1.N2 * gp1.density * gp1.ay + sf2.N2 * gp2.density * gp2.ay
+			  + sf3.N2 * gp3.density * gp3.ay + sf4.N2 * gp4.density * gp4.ay) * gp_w * coef;
+	fvec[6] += (sf1.N3 * gp1.density * gp1.ay + sf2.N3 * gp2.density * gp2.ay
+			  + sf3.N3 * gp3.density * gp3.ay + sf4.N3 * gp4.density * gp4.ay) * gp_w * coef;
+	fvec[7] += (sf1.N4 * gp1.density * gp1.ay + sf2.N4 * gp2.density * gp2.ay
+			  + sf3.N4 * gp3.density * gp3.ay + sf4.N4 * gp4.density * gp4.ay) * gp_w * coef;
+	// f_v
+	coef = 1.0 / (beta * dtime);
+	fvec[0] += (sf1.N1 * gp1.density * gp1.vx + sf2.N1 * gp2.density * gp2.vx
+			  + sf3.N1 * gp3.density * gp3.vx + sf4.N1 * gp4.density * gp4.vx) * gp_w * coef;
+	fvec[1] += (sf1.N2 * gp1.density * gp1.vx + sf2.N2 * gp2.density * gp2.vx
+			  + sf3.N2 * gp3.density * gp3.vx + sf4.N2 * gp4.density * gp4.vx) * gp_w * coef;
+	fvec[2] += (sf1.N3 * gp1.density * gp1.vx + sf2.N3 * gp2.density * gp2.vx
+			  + sf3.N3 * gp3.density * gp3.vx + sf4.N3 * gp4.density * gp4.vx) * gp_w * coef;
+	fvec[3] += (sf1.N4 * gp1.density * gp1.vx + sf2.N4 * gp2.density * gp2.vx
+			  + sf3.N4 * gp3.density * gp3.vx + sf4.N4 * gp4.density * gp4.vx) * gp_w * coef;
+	fvec[4] += (sf1.N1 * gp1.density * gp1.vy + sf2.N1 * gp2.density * gp2.vy
+			  + sf3.N1 * gp3.density * gp3.vy + sf4.N1 * gp4.density * gp4.vy) * gp_w * coef;
+	fvec[5] += (sf1.N2 * gp1.density * gp1.vy + sf2.N2 * gp2.density * gp2.vy
+			  + sf3.N2 * gp3.density * gp3.vy + sf4.N2 * gp4.density * gp4.vy) * gp_w * coef;
+	fvec[6] += (sf1.N3 * gp1.density * gp1.vy + sf2.N3 * gp2.density * gp2.vy
+			  + sf3.N3 * gp3.density * gp3.vy + sf4.N3 * gp4.density * gp4.vy) * gp_w * coef;
+	fvec[7] += (sf1.N4 * gp1.density * gp1.vy + sf2.N4 * gp2.density * gp2.vy
+			  + sf3.N4 * gp3.density * gp3.vy + sf4.N4 * gp4.density * gp4.vy) * gp_w * coef;
 }

@@ -149,7 +149,7 @@ public:
 	void print_with_iter(void)
 	{
 		size_t row_id = begin()->row();
-		for (MatrixCoefficientSet<5>::CoefficientIterator iter(begin()); iter != end(); ++iter)
+		for (CoefficientIterator iter(begin()); iter != end(); ++iter)
 		{
 			if (row_id != iter->row())
 			{

@@ -12,8 +12,11 @@
 #include "test_sim_core.h"
 #include "test_post_processor.h"
 
-static double bgm_h = 1.0;
-static size_t len = 5;
+using namespace Model_S2D_ME_s_up_Internal;
+
+static double bgm_h = 0.25;
+static size_t width = 1;
+static size_t len = 2;
 
 // implicit 1d bar compression
 void test_mpm_me_s_up_1dbar(void)
@@ -21,44 +24,62 @@ void test_mpm_me_s_up_1dbar(void)
 	Model_S2D_ME_s_up model;
 	
 	// background mesh
-	model.init_mesh(bgm_h, 1, len);
+	model.init_mesh(bgm_h, width, len);
 
 	// material points
 	size_t pcl_per_elem_len = 2;
-	size_t pcl_num = pcl_per_elem_len * (len * pcl_per_elem_len);
+	size_t pcl_num = (width * pcl_per_elem_len) * (len * pcl_per_elem_len);
 	double pcl_area = bgm_h * bgm_h / double(pcl_per_elem_len * pcl_per_elem_len);
-	model.init_pcl(pcl_num, pcl_area, 1.0, 100.0, 0.3, 83.33);
+	model.init_pcl(pcl_num, pcl_area, 1.0, 100.0, 0.0, 100.0 / 3.0);
 	size_t pcl_id = 0;
 	for (size_t y_id = 0; y_id < len * pcl_per_elem_len; ++y_id)
-		for (size_t x_id = 0; x_id < pcl_per_elem_len; ++x_id)
+		for (size_t x_id = 0; x_id < width * pcl_per_elem_len; ++x_id)
 		{
 			Model_S2D_ME_s_up::Particle &pcl = model.pcls[pcl_id++];
 			pcl.x = (0.25 + double(x_id) * 0.5) * bgm_h;
 			pcl.y = (0.25 + double(y_id) * 0.5) * bgm_h;
 		}
+	//model.pcls[0].x = 0.0   * N1(-0.5773502692, -0.5773502692) + bgm_h * N2(-0.5773502692, -0.5773502692)
+	//				+ bgm_h * N3(-0.5773502692, -0.5773502692) + 0.0   * N4(-0.5773502692, -0.5773502692);
+	//model.pcls[0].y = 0.0   * N1(-0.5773502692, -0.5773502692) + 0.0   * N2(-0.5773502692, -0.5773502692)
+	//				+ bgm_h * N3(-0.5773502692, -0.5773502692) + bgm_h * N4(-0.5773502692, -0.5773502692);
+	//model.pcls[1].x = 0.0   * N1( 0.5773502692, -0.5773502692) + bgm_h * N2( 0.5773502692, -0.5773502692)
+	//				+ bgm_h * N3( 0.5773502692, -0.5773502692) + 0.0   * N4( 0.5773502692, -0.5773502692);
+	//model.pcls[1].y = 0.0   * N1( 0.5773502692, -0.5773502692) + 0.0   * N2( 0.5773502692, -0.5773502692)
+	//				+ bgm_h * N3( 0.5773502692, -0.5773502692) + bgm_h * N4( 0.5773502692, -0.5773502692);
+	//model.pcls[2].x = 0.0   * N1( 0.5773502692,  0.5773502692) + bgm_h * N2( 0.5773502692,  0.5773502692)
+	//				+ bgm_h * N3( 0.5773502692,  0.5773502692) + 0.0   * N4( 0.5773502692,  0.5773502692);
+	//model.pcls[2].y = 0.0   * N1( 0.5773502692,  0.5773502692) + 0.0   * N2( 0.5773502692,  0.5773502692)
+	//				+ bgm_h * N3( 0.5773502692,  0.5773502692) + bgm_h * N4( 0.5773502692,  0.5773502692);
+	//model.pcls[3].x = 0.0   * N1(-0.5773502692,  0.5773502692) + bgm_h * N2(-0.5773502692,  0.5773502692)
+	//				+ bgm_h * N3(-0.5773502692,  0.5773502692) + 0.0   * N4(-0.5773502692,  0.5773502692);
+	//model.pcls[3].y = 0.0   * N1(-0.5773502692,  0.5773502692) + 0.0   * N2(-0.5773502692,  0.5773502692)
+	//				+ bgm_h * N3(-0.5773502692,  0.5773502692) + bgm_h * N4(-0.5773502692,  0.5773502692);
+	
 	// velocity bc
-	model.uy_num = 2;
+	model.uy_num = width + 1;
 	model.uys = new DisplacementBC[model.uy_num];
-	model.uys[0].node_id = 0;
-	model.uys[0].u = 0.0;
-	model.uys[1].node_id = 1;
-	model.uys[1].u = 0.0;
+	for (size_t n_id = 0; n_id < model.uy_num; ++n_id)
+	{
+		model.uys[n_id].node_id = n_id;
+		model.uys[n_id].u = 0.0;
+	}
 	model.ux_num = (len + 1) * 2;
 	model.uxs = new DisplacementBC[model.ux_num];
 	for (size_t n_id = 0; n_id < len + 1; ++n_id)
 	{
-		model.uxs[n_id].node_id = 2 * n_id;
+		model.uxs[n_id].node_id = (width + 1) * n_id;
 		model.uxs[n_id].u = 0.0;
-		model.uxs[len + 1 + n_id].node_id = 2 * n_id + 1;
+		model.uxs[len + 1 + n_id].node_id = (width + 1) * (n_id + 1) - 1;
 		model.uxs[len + 1 + n_id].u = 0.0;
 	}
 	// traction bc
-	model.ty_num = pcl_per_elem_len;
+	model.ty_num = width * pcl_per_elem_len;
 	model.tys = new TractionBC_MPM[model.ty_num];
 	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
-		model.tys[t_id].pcl_id = (len * pcl_per_elem_len - 1) * pcl_per_elem_len + t_id;
-		model.tys[t_id].t = bgm_h / double(pcl_per_elem_len) * -100.0;
+		model.tys[t_id].pcl_id = (len * pcl_per_elem_len - 1) * width * pcl_per_elem_len + t_id;
+		model.tys[t_id].t = bgm_h / double(pcl_per_elem_len) * -10.0;
 	}
 
 	ResultFile_PlainBin res_file_pb;
@@ -76,18 +97,18 @@ void test_mpm_me_s_up_1dbar(void)
 
 	TimeHistoryOutput_S2D_ME_s_up out1;
 	out1.set_res_file(res_file_pb);
-	out1.set_interval_num(50);
+	out1.set_interval_num(78);
 	out1.set_output_init_state();
 	TimeHistoryOutput_S2D_ME_s_up out2;
 	out2.set_res_file(res_file_xml);
-	out2.set_interval_num(50);
+	out2.set_interval_num(78);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar cpb;
 	
 	Step_S2D_ME_s_up step;
 	step.set_name("init_step");
 	step.set_model(model);
-	step.set_time(0.25);
+	step.set_time(0.78);
 	step.set_dtime(0.01);
 	step.add_time_history(out1);
 	step.add_time_history(out2);

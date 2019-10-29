@@ -119,7 +119,7 @@ int time_history_output_func_s2d_me_s_fem_up_to_xml_res_file(TimeHistoryOutput &
 		step.get_current_time(), step.get_total_time());
 	file.write(str_buffer, strlen(str_buffer));
 
-	// output material points data
+	// output mesh data (nodes and gauss points)
 	Model_S2D_ME_s_FEM_up &model = static_cast<Model_S2D_ME_s_FEM_up &>(th.get_model());
 	file << "    <MeshObject>\n";
 	// node data

@@ -63,6 +63,9 @@ public:
 
 	size_t dof_num;
 	ShapeFuncValue gp1_sf, gp2_sf, gp3_sf, gp4_sf;
+	double gp_w; // weight = h*h/4
+	double dN_dx_mat1[3][8], dN_dx_mat2[3][8];
+	double dN_dx_mat3[3][8], dN_dx_mat4[3][8];
 
 	// Force BCs (Naumann BCs)
 	size_t tx_num, ty_num;
@@ -74,10 +77,7 @@ public:
 	DisplacementBC *uxs, *uys;
 	//size_t pbc_num;
 	//PressureBC *pbcs;
-
-	double dN_dx_mat1[3][8], dN_dx_mat2[3][8];
-	double dN_dx_mat3[3][8], dN_dx_mat4[3][8];
-
+	
 public:
 	Model_S2D_ME_s_FEM_up();
 	~Model_S2D_ME_s_FEM_up();

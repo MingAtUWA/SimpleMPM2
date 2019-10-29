@@ -184,10 +184,7 @@ public:
 		ufy = 3,
 		p = 4
 	};
-	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const
-	{
-		return size_t(dof_type) * node_num + n_id;
-	}
+	inline size_t n_id_to_dof_id(size_t n_id, DOF dof_type) const { return size_t(dof_type) * node_num + n_id; }
 };
 
 #undef N_LOW

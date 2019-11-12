@@ -46,7 +46,7 @@ int Step_S2D_CHM_s_FEM_uUp::init_calculation(void)
 	kmat_col = new double[model->dof_num];
 
 	// for debug
-	out_file.open("debug_mat_out.csv", std::ios::binary | std::ios::out);
+	out_file.open("debug_mat_out_CHM_s_FEM_uUp.csv", std::ios::binary | std::ios::out);
 	
 	return 0;
 }

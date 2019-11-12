@@ -28,11 +28,13 @@ void test_slide_down_frictional_slope2(void);
 
 void test_mpm_chm_s_1d_consolidation(void);
 
-void test_mpm_me_s_up_1dbar(void);
 void test_fem_me_s_up_1dbar(void);
+void test_fem_chm_s_1d_consolidation(void);
+
+void test_imp_mpm_me_s_up_1dbar(void);
+void test_imp_mpm_chm_s_uup_1d_consolidation(void);
 
 void test_init_pcl_gimp(void);
 
-void test_fem_chm_s_1d_consolidation(void);
 
 #endif

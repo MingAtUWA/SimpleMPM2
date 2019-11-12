@@ -11,6 +11,16 @@ namespace
 	typedef Model_S2D_CHM_s_FEM_uUp::Node Node_fem;
 	typedef Model_S2D_CHM_s_FEM_uUp::DOF DOF;
 
+	void print_mat(double mat[3][3])
+	{
+		for (size_t i = 0; i < 3; i++)
+		{
+			for (size_t j = 0; j < 3; j++)
+				std::cout << mat[i][j] << ", ";
+			std::cout << "\n";
+		}
+	}
+
 	void print_mat(double mat[20][20],
 				   std::fstream &out_file,
 				   const char *mat_name = nullptr)
@@ -222,9 +232,6 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 	kmat[11][11] = mat_term;
 	kmat[15][15] = mat_term;
 
-	//print_mat(kmat, out_file);
-	//memset(kmat, 0, sizeof(double) * 20 * 20);
-
 	// damping matrix
 	coef = gamma / (beta * dtime);
 	double sp_f1 = gp1.n * gp1.n * gp1.miu / gp1.k;
@@ -288,9 +295,6 @@ void Step_S2D_CHM_s_FEM_uUp::form_elem_stiffness_mat_and_force_vec(
 	mat_term = (sf1.N4 * sp_f1 * sf1.N4 + sf2.N4 * sp_f2 * sf2.N4
 			  + sf3.N4 * sp_f3 * sf3.N4 + sf4.N4 * sp_f4 * sf4.N4) * gp_w * coef;
 	FILL_SEEP_MAT(3, 3);
-
-	//print_mat(kmat, out_file);
-	//memset(kmat, 0, sizeof(double) * 20 * 20);
 
 	// stiffness matrix
 	double E_mat[3][3];

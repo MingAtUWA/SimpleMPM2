@@ -45,12 +45,17 @@ int main(int argc, void **argv)
 	//test_mpm_chm_s_1d_consolidation();
 	//test_animation_chm_s_1d_consolidation();
 	
-	// Implicit 1d bar compression
-	test_mpm_me_s_up_1dbar();
-	//test_animation_me_s_up_1dbar();
-
+	// mixed u-p implicit FEM
 	//test_fem_me_s_up_1dbar();
 	//test_fem_chm_s_1d_consolidation();
+	
+	// Implicit ME MPM
+	//test_imp_mpm_me_s_up_1dbar();
+	//test_animation_me_s_up_1dbar();
+
+	// Implicit CHM MPM
+	test_imp_mpm_chm_s_uup_1d_consolidation();
+	//test_animation_chm_s_uup_1d_consolidation();
 
 	//system("pause");
 	return 0;

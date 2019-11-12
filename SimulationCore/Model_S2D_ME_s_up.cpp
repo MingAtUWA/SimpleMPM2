@@ -18,6 +18,7 @@ Model_S2D_ME_s_up::Model_S2D_ME_s_up() :
 Model_S2D_ME_s_up::~Model_S2D_ME_s_up()
 {
 	clear_mesh();
+	clear_pcl();
 	if (bfxs)
 	{
 		delete[] bfxs;

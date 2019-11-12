@@ -10,7 +10,7 @@
 #include "test_post_processor.h"
 
 static double bgm_h = 0.25;
-static size_t len = 1;
+static size_t len = 10;
 
 // implicit 1d bar compression
 void test_fem_me_s_up_1dbar(void)
@@ -75,7 +75,7 @@ void test_fem_me_s_up_1dbar(void)
 	Step_S2D_ME_s_FEM_up step;
 	step.set_name("init_step");
 	step.set_model(model);
-	step.set_time(0.01);
+	step.set_time(5.0);
 	step.set_dtime(0.01);
 	//step.add_time_history(out1);
 	step.add_time_history(out2);

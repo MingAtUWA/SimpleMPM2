@@ -12,7 +12,7 @@
 //#include "GA_S2D_CHM_s.h"
 
 static size_t width = 1;
-static size_t len = 10;
+static size_t len = 1;
 static double bgm_h = 1.0 / double(len);
 
 void test_fem_chm_s_1d_consolidation(void)
@@ -64,16 +64,22 @@ void test_fem_chm_s_1d_consolidation(void)
 		dbc4.node_id = (width + 1) * (bc_id + 1) - 1;
 		dbc4.u = 0.0;
 	}
-	model.ufy_num = (width + 1) * 2;
+	model.ufy_num = width + 1;
 	model.ufys = new DisplacementBC[model.ufy_num];
-	for (size_t bc_id = 0; bc_id < width + 1; ++bc_id)
+	for (size_t bc_id = 0; bc_id < model.ufy_num; ++bc_id)
 	{
 		DisplacementBC &dbc1 = model.ufys[bc_id];
 		dbc1.node_id = bc_id;
 		dbc1.u = 0.0;
-		DisplacementBC &dbc2 = model.ufys[width + 1 + bc_id];
-		dbc2.node_id = (width + 1) * len + bc_id;
-		dbc2.u = 0.0;
+	}
+	// freely drainage bc
+	model.pbc_num = width + 1;
+	model.pbcs = new PressureBC[model.pbc_num];
+	for (size_t bc_id = 0; bc_id < model.pbc_num; ++bc_id)
+	{
+		PressureBC &pbc = model.pbcs[bc_id];
+		pbc.node_id = (width + 1) * len + bc_id;
+		pbc.p = 0.0;
 	}
 
 	//ResultFile_PlainBin res_file_pb;
@@ -102,24 +108,13 @@ void test_fem_chm_s_1d_consolidation(void)
 	Step_S2D_CHM_s_FEM_uUp step;
 	step.set_name("consolidation");
 	step.set_model(model);
-	step.set_time(15.0);
+	step.set_time(0.05);
 	step.set_dtime(0.05);
 	//step.add_time_history(out1);
 	step.add_time_history(out2);
 	//step.add_time_history(cpb);
 
-	// freely drainage bc
-	model.ufy_num = width + 1;
-	model.pbc_num = width + 1;
-	model.pbcs = new PressureBC[model.pbc_num];
-	for (size_t bc_id = 0; bc_id < model.pbc_num; ++bc_id)
-	{
-		PressureBC &pbc = model.pbcs[bc_id];
-		pbc.node_id = (width + 1) * len + bc_id;
-		pbc.p = 0.0;
-	}
-
 	step.solve();
 
-	system("pause");
+	//system("pause");
 }

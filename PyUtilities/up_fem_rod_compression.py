@@ -15,8 +15,8 @@ for th in root.findall("TimeHistory"):
     time.append(float(th.find("total_time").text))
     mh_obj = th.find("MeshObject")
     gp_num = int(mh_obj.find("gauss_point_num").text)
-    #gp_id = 0
-    gp_id = 39
+    gp_id = 0 # for stress
+    #gp_id = 39 # for displacement
     gp_data_text = mh_obj.find("gauss_point_data").text
     gp_data_buf = io.StringIO(gp_data_text)
     gp_data_buf.readline()
@@ -24,8 +24,8 @@ for th in root.findall("TimeHistory"):
     for i in range(gp_id): 
         gp_data_buf.readline()
     data_text = gp_data_buf.readline().strip('\n').split(',')
-    #syy.append(float(data_text[2]) + float(data_text[4]))
-    syy.append(float(data_text[1]))
+    syy.append(float(data_text[2]) + float(data_text[4])) # stress
+    #syy.append(float(data_text[1])) # displacement
 
 fig = plt.figure()
 plot1 = fig.subplots(1, 1)
@@ -56,8 +56,8 @@ for i in range(data_num):
 
 # plot
 plot1.set_xlim(0.0, t_len)
-#line2, = plot1.plot(t_list, s_list, 'r--')
-line2, = plot1.plot(t_list, u_list, 'r--')
+line2, = plot1.plot(t_list, s_list, 'r--')
+#line2, = plot1.plot(t_list, u_list, 'r--')
 
 plt.legend(handles=[line1, line2], labels=['FEM', 'Analytical Solution'])
 

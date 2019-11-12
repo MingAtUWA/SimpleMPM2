@@ -16,10 +16,10 @@ using namespace Model_S2D_ME_s_up_Internal;
 
 static double bgm_h = 0.25;
 static size_t width = 1;
-static size_t len = 2;
+static size_t len = 5;
 
 // implicit 1d bar compression
-void test_mpm_me_s_up_1dbar(void)
+void test_imp_mpm_me_s_up_1dbar(void)
 {
 	Model_S2D_ME_s_up model;
 	
@@ -79,7 +79,7 @@ void test_mpm_me_s_up_1dbar(void)
 	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
 		model.tys[t_id].pcl_id = (len * pcl_per_elem_len - 1) * width * pcl_per_elem_len + t_id;
-		model.tys[t_id].t = bgm_h / double(pcl_per_elem_len) * -10.0;
+		model.tys[t_id].t = bgm_h / double(pcl_per_elem_len) * -30.0;
 	}
 
 	ResultFile_PlainBin res_file_pb;
@@ -97,18 +97,18 @@ void test_mpm_me_s_up_1dbar(void)
 
 	TimeHistoryOutput_S2D_ME_s_up out1;
 	out1.set_res_file(res_file_pb);
-	out1.set_interval_num(78);
+	out1.set_interval_num(50);
 	out1.set_output_init_state();
 	TimeHistoryOutput_S2D_ME_s_up out2;
 	out2.set_res_file(res_file_xml);
-	out2.set_interval_num(78);
+	out2.set_interval_num(50);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar cpb;
 	
 	Step_S2D_ME_s_up step;
 	step.set_name("init_step");
 	step.set_model(model);
-	step.set_time(0.78);
+	step.set_time(1.0);
 	step.set_dtime(0.01);
 	step.add_time_history(out1);
 	step.add_time_history(out2);
@@ -125,7 +125,7 @@ void test_animation_me_s_up_1dbar(void)
 	double padding_height = height * 0.5;
 	double padding_width = width * 0.5;
 	GA_S2D_ME_s_up gen;
-	gen.generate(5.0, -padding_width, width + padding_width,
+	gen.generate(15.0, -padding_width, width + padding_width,
 		-padding_height, height + padding_height,
 		"mpm_me_up_res_1dbar.bin",
 		"mpm_me_up_res_1dbar.gif");

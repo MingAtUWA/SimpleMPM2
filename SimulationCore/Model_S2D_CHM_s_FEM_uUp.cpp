@@ -2,6 +2,19 @@
 
 #include "Model_S2D_CHM_s_FEM_uUp.h"
 
+namespace
+{
+	void print_mat(double mat[3][8])
+	{
+		for (size_t i = 0; i < 3; i++)
+		{
+			for (size_t j = 0; j < 8; j++)
+				std::cout << mat[i][j] << ", ";
+			std::cout << "\n";
+		}
+	}
+};
+
 Model_S2D_CHM_s_FEM_uUp::Model_S2D_CHM_s_FEM_uUp() :
 	Model("Model_S2D_CHM_s_FEM_uUp"),
 	elems(nullptr), elem_x_num(0), elem_y_num(0), elem_num(0),
@@ -148,6 +161,10 @@ void Model_S2D_CHM_s_FEM_uUp::init_mesh(
 	Form_dN_dx_mat(2);
 	Form_dN_dx_mat(3);
 	Form_dN_dx_mat(4);
+	//print_mat(dN_dx_mat1);
+	//print_mat(dN_dx_mat2);
+	//print_mat(dN_dx_mat3);
+	//print_mat(dN_dx_mat4);
 }
 
 void Model_S2D_CHM_s_FEM_uUp::init_mat_param(

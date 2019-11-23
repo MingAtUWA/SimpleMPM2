@@ -27,6 +27,7 @@ add_executable(
     test_slide_down_frictional_slope2.cpp
     # chm - mpm
     test_mpm_chm_s_1d_consolidation.cpp
+    test_t2d_mpm_chm_s_1d_consolidation.cpp
     # Animation output
     test_mpm_rigidbody_animation.cpp
     # Generate material points from mesh

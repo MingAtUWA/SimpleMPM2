@@ -58,9 +58,9 @@ int solve_substep_S2D_CHM_s_uUp(void *_self)
 	Step_S2D_CHM_s_uUp &self = *(Step_S2D_CHM_s_uUp *)(_self);
 	
 	self.time_marching();
-	self.form_global_residual_force();
+	//self.form_global_residual_force();
 
-	//self.map_from_pcl_to_node();
+	self.map_from_pcl_to_node();
 
 	//self.requilibration();
 	//self.form_global_residual_force();
@@ -157,7 +157,9 @@ void Step_S2D_CHM_s_uUp::map_from_pcl_to_node(void)
 				n4.vy_f += pcl.vy_f * vol_N;
 			}
 		}
+		//std::cout << pcl.N1 << ", ";
 	}
+	//std::cout << "\n";
 
 	cal_node_num = 0;
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
@@ -177,16 +179,16 @@ void Step_S2D_CHM_s_uUp::map_from_pcl_to_node(void)
 				n2.g_id = cal_node_num;
 				++cal_node_num;
 			}
-			Node &n4 = md.nodes[e.n4_id];
-			if (n4.g_id == node_num)
-			{
-				n4.g_id = cal_node_num;
-				++cal_node_num;
-			}
 			Node &n3 = md.nodes[e.n3_id];
 			if (n3.g_id == node_num)
 			{
 				n3.g_id = cal_node_num;
+				++cal_node_num;
+			}
+			Node &n4 = md.nodes[e.n4_id];
+			if (n4.g_id == node_num)
+			{
+				n4.g_id = cal_node_num;
 				++cal_node_num;
 			}
 		}
@@ -215,17 +217,6 @@ void Step_S2D_CHM_s_uUp::map_from_pcl_to_node(void)
 		if (n.g_id != node_num)
 			g_id_map[n.g_id] = n_id;
 	}
-
-	//for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	//{
-	//	Node &n = md.nodes[n_id];
-	//	std::cout << n.g_id << " " 
-	//			  << n.ax_s << " " << n.ay_s << " "
-	//			  << n.vx_s << " " << n.vy_s << " "
-	//			  << n.ax_f << " " << n.ay_f << " "
-	//			  << n.vx_f << " " << n.vy_f << " "
-	//			  << n.p << "\n";
-	//}
 
 	// apply inititial conditions, only support zero init cond
 	for (size_t bc_id = 0; bc_id < md.usx_num; ++bc_id)

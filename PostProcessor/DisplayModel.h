@@ -1,5 +1,5 @@
-#ifndef __DISPLAY_MODEL_H__
-#define __DISPLAY_MODEL_H__
+#ifndef __Display_Model_H__
+#define __Display_Model_H__
 
 #include "ShaderProgram.h"
 #include "Geometry.h"

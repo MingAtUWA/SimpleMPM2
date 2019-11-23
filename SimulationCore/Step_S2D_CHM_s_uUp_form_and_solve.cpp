@@ -161,7 +161,7 @@ void Step_S2D_CHM_s_uUp::form_and_solve_problem(Eigen::VectorXd &g_du_vec)
 	}
 	for (size_t bc_id = 0; bc_id < md.ufy_num; ++bc_id)
 	{
-		DisplacementBC &dbc = md.usys[bc_id];
+		DisplacementBC &dbc = md.ufys[bc_id];
 		node_g_id = md.nodes[dbc.node_id].g_id;
 		if (node_g_id != node_num)
 		{
@@ -195,7 +195,7 @@ void Step_S2D_CHM_s_uUp::form_and_solve_problem(Eigen::VectorXd &g_du_vec)
 	static size_t call_id = 0;
 	++call_id;
 	//print_sparse_mat(g_kmat, out_file);
-	std::cout << call_id << "\n" << g_fvec << "\n\n" << g_du_vec << "\n";
+	//std::cout << call_id << "\n" << g_fvec << "\n\n" << g_du_vec << "\n";
 
 	// reapply disp bc
 	for (size_t bc_id = 0; bc_id < md.usx_num; ++bc_id)
@@ -244,7 +244,7 @@ void Step_S2D_CHM_s_uUp::form_and_solve_problem(Eigen::VectorXd &g_du_vec)
 		node_g_id = md.nodes[pbc.node_id].g_id;
 		if (node_g_id != node_num)
 		{
-			dof_g_id = n_id_to_dof_id(node_g_id, DOF::uy_f);
+			dof_g_id = n_id_to_dof_id(node_g_id, DOF::p);
 			g_du_vec[dof_g_id] = pbc.p;
 		}
 	}
@@ -260,30 +260,27 @@ int Step_S2D_CHM_s_uUp::requilibration(void)
 	// update nodal variables
 	double dt = dtime, dt2 = dt * dt;
 	size_t node_g_id;
-	double dux_s, duy_s, dvx_s, dvy_s, dax_s, day_s;
-	double dux_f, duy_f, dvx_f, dvy_f, dax_f, day_f;
+	double dvx_s, dvy_s, dvx_f, dvy_f;
+	double dax_s, day_s, dax_f, day_f;
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
 		Node &n = md.nodes[n_id];
 		node_g_id = n.g_id;
 		if (node_g_id != md.node_num)
 		{
-			dux_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			dvx_s = gamma / (beta * dt) * dux_s - gamma / beta * n.vx_s
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_s;
-			dvy_s = gamma / (beta * dt) * duy_s - gamma / beta * n.vy_s
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_s;
-			dvx_f = gamma / (beta * dt) * dux_f - gamma / beta * n.vx_f
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_f;
-			dvy_f = gamma / (beta * dt) * duy_f - gamma / beta * n.vy_f
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_f;
-			dax_s = dux_s / (beta * dt2) - n.vx_s / (beta * dt) - n.ax_s / (2.0 * beta);
-			day_s = duy_s / (beta * dt2) - n.vy_s / (beta * dt) - n.ay_s / (2.0 * beta);
-			dax_f = dux_f / (beta * dt2) - n.vx_f / (beta * dt) - n.ax_f / (2.0 * beta);
-			day_f = duy_f / (beta * dt2) - n.vy_f / (beta * dt) - n.ay_f / (2.0 * beta);
+			n.dux_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
+			n.duy_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
+			n.dux_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
+			n.duy_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
+			n.dp    = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
+			dvx_s = gamma / (beta * dt) * n.dux_s - gamma / beta * n.vx_s + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_s;
+			dvy_s = gamma / (beta * dt) * n.duy_s - gamma / beta * n.vy_s + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_s;
+			dvx_f = gamma / (beta * dt) * n.dux_f - gamma / beta * n.vx_f + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_f;
+			dvy_f = gamma / (beta * dt) * n.duy_f - gamma / beta * n.vy_f + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_f;
+			dax_s = n.dux_s / (beta * dt2) - n.vx_s / (beta * dt) - n.ax_s / (2.0 * beta);
+			day_s = n.duy_s / (beta * dt2) - n.vy_s / (beta * dt) - n.ay_s / (2.0 * beta);
+			dax_f = n.dux_f / (beta * dt2) - n.vx_f / (beta * dt) - n.ax_f / (2.0 * beta);
+			day_f = n.duy_f / (beta * dt2) - n.vy_f / (beta * dt) - n.ay_f / (2.0 * beta);
 			n.vx_s += dvx_s;
 			n.vy_s += dvy_s;
 			n.vx_f += dvx_f;
@@ -292,46 +289,18 @@ int Step_S2D_CHM_s_uUp::requilibration(void)
 			n.ay_s += day_s;
 			n.ax_f += dax_f;
 			n.ay_f += day_f;
+			n.p    += n.dp;
 		}
 	}
 
 	// Update particle variables
-	double dux_s1, duy_s1, dux_f1, duy_f1, dp1;
-	double dux_s2, duy_s2, dux_f2, duy_f2, dp2;
-	double dux_s3, duy_s3, dux_f3, duy_f3, dp3;
-	double dux_s4, duy_s4, dux_f4, duy_f4, dp4;
 	double de11, de22, de12;
 	double ds11, ds22, ds12, dp;
-	double de_vol_s;
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
 		Element &e = md.elems[e_id];
 		if (e.pcls)
 		{
-			node_g_id = md.nodes[e.n1_id].g_id;
-			dux_s1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			dp1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
-			node_g_id = md.nodes[e.n2_id].g_id;
-			dux_s2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			dp2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
-			node_g_id = md.nodes[e.n3_id].g_id;
-			dux_s3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			dp3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
-			node_g_id = md.nodes[e.n4_id].g_id;
-			dux_s4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			dp4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
 			Node &n1 = md.nodes[e.n1_id];
 			Node &n2 = md.nodes[e.n2_id];
 			Node &n3 = md.nodes[e.n3_id];
@@ -347,21 +316,22 @@ int Step_S2D_CHM_s_uUp::requilibration(void)
 				pcl.vy_s = n1.vy_s * pcl.N1 + n2.vy_s * pcl.N2 + n3.vy_s * pcl.N3 + n4.vy_s * pcl.N4;
 				pcl.vx_f = n1.vx_f * pcl.N1 + n2.vx_f * pcl.N2 + n3.vx_f * pcl.N3 + n4.vx_f * pcl.N4;
 				pcl.vy_f = n1.vy_f * pcl.N1 + n2.vy_f * pcl.N2 + n3.vy_f * pcl.N3 + n4.vy_f * pcl.N4;
+
 				// acceleration
 				pcl.ax_s = n1.ax_s * pcl.N1 + n2.ax_s * pcl.N2 + n3.ax_s * pcl.N3 + n4.ax_s * pcl.N4;
 				pcl.ay_s = n1.ay_s * pcl.N1 + n2.ay_s * pcl.N2 + n3.ay_s * pcl.N3 + n4.ay_s * pcl.N4;
 				pcl.ax_f = n1.ax_f * pcl.N1 + n2.ax_f * pcl.N2 + n3.ax_f * pcl.N3 + n4.ax_f * pcl.N4;
 				pcl.ay_f = n1.ay_f * pcl.N1 + n2.ay_f * pcl.N2 + n3.ay_f * pcl.N3 + n4.ay_f * pcl.N4;
-
+				
 				// strain increment
-				de11 = dux_s1 * pcl.dN1_dx + dux_s2 * pcl.dN2_dx
-					 + dux_s3 * pcl.dN3_dx + dux_s4 * pcl.dN4_dx;
-				de22 = duy_s1 * pcl.dN1_dy + duy_s2 * pcl.dN2_dy
-					 + duy_s3 * pcl.dN3_dy + duy_s4 * pcl.dN4_dy;
-				de12 = (dux_s1 * pcl.dN1_dy + dux_s2 * pcl.dN2_dy
-					  + dux_s3 * pcl.dN3_dy + dux_s4 * pcl.dN4_dy
-					  + duy_s1 * pcl.dN1_dx + duy_s2 * pcl.dN2_dx
-					  + duy_s3 * pcl.dN3_dx + duy_s4 * pcl.dN4_dx) * 0.5;
+				de11 = n1.dux_s * pcl.dN1_dx + n2.dux_s * pcl.dN2_dx
+					 + n3.dux_s * pcl.dN3_dx + n4.dux_s * pcl.dN4_dx;
+				de22 = n1.duy_s * pcl.dN1_dy + n2.duy_s * pcl.dN2_dy
+					 + n3.duy_s * pcl.dN3_dy + n4.duy_s * pcl.dN4_dy;
+				de12 = (n1.dux_s * pcl.dN1_dy + n2.dux_s * pcl.dN2_dy
+					  + n3.dux_s * pcl.dN3_dy + n4.dux_s * pcl.dN4_dy
+					  + n1.duy_s * pcl.dN1_dx + n2.duy_s * pcl.dN2_dx
+					  + n3.duy_s * pcl.dN3_dx + n4.duy_s * pcl.dN4_dx) * 0.5;
 				pcl.e11 += de11;
 				pcl.e22 += de22;
 				pcl.e12 += de12;
@@ -375,16 +345,10 @@ int Step_S2D_CHM_s_uUp::requilibration(void)
 				pcl.s22 += ds22;
 				pcl.s12 += ds12;
 
-				// porosity
-				de_vol_s = de11 + de22;
-				pcl.n = (de_vol_s + pcl.n) / (1.0 + de_vol_s);
-
 				// pore pressure
-				dp = dp1 * pcl.N1 + dp2 * pcl.N2 + dp3 * pcl.N3 + dp4 * pcl.N4;
+				dp = n1.dp * pcl.N1 + n2.dp * pcl.N2 + n3.dp * pcl.N3 + n4.dp * pcl.N4;
 				pcl.p += dp;
-
-				// density
-				pcl.density_f += -pcl.density_f * dp / pcl.Kf;
+				//pcl.p = n1.p * pcl.N1 + n2.p * pcl.N2 + n3.p * pcl.N3 + n4.p + pcl.N4;
 			}
 		}
 	}
@@ -399,92 +363,89 @@ int Step_S2D_CHM_s_uUp::time_marching(void)
 	Eigen::VectorXd g_du_vec(dof_num);
 	form_and_solve_problem(g_du_vec);
 
-	// update nodal variables
-	double dt = dtime, dt2 = dt * dt;
+	// Update nodal variables
+	double dt = dtime, dt2 = dtime * dtime;
 	size_t node_g_id;
-	double dux_s, duy_s, dvx_s, dvy_s, dax_s, day_s;
-	double dux_f, duy_f, dvx_f, dvy_f, dax_f, day_f;
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
 		Node &n = md.nodes[n_id];
 		node_g_id = n.g_id;
 		if (node_g_id != md.node_num)
 		{
-			dux_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			n.p  += g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
-			dvx_s = gamma / (beta * dt) * dux_s - gamma / beta * n.vx_s
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_s;
-			dvy_s = gamma / (beta * dt) * duy_s - gamma / beta * n.vy_s
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_s;
-			dvx_f = gamma / (beta * dt) * dux_f - gamma / beta * n.vx_f
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_f;
-			dvy_f = gamma / (beta * dt) * duy_f - gamma / beta * n.vy_f
-				  + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_f;
-			dax_s = dux_s / (beta * dt2) - n.vx_s / (beta * dt) - n.ax_s / (2.0 * beta);
-			day_s = duy_s / (beta * dt2) - n.vy_s / (beta * dt) - n.ay_s / (2.0 * beta);
-			dax_f = dux_f / (beta * dt2) - n.vx_f / (beta * dt) - n.ax_f / (2.0 * beta);
-			day_f = duy_f / (beta * dt2) - n.vy_f / (beta * dt) - n.ay_f / (2.0 * beta);
-			n.vx_s += dvx_s;
-			n.vy_s += dvy_s;
-			n.vx_f += dvx_f;
-			n.vy_f += dvy_f;
-			n.ax_s += dax_s;
-			n.ay_s += day_s;
-			n.ax_f += dax_f;
-			n.ay_f += day_f;
+			n.dux_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
+			n.duy_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
+			n.dux_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
+			n.duy_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
+			n.dp = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
+			n.dvx_s = gamma / (beta * dt) * n.dux_s - gamma / beta * n.vx_s + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_s;
+			n.dvy_s = gamma / (beta * dt) * n.duy_s - gamma / beta * n.vy_s + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_s;
+			n.dvx_f = gamma / (beta * dt) * n.dux_f - gamma / beta * n.vx_f + dt * (1.0 - gamma / (2.0 * beta)) * n.ax_f;
+			n.dvy_f = gamma / (beta * dt) * n.duy_f - gamma / beta * n.vy_f + dt * (1.0 - gamma / (2.0 * beta)) * n.ay_f;
+			n.dax_s = n.dux_s / (beta * dt2) - n.vx_s / (beta * dt) - n.ax_s / (2.0 * beta);
+			n.day_s = n.duy_s / (beta * dt2) - n.vy_s / (beta * dt) - n.ay_s / (2.0 * beta);
+			n.dax_f = n.dux_f / (beta * dt2) - n.vx_f / (beta * dt) - n.ax_f / (2.0 * beta);
+			n.day_f = n.duy_f / (beta * dt2) - n.vy_f / (beta * dt) - n.ay_f / (2.0 * beta);
+			n.vx_s += n.dvx_s;
+			n.vy_s += n.dvy_s;
+			n.vx_f += n.dvx_f;
+			n.vy_f += n.dvy_f;
+			n.ax_s += n.dax_s;
+			n.ay_s += n.day_s;
+			n.ax_f += n.dax_f;
+			n.ay_f += n.day_f;
+			n.p += n.dp;
+
 		}
 	}
 
-	// Update particle variables
-	double dux_s1, duy_s1, dux_f1, duy_f1, dp1;
-	double dux_s2, duy_s2, dux_f2, duy_f2, dp2;
-	double dux_s3, duy_s3, dux_f3, duy_f3, dp3;
-	double dux_s4, duy_s4, dux_f4, duy_f4, dp4;
-	double de11, de22, de12;
-	double ds11, ds22, ds12;
+	// Update particle position and size
+	double de11, de22, de12, de_vol_s;
+	double ds11, ds22, ds12, dp;
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
 		Element &e = md.elems[e_id];
 		if (e.pcls)
 		{
-			node_g_id = md.nodes[e.n1_id].g_id;
-			dux_s1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			node_g_id = md.nodes[e.n2_id].g_id;
-			dux_s2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			node_g_id = md.nodes[e.n3_id].g_id;
-			dux_s3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-			node_g_id = md.nodes[e.n4_id].g_id;
-			dux_s4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-			duy_s4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-			dux_f4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-			duy_f4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
+			Node &n1 = md.nodes[e.n1_id];
+			Node &n2 = md.nodes[e.n2_id];
+			Node &n3 = md.nodes[e.n3_id];
+			Node &n4 = md.nodes[e.n4_id];
 
 			// update particle variables
 			for (Particle *pcl_iter = e.pcls; pcl_iter; pcl_iter = pcl_iter->next)
 			{
 				Particle &pcl = *pcl_iter;
+
+				// velocity
+				pcl.vx_s += n1.dvx_s * pcl.N1 + n2.dvx_s * pcl.N2 + n3.dvx_s * pcl.N3 + n4.dvx_s * pcl.N4;
+				pcl.vy_s += n1.dvy_s * pcl.N1 + n2.dvy_s * pcl.N2 + n3.dvy_s * pcl.N3 + n4.dvy_s * pcl.N4;
+				pcl.vx_f += n1.dvx_f * pcl.N1 + n2.dvx_f * pcl.N2 + n3.dvx_f * pcl.N3 + n4.dvx_f * pcl.N4;
+				pcl.vy_f += n1.dvy_f * pcl.N1 + n2.dvy_f * pcl.N2 + n3.dvy_f * pcl.N3 + n4.dvy_f * pcl.N4;
+
+				// acceleration
+				pcl.ax_s += n1.dax_s * pcl.N1 + n2.dax_s * pcl.N2 + n3.dax_s * pcl.N3 + n4.dax_s * pcl.N4;
+				pcl.ay_s += n1.day_s * pcl.N1 + n2.day_s * pcl.N2 + n3.day_s * pcl.N3 + n4.day_s * pcl.N4;
+				pcl.ax_f += n1.dax_f * pcl.N1 + n2.dax_f * pcl.N2 + n3.dax_f * pcl.N3 + n4.dax_f * pcl.N4;
+				pcl.ay_f += n1.day_f * pcl.N1 + n2.day_f * pcl.N2 + n3.day_f * pcl.N3 + n4.day_f * pcl.N4;
 				
+				// displacement
+				pcl.ux_s += n1.dux_s * pcl.N1 + n2.dux_s * pcl.N2 + n3.dux_s * pcl.N3 + n4.dux_s * pcl.N4;
+				pcl.uy_s += n1.duy_s * pcl.N1 + n2.duy_s * pcl.N2 + n3.duy_s * pcl.N3 + n4.duy_s * pcl.N4;
+				pcl.ux_f += n1.dux_f * pcl.N1 + n2.dux_f * pcl.N2 + n3.dux_f * pcl.N3 + n4.dux_f * pcl.N4;
+				pcl.uy_f += n1.duy_f * pcl.N1 + n2.duy_f * pcl.N2 + n3.duy_f * pcl.N3 + n4.duy_f * pcl.N4;
+				// position
+				pcl.x = pcl.x_ori + pcl.ux_s;
+				pcl.y = pcl.y_ori + pcl.uy_s;
+
 				// strain increment
-				de11 = dux_s1 * pcl.dN1_dx + dux_s2 * pcl.dN2_dx
-					 + dux_s3 * pcl.dN3_dx + dux_s4 * pcl.dN4_dx;
-				de22 = duy_s1 * pcl.dN1_dy + duy_s2 * pcl.dN2_dy
-					 + duy_s3 * pcl.dN3_dy + duy_s4 * pcl.dN4_dy;
-				de12 = (dux_s1 * pcl.dN1_dy + dux_s2 * pcl.dN2_dy
-					  + dux_s3 * pcl.dN3_dy + dux_s4 * pcl.dN4_dy
-					  + duy_s1 * pcl.dN1_dx + duy_s2 * pcl.dN2_dx
-					  + duy_s3 * pcl.dN3_dx + duy_s4 * pcl.dN4_dx) * 0.5;
+				de11 = n1.dux_s * pcl.dN1_dx + n2.dux_s * pcl.dN2_dx
+					 + n3.dux_s * pcl.dN3_dx + n4.dux_s * pcl.dN4_dx;
+				de22 = n1.duy_s * pcl.dN1_dy + n2.duy_s * pcl.dN2_dy
+					 + n3.duy_s * pcl.dN3_dy + n4.duy_s * pcl.dN4_dy;
+				de12 = (n1.dux_s * pcl.dN1_dy + n2.dux_s * pcl.dN2_dy
+					  + n3.dux_s * pcl.dN3_dy + n4.dux_s * pcl.dN4_dy
+					  + n1.duy_s * pcl.dN1_dx + n2.duy_s * pcl.dN2_dx
+					  + n3.duy_s * pcl.dN3_dx + n4.duy_s * pcl.dN4_dx) * 0.5;
 				pcl.e11 += de11;
 				pcl.e22 += de22;
 				pcl.e12 += de12;
@@ -497,61 +458,77 @@ int Step_S2D_CHM_s_uUp::time_marching(void)
 				pcl.s11 += ds11;
 				pcl.s22 += ds22;
 				pcl.s12 += ds12;
+
+				// pore pressure
+				dp = n1.dp * pcl.N1 + n2.dp * pcl.N2 + n3.dp * pcl.N3 + n4.dp * pcl.N4;
+				//pcl.p += dp;
+				pcl.p = n1.p * pcl.N1 + n2.p * pcl.N2 + n3.p * pcl.N3 + n4.p * pcl.N4;
+				
+				// porosity
+				de_vol_s = de11 + de22;
+				pcl.n = (de_vol_s + pcl.n) / (1.0 + de_vol_s);
+
+				// density
+				pcl.density_f /= (1.0 + dp / pcl.Kf);
 			}
 		}
 	}
 
-	//// Update particle position
+	//// Update nodal variables
 	//size_t node_g_id;
-	//double dux_s1, duy_s1, dux_f1, duy_f1, dp1;
-	//double dux_s2, duy_s2, dux_f2, duy_f2, dp2;
-	//double dux_s3, duy_s3, dux_f3, duy_f3, dp3;
-	//double dux_s4, duy_s4, dux_f4, duy_f4, dp4;
-	//double de11, de22, de12;
-	//double ds11, ds22, ds12, dp;
-	//double de_vol_s;
+	//for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	//{
+	//	Node &n = md.nodes[n_id];
+	//	node_g_id = n.g_id;
+	//	if (node_g_id != md.node_num)
+	//	{
+	//		n.dux_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
+	//		n.duy_s = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
+	//		n.dux_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
+	//		n.duy_f = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
+	//		n.dp    = g_du_vec[n_id_to_dof_id(node_g_id, DOF::p)];
+	//	}
+	//}
+
+	//// Update particle position and size
+	//double de11, de22, de_vol_s, dp;
 	//for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	//{
 	//	Element &e = md.elems[e_id];
 	//	if (e.pcls)
 	//	{
-	//		node_g_id = md.nodes[e.n1_id].g_id;
-	//		dux_s1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-	//		duy_s1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-	//		dux_f1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-	//		duy_f1 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-	//		node_g_id = md.nodes[e.n2_id].g_id;
-	//		dux_s2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-	//		duy_s2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-	//		dux_f2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-	//		duy_f2 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-	//		node_g_id = md.nodes[e.n3_id].g_id;
-	//		dux_s3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-	//		duy_s3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-	//		dux_f3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-	//		duy_f3 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-	//		node_g_id = md.nodes[e.n4_id].g_id;
-	//		dux_s4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_s)];
-	//		duy_s4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_s)];
-	//		dux_f4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::ux_f)];
-	//		duy_f4 = g_du_vec[n_id_to_dof_id(node_g_id, DOF::uy_f)];
-
+	//		Node &n1 = md.nodes[e.n1_id];
+	//		Node &n2 = md.nodes[e.n2_id];
+	//		Node &n3 = md.nodes[e.n3_id];
+	//		Node &n4 = md.nodes[e.n4_id];
+	//		
 	//		// update particle variables
 	//		for (Particle *pcl_iter = e.pcls; pcl_iter; pcl_iter = pcl_iter->next)
 	//		{
 	//			Particle &pcl = *pcl_iter;
 
 	//			// displacement
-	//			pcl.ux_s += dux_s1 * pcl.N1 + dux_s2 * pcl.N2 + dux_s3 * pcl.N3 + dux_s4 * pcl.N4;
-	//			pcl.uy_s += duy_s1 * pcl.N1 + duy_s2 * pcl.N2 + duy_s3 * pcl.N3 + duy_s4 * pcl.N4;
-	//			pcl.ux_f += dux_f1 * pcl.N1 + dux_f2 * pcl.N2 + dux_f3 * pcl.N3 + dux_f4 * pcl.N4;
-	//			pcl.uy_f += duy_f1 * pcl.N1 + duy_f2 * pcl.N2 + duy_f3 * pcl.N3 + duy_f4 * pcl.N4;
+	//			pcl.ux_s += n1.dux_s * pcl.N1 + n2.dux_s * pcl.N2 + n3.dux_s * pcl.N3 + n4.dux_s * pcl.N4;
+	//			pcl.uy_s += n1.duy_s * pcl.N1 + n2.duy_s * pcl.N2 + n3.duy_s * pcl.N3 + n4.duy_s * pcl.N4;
+	//			pcl.ux_f += n1.dux_f * pcl.N1 + n2.dux_f * pcl.N2 + n3.dux_f * pcl.N3 + n4.dux_f * pcl.N4;
+	//			pcl.uy_f += n1.duy_f * pcl.N1 + n2.duy_f * pcl.N2 + n3.duy_f * pcl.N3 + n4.duy_f * pcl.N4;
 	//			// position
 	//			pcl.x = pcl.x_ori + pcl.ux_s;
 	//			pcl.y = pcl.y_ori + pcl.uy_s;
+
+	//			// porosity
+	//			de11 = n1.dux_s * pcl.dN1_dx + n2.dux_s * pcl.dN2_dx + n3.dux_s * pcl.dN3_dx + n4.dux_s * pcl.dN4_dx;
+	//			de22 = n1.duy_s * pcl.dN1_dy + n2.duy_s * pcl.dN2_dy + n3.duy_s * pcl.dN3_dy + n4.duy_s * pcl.dN4_dy;
+	//			de_vol_s = de11 + de22;
+	//			pcl.n = (de_vol_s + pcl.n) / (1.0 + de_vol_s);
+
+	//			// density
+	//			dp = n1.dp * pcl.N1 + n2.dp * pcl.N2 + n3.dp * pcl.N3 + n4.dp * pcl.N4;
+	//			pcl.density_f /= (1.0 + dp / pcl.Kf);
 	//		}
 	//	}
 	//}
-	
+			
 	return 0;
 }
+

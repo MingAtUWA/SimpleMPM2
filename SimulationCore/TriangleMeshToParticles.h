@@ -21,7 +21,8 @@ public:
 	enum class GeneratorType : unsigned int
 	{
 		FirstOrderGaussPoint = 0,
-		SecondOrderGaussPoint = 1
+		SecondOrderGaussPoint = 1,
+		EvenlyDistributedPoint = 2
 	};
 protected: // particle generator functions
 	typedef void(TriangleMeshToParticles::*GeneratorFunc)(Point &p1, Point &p2, Point &p3, double vol);
@@ -33,7 +34,8 @@ public:
 public:
 	TriangleMeshToParticles(TriangleMesh &_mesh,
 		GeneratorType _type = GeneratorType::FirstOrderGaussPoint) : 
-		mesh(_mesh), top(nullptr), pcl_num(0)
+		mesh(_mesh), top(nullptr), pcl_num(0),
+		evenly_div_num(1)
 	{
 		if (unsigned int(_type) < generator_num)
 			type = _type;
@@ -42,13 +44,16 @@ public:
 		cur_generator_func = generator_funcs[unsigned int(_type)];
 		cur_generator_pcl_num = generator_pcl_num[unsigned int(_type)];
 	}
+
 	~TriangleMeshToParticles() { clear(); }
+
 	inline void clear(void) noexcept
 	{
 		top = nullptr;
 		pcl_num = 0;
 		particle_buffer.clear();
 	}
+
 	inline int set_generator(GeneratorType _type) noexcept
 	{
 		if (unsigned int(_type) < generator_num)
@@ -61,7 +66,7 @@ public:
 		return -1;
 	}
 
-public: // main function
+	// main function
 	// max_pcl_size == 0.0 means no restriction on particle size
 	void generate_pcls(double max_pcl_area = 0.0);
 	inline size_t get_pcl_num_per_elem(void) const noexcept { return generator_pcl_num[unsigned int(type)]; }
@@ -92,6 +97,11 @@ protected:
 	// particle generator functions
 	void FirstOrderGaussPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
 	void SecondOrderGaussPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
+
+	size_t evenly_div_num;
+	void EvenlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
+public:
+	inline void set_even_div_num(size_t num) noexcept { evenly_div_num = num; }
 };
 
 #endif

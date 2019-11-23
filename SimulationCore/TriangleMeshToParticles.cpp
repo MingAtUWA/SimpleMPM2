@@ -5,12 +5,14 @@
 const typename TriangleMeshToParticles::GeneratorFunc
 	TriangleMeshToParticles::generator_funcs[] = {
 	&FirstOrderGaussPointGenerator,
-	&SecondOrderGaussPointGenerator
+	&SecondOrderGaussPointGenerator,
+	&EvenlyDistributedPointGenerator
 };
 
 const size_t TriangleMeshToParticles::generator_pcl_num[] = {
 	1,
-	3
+	3,
+	1 // ad hoc, need to be fixed
 };
 
 const size_t TriangleMeshToParticles::generator_num =
@@ -42,6 +44,39 @@ void TriangleMeshToParticles::SecondOrderGaussPointGenerator(Point &p1, Point &p
 	pcl3.vol = vol;
 }
 
+void TriangleMeshToParticles::EvenlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol)
+{
+	vol /= double(evenly_div_num * evenly_div_num);
+	double dx21 = (p2.x - p1.x) / double(evenly_div_num);
+	double dy21 = (p2.y - p1.y) / double(evenly_div_num);
+	double dx32 = (p3.x - p2.x) / double(evenly_div_num);
+	double dy32 = (p3.y - p2.y) / double(evenly_div_num);
+	double row_inc, col_inc;
+	for (size_t row_id = 0; row_id < evenly_div_num; ++row_id)
+	{
+		for (size_t col_id = 0; col_id < row_id; ++col_id)
+		{
+			Particle &pcl1 = *add_pcl();
+			row_inc = double(row_id + 2.0 / 3.0);
+			col_inc = double(col_id + 1.0 / 3.0);
+			pcl1.x = p1.x + row_inc * dx21 + col_inc * dx32;
+			pcl1.y = p1.y + row_inc * dy21 + col_inc * dy32;
+			pcl1.vol = vol;
+			Particle &pcl2 = *add_pcl();
+			row_inc = double(row_id + 1.0 / 3.0);
+			col_inc = double(col_id + 2.0 / 3.0);
+			pcl2.x = p1.x + row_inc * dx21 + col_inc * dx32;
+			pcl2.y = p1.y + row_inc * dy21 + col_inc * dy32;
+			pcl2.vol = vol;
+		}
+		Particle &pcln = *add_pcl(); // last pcl of each row
+		row_inc = double(row_id + 2.0 / 3.0);
+		col_inc = double(row_id + 1.0 / 3.0);
+		pcln.x = p1.x + row_inc * dx21 + col_inc * dx32;
+		pcln.y = p1.y + row_inc * dy21 + col_inc * dy32;
+		pcln.vol = vol;
+	}
+}
 
 void TriangleMeshToParticles::generate_pcls(double max_pcl_area)
 {

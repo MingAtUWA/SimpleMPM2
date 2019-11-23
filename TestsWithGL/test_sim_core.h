@@ -36,5 +36,7 @@ void test_imp_mpm_chm_s_uup_1d_consolidation(void);
 
 void test_init_pcl_gimp(void);
 
+void test_t2d_mpm_square(void);
+void test_t2d_mpm_chm_s_1d_consolidation(void);
 
 #endif

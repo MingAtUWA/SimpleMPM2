@@ -15,6 +15,7 @@ namespace ResultFile_PlainBin_DataStruct
 			strcpy(tag, "MD");
 		}
 	};
+
 	struct BackgroundMeshHeader
 	{
 		char tag[32];
@@ -26,6 +27,17 @@ namespace ResultFile_PlainBin_DataStruct
 			strcpy(tag, "BgMeshS2D");
 		}
 	};
+	struct BackgroundMeshHeader_T2D
+	{
+		char tag[32];
+		unsigned long long node_num, elem_num;
+		inline void init(void)
+		{
+			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
+			strcpy(tag, "BgMeshT2D");
+		}
+	};
+
 	struct RigidBodyHeader
 	{
 		char tag[32];
@@ -53,6 +65,7 @@ namespace ResultFile_PlainBin_DataStruct
 			strcpy(tag, "TH");
 		}
 	};
+
 	struct RigidBodyMotionHeader
 	{
 		char tag[32];
@@ -66,6 +79,7 @@ namespace ResultFile_PlainBin_DataStruct
 			strcpy(tag, "RigObjMotion");
 		}
 	};
+
 	struct MPObjectHeader
 	{
 		char tag[32];
@@ -78,6 +92,7 @@ namespace ResultFile_PlainBin_DataStruct
 			strcpy(tag, "MPObj");
 		}
 	};
+
 	struct MeshObjectHeader_2D4R
 	{
 		char tag[32];

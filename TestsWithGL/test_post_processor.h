@@ -10,5 +10,6 @@ void test_animation_chm_s_1d_consolidation(void);
 
 void test_animation_me_s_up_1dbar(void);
 void test_animation_chm_s_uup_1d_consolidation(void);
+void test_animation_t2d_chm_s_1d_consolidation(void);
 
 #endif

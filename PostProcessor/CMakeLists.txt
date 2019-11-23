@@ -12,7 +12,9 @@ add_library(
     GA_S2D_CHM_s.h GA_S2D_CHM_s.cpp
     GA_S2D_ME_s_up.h GA_S2D_ME_s_up.cpp
     GA_S2D_CHM_s_uUp.h GA_S2D_CHM_s_uUp.cpp
+    GA_T2D_CHM_s.h GA_T2D_CHM_s.cpp
     DisplayModel.h DisplayModel.cpp
+    DisplayModel_T2D.h DisplayModel_T2D.cpp
     )
 
 target_include_directories(

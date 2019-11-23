@@ -54,8 +54,12 @@ int main(int argc, void **argv)
 	//test_animation_me_s_up_1dbar();
 
 	// Implicit CHM MPM
-	test_imp_mpm_chm_s_uup_1d_consolidation();
+	//test_imp_mpm_chm_s_uup_1d_consolidation();
 	//test_animation_chm_s_uup_1d_consolidation();
+
+	//test_t2d_mpm_square();
+	test_t2d_mpm_chm_s_1d_consolidation();
+	test_animation_t2d_chm_s_1d_consolidation();
 
 	//system("pause");
 	return 0;

@@ -48,7 +48,7 @@ public:
 		double ax_f, ay_f;
 		double ux_f, uy_f;
 		double vx_f, vy_f;
-
+		
 		double s11, s22, s12, p;
 		double e11, e22, e12;
 
@@ -77,6 +77,9 @@ public:
 		double vol, p;
 		double ax_s, ay_s, vx_s, vy_s; // soil phase
 		double ax_f, ay_f, vx_f, vy_f; // fluid phase
+		double dux_s, duy_s, dux_f, duy_f, dp;
+		double dvx_s, dvy_s, dvx_f, dvy_f;
+		double dax_s, day_s, dax_f, day_f;
 	};
 
 	struct Element

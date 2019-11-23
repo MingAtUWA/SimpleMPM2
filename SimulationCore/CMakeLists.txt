@@ -64,6 +64,11 @@ add_library(
     Step_S2D_CHM_s_uUp_form_and_solve.cpp Step_S2D_CHM_s_uUp_mat_and_vec.cpp
     ModelDataOutput_S2D_CHM_s_uUp.h ModelDataOutput_S2D_CHM_s_uUp.cpp
     TimeHistoryOutput_S2D_CHM_s_uUp.h TimeHistoryOutput_S2D_CHM_s_uUp.cpp
+    # Triangular 2D Mesh
+    Model_T2D_CHM_s.h Model_T2D_CHM_s.cpp
+    Step_T2D_CHM_s.h Step_T2D_CHM_s.cpp
+    ModelDataOutput_T2D_CHM_s.h ModelDataOutput_T2D_CHM_s.cpp
+    TimeHistoryOutput_T2D_CHM_s.h TimeHistoryOutput_T2D_CHM_s.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

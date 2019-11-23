@@ -628,13 +628,23 @@ void Step_S2D_CHM_s_uUp::elem_residual_force_vec(Element &e, double fvec[20])
 		Node &n4 = model->nodes[e.n4_id];
 		
 		// f_int
-		//double dux_s_dx = pcl.dN1_dx * ;
-		//double duy_s_dy = ;
+		double dux_s_dx = pcl.dN1_dx * n1.dux_s + pcl.dN2_dx * n2.dux_s
+						+ pcl.dN3_dx * n3.dux_s + pcl.dN4_dx * n4.dux_s;
+		double duy_s_dy = pcl.dN1_dy * n1.duy_s + pcl.dN2_dy * n2.duy_s
+						+ pcl.dN3_dy * n3.duy_s + pcl.dN4_dy * n4.duy_s;
+		double dux_f_dx = pcl.dN1_dx * n1.dux_f + pcl.dN2_dx * n2.dux_f
+						+ pcl.dN3_dx * n3.dux_f + pcl.dN4_dx * n4.dux_f;
+		double duy_f_dy = pcl.dN1_dy * n1.duy_f + pcl.dN2_dy * n2.duy_f
+						+ pcl.dN3_dy * n3.duy_f + pcl.dN4_dy * n4.duy_f;
+		double dp = pcl.N1 * n1.dp + pcl.N2 * n2.dp + pcl.N3 * n3.dp + pcl.N4 * n4.dp;
+		//std::cout << dux_s_dx << " " << duy_s_dy << " " << dux_f_dx << " "
+		//		  << duy_f_dy << " " << dp << "\n";
+		//std::cout << pcl.N1 << " " << pcl.N2 << " " << pcl.N3 << " " << pcl.N4 << " " << pcl.n << " " << pcl.vol << "\n";
 		add_internal_force_vec(fvec, pcl);
-		//fvec[16] += pcl.N1 * ((1.0 - pcl.n) * pcl.dN1_dx);
-		//fvec[17] += pcl.N2 * pcl_may_f;
-		//fvec[18] += pcl.N3 * pcl_may_f;
-		//fvec[19] += pcl.N4 * pcl_may_f;
+		fvec[16] += pcl.N1 * ((1.0 - pcl.n) * (dux_s_dx + duy_s_dy) + pcl.n * (dux_f_dx + duy_f_dy) + pcl.n/pcl.Kf * dp) * pcl.vol;
+		fvec[17] += pcl.N2 * ((1.0 - pcl.n) * (dux_s_dx + duy_s_dy) + pcl.n * (dux_f_dx + duy_f_dy) + pcl.n/pcl.Kf * dp) * pcl.vol;
+		fvec[18] += pcl.N3 * ((1.0 - pcl.n) * (dux_s_dx + duy_s_dy) + pcl.n * (dux_f_dx + duy_f_dy) + pcl.n/pcl.Kf * dp) * pcl.vol;
+		fvec[19] += pcl.N4 * ((1.0 - pcl.n) * (dux_s_dx + duy_s_dy) + pcl.n * (dux_f_dx + duy_f_dy) + pcl.n/pcl.Kf * dp) * pcl.vol;
 
 		// Ma
 		pcl_max_s = (n1.ax_s * pcl.N1 + n2.ax_s * pcl.N2 + n3.ax_s * pcl.N3 + n4.ax_s * pcl.N4) * pcl.m_s;
@@ -795,50 +805,120 @@ void Step_S2D_CHM_s_uUp::form_global_residual_force(void)
 	}
 	// body force to be finished...
 
+	//size_t node_num = md.node_num;
+	//// Apply displacement boundary condition
+	//for (size_t bc_id = 0; bc_id < md.usx_num; ++bc_id)
+	//{
+	//	DisplacementBC &dbc = md.usxs[bc_id];
+	//	node_g_id = md.nodes[dbc.node_id].g_id;
+	//	if (node_g_id != node_num)
+	//	{
+	//		dof_g_id = n_id_to_dof_id(node_g_id, DOF::ux_s);
+	//		g_fvec[dof_g_id] = dbc.u;
+	//	}
+	//}
+	//for (size_t bc_id = 0; bc_id < md.usy_num; ++bc_id)
+	//{
+	//	DisplacementBC &dbc = md.usys[bc_id];
+	//	node_g_id = md.nodes[dbc.node_id].g_id;
+	//	if (node_g_id != node_num)
+	//	{
+	//		dof_g_id = n_id_to_dof_id(node_g_id, DOF::uy_s);
+	//		g_fvec[dof_g_id] = dbc.u;
+	//	}
+	//}
+	//for (size_t bc_id = 0; bc_id < md.ufx_num; ++bc_id)
+	//{
+	//	DisplacementBC &dbc = md.ufxs[bc_id];
+	//	node_g_id = md.nodes[dbc.node_id].g_id;
+	//	if (node_g_id != node_num)
+	//	{
+	//		dof_g_id = n_id_to_dof_id(node_g_id, DOF::ux_f);
+	//		g_fvec[dof_g_id] = dbc.u;
+	//	}
+	//}
+	//for (size_t bc_id = 0; bc_id < md.ufy_num; ++bc_id)
+	//{
+	//	DisplacementBC &dbc = md.usys[bc_id];
+	//	node_g_id = md.nodes[dbc.node_id].g_id;
+	//	if (node_g_id != node_num)
+	//	{
+	//		dof_g_id = n_id_to_dof_id(node_g_id, DOF::uy_f);
+	//		g_fvec[dof_g_id] = dbc.u;
+	//	}
+	//}
+
 	std::cout << "Rf " << call_id << "\n" << g_fvec << "\n";
 
-	size_t node_num = md.node_num;
-	// Apply displacement boundary condition
-	for (size_t bc_id = 0; bc_id < md.usx_num; ++bc_id)
+	std::cout << "ax_s: ";
+	for (size_t i = 0; i < md.node_num; i++)
 	{
-		DisplacementBC &dbc = md.usxs[bc_id];
-		node_g_id = md.nodes[dbc.node_id].g_id;
-		if (node_g_id != node_num)
-		{
-			dof_g_id = n_id_to_dof_id(node_g_id, DOF::ux_s);
-			g_fvec[dof_g_id] = dbc.u;
-		}
+		Node &n = md.nodes[i];
+		std::cout << n.ax_s << ", ";
 	}
-	for (size_t bc_id = 0; bc_id < md.usy_num; ++bc_id)
-	{
-		DisplacementBC &dbc = md.usys[bc_id];
-		node_g_id = md.nodes[dbc.node_id].g_id;
-		if (node_g_id != node_num)
-		{
-			dof_g_id = n_id_to_dof_id(node_g_id, DOF::uy_s);
-			g_fvec[dof_g_id] = dbc.u;
-		}
-	}
-	for (size_t bc_id = 0; bc_id < md.ufx_num; ++bc_id)
-	{
-		DisplacementBC &dbc = md.ufxs[bc_id];
-		node_g_id = md.nodes[dbc.node_id].g_id;
-		if (node_g_id != node_num)
-		{
-			dof_g_id = n_id_to_dof_id(node_g_id, DOF::ux_f);
-			g_fvec[dof_g_id] = dbc.u;
-		}
-	}
-	for (size_t bc_id = 0; bc_id < md.ufy_num; ++bc_id)
-	{
-		DisplacementBC &dbc = md.usys[bc_id];
-		node_g_id = md.nodes[dbc.node_id].g_id;
-		if (node_g_id != node_num)
-		{
-			dof_g_id = n_id_to_dof_id(node_g_id, DOF::uy_f);
-			g_fvec[dof_g_id] = dbc.u;
-		}
-	}
+	std::cout << "\n";
 
-	//std::cout << "Rf " << call_id << "\n" << g_fvec << "\n";
+	std::cout << "ay_s: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.ay_s << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "ax_f: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.ax_f << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "ay_f: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.ay_f << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "vx_s: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.vx_s << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "vy_s: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.vy_s << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "vx_f: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.vx_f << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "vy_f: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.vy_f << ", ";
+	}
+	std::cout << "\n";
+
+	std::cout << "p: ";
+	for (size_t i = 0; i < md.node_num; i++)
+	{
+		Node &n = md.nodes[i];
+		std::cout << n.p << ", ";
+	}
+	std::cout << "\n";
 }

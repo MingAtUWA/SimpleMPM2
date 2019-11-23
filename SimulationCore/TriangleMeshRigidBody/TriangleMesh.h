@@ -118,12 +118,14 @@ public:
 		nodes(nullptr), node_num(0),
 		elems(nullptr), elem_num(0),
 		boundary_edges(nullptr), boundary_edge_num(0) {}
-	~TriangleMesh()
+	~TriangleMesh() { clear(); }
+	void clear(void)
 	{
 		clear_nodes();
 		clear_elements();
 		clear_edges_at_boundary();
 	}
+
 	void clear_nodes(void)
 	{
 		if (nodes) delete[] nodes;

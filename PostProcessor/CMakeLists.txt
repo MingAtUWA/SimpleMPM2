@@ -15,6 +15,9 @@ add_library(
     GA_T2D_CHM_s.h GA_T2D_CHM_s.cpp
     DisplayModel.h DisplayModel.cpp
     DisplayModel_T2D.h DisplayModel_T2D.cpp
+    # color particle according to variables
+    ColorGraph.h
+    GA_T2D_CHM_s_color.h GA_T2D_CHM_s_color.cpp
     )
 
 target_include_directories(

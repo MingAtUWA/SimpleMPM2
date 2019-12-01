@@ -6,6 +6,7 @@
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
+#include "DispConRigidCircle.h"
 
 #define SHAPE_FUNC_VALUE_CONTENT   \
 	double N1, N2, N3;             \
@@ -72,6 +73,8 @@ public: // Node, Element and Particle data structures
 	{
 		size_t id;
 		double x, y;
+		// material point
+		bool has_mp;
 		// solid phase
 		double m_s;
 		double ax_s, ay_s;
@@ -88,18 +91,12 @@ public: // Node, Element and Particle data structures
 		double fx_int_f, fy_int_f;
 		// solid - fluid interaction
 		double fx_drag, fy_drag;
+		// rigid body
+		bool has_rb;
+		double vx_rb, vy_rb, vol_rb;
 	};
 	
-	struct Element
-	{
-		size_t id, n1, n2, n3; // node index, topology
-		double area_2; // 2 * A
-		// shape function of element centre
-		union { struct { SHAPE_FUNC_VALUE_CONTENT; };  ShapeFuncValue sf; };
-		// calculation variables
-		double vol, n, s11, s22, s12, p;
-	};
-
+	struct Element;
 	struct Particle
 	{
 		size_t id;
@@ -123,19 +120,31 @@ public: // Node, Element and Particle data structures
 		// pore pressure
 		double p;
 
-		// Constitutive model
-		double E;   // Elastic modulus
-		double niu; // Poisson ratio
-		double Kf;  // Bulk modulus of water
-		double k;   // Permeability
-		double miu; // Dynamic viscosity
-
 		// calculation variables
 		double x_ori, y_ori;
 		double vol, m_f;
 		Element *pe;
 		// shape function value
 		union { struct { SHAPE_FUNC_VALUE_CONTENT; }; ShapeFuncValue sf; };
+
+		// Used by Element
+		Particle *next;
+	};
+
+	struct Element
+	{
+		size_t id, n1, n2, n3; // node index, topology
+		double area, area_2; // 2 * A
+		// shape function of element centre
+		union { struct { SHAPE_FUNC_VALUE_CONTENT; };  ShapeFuncValue sf; };
+		// calculation variables
+		double vol, n, s11, s22, s12, p;
+		Particle *pcls;
+		inline void add_pcl(Particle &pcl) noexcept
+		{
+			pcl.next = pcls;
+			pcls = &pcl;
+		}
 	};
 
 public:
@@ -163,6 +172,13 @@ public:
 	size_t vfx_num, vfy_num;
 	VelocityBC *vfxs, *vfys;
 
+	// Constitutive model
+	double E;   // Elastic modulus
+	double niu; // Poisson ratio
+	double Kf;  // Bulk modulus of water
+	double k;   // Permeability
+	double miu; // Dynamic viscosity
+	
 public:
 	Model_T2D_CHM_s();
 	~Model_T2D_CHM_s();
@@ -172,7 +188,7 @@ public:
 	void clear_mesh(void);
 
 	void init_pcls(size_t num, double n, double m_s, double density_s, double density_f,
-				  double E, double niu, double Kf, double k, double miu);
+				  double _E, double _niu, double _Kf, double _k, double _miu);
 	void clear_pcls(void);
 
 	void init_mesh(TriangleMesh &tri_mesh);
@@ -247,20 +263,10 @@ protected:
 				&& 0.0 <= c && c <= e.area_2;
 		if (res)
 		{
-			//std::cout << "p: (" << p.x << ", " << p.y << ") is in e " << e.id << "\n"
-			//		  << a/e.area_2 << ", " << b/e.area_2 << "\n";
 			ShapeFuncValue &sf = p.sf;
 			sf.N1 = a / e.area_2;
 			sf.N2 = b / e.area_2;
 			sf.N3 = 1.0 - sf.N1 - sf.N2;
-			//sf.dN1_dx = (n2.y - n3.y) / e.area_2;
-			//sf.dN1_dy = (n3.x - n2.x) / e.area_2;
-			//sf.dN2_dx = (n3.y - n1.y) / e.area_2;
-			//sf.dN2_dy = (n1.x - n3.x) / e.area_2;
-			//sf.dN3_dx = (n1.y - n2.y) / e.area_2;
-			//sf.dN3_dy = (n2.x - n1.x) / e.area_2;
-			//std::cout << "outf: N1 " << sf.N1 << ", N2 " << sf.N2 << ", N3 " << sf.N3 << "\n";
-			//p.sf.cal_shape_func_value(a / e.area_2, b / e.area_2, n1.x, n1.y, n2.x, n2.y, n3.x, n3.y);
 		}
 		return res;
 	}
@@ -282,6 +288,71 @@ protected:
 		pcl.pe = nullptr;
 		return false;
 	}
+
+protected:
+	DispConRigidCircle rigid_circle;
+	typedef DispConRigidCircle::Particle RCParticle;
+	inline bool is_in_triangle(Element &e, RCParticle &p)
+	{
+		Node &n1 = nodes[e.n1];
+		Node &n2 = nodes[e.n2];
+		Node &n3 = nodes[e.n3];
+		double a = (n2.x - p.x) * (n3.y - p.y) - (n3.x - p.x) * (n2.y - p.y);
+		double b = (n3.x - p.x) * (n1.y - p.y) - (n1.x - p.x) * (n3.y - p.y);
+		double c = e.area_2 - a - b;
+		bool res = 0.0 <= a && a <= e.area_2
+				&& 0.0 <= b && b <= e.area_2
+				&& 0.0 <= c && c <= e.area_2;
+		if (res)
+		{
+			p.N1 = a / e.area_2;
+			p.N2 = b / e.area_2;
+			p.N3 = 1.0 - p.N1 - p.N2;
+			// map rigid body velocity to nodes
+			double n_vol;
+			// node 1
+			n_vol = p.vol * p.N1;
+			n1.vol_rb += n_vol;
+			n1.vx_rb  += n_vol * p.vx;
+			n1.vy_rb  += n_vol * p.vy;
+			n1.has_rb = true;
+			// node 2
+			n_vol = p.vol * p.N2;
+			n2.vol_rb += n_vol;
+			n2.vx_rb  += n_vol * p.vx;
+			n2.vy_rb  += n_vol * p.vy;
+			n2.has_rb = true;
+			// node 3
+			n_vol = p.vol * p.N3;
+			n3.vol_rb += n_vol;
+			n3.vx_rb  += n_vol * p.vx;
+			n3.vy_rb  += n_vol * p.vy;
+			n3.has_rb = true;
+		}
+		return res;
+	}
+	inline bool apply_pcl_to_mesh(RCParticle &pcl)
+	{
+		for (size_t e_id = 0; e_id < elem_num; ++e_id)
+		{
+			Element &e = elems[e_id];
+			if (is_in_triangle(e, pcl))
+				return true;
+		}
+		return false;
+	}
+	int apply_rigid_body_to_bg_mesh(double dtime);
+	
+public:
+	inline void init_rigid_circle(double _r, double _x, double _y, double max_pcl_size)
+	{
+		rigid_circle.init(_r, _x, _y, max_pcl_size);
+	}
+	inline void set_rigid_circle_velocity(double _vx, double _vy, double _w)
+	{
+		rigid_circle.set_velocity(_vx, _vy, _w);
+	}
+	inline DispConRigidCircle &get_rigid_circle(void) noexcept { return rigid_circle; }
 };
 
 #undef SHAPE_FUNC_VALUE_CONTENT

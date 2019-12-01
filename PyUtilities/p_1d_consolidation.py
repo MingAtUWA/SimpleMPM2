@@ -9,7 +9,6 @@ from OneDConsolidation import OneDConsolidation
 fig = plt.figure()
 plot1 = fig.subplots(1, 1)
 plot1.set_xlabel("Time")
-#plot1.set_xlim([0.0, 5.0])
 plot1.set_ylabel("Pore pressure")
 
 # Read result file
@@ -43,7 +42,7 @@ for th in root.findall("TimeHistory"):
 line1, = plot1.plot(time, settlement)
 
 #################################################################################################
-u0 = 10.0
+u0 = 50.0
 E = 1000.0
 niu = 0.2 # possion ratio
 kv = 1.0e-4
@@ -67,6 +66,8 @@ for i in range(data_num):
     t_list[i + 2] += t_list[1]
 
 line2, = plot1.plot(t_list, u_list, 'r--')
+# plot1.set_xlim([7.12, 7.13])
+# plot1.set_ylim([-100.0, 80.0])
 
 plt.legend(handles=[line1,line2], labels=['MPM', 'Analytical Solution'])
 

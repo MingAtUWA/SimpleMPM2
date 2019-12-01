@@ -69,10 +69,18 @@ void Model_T2D_CHM_s::init_mesh(double *node_coords, size_t n_num,
 			e.n2 = e.n3;
 			e.n3 = n_tmp;
 		}
+		e.area = e.area_2 * 0.5;
 		Node &_n2 = nodes[e.n2];
 		Node &_n3 = nodes[e.n3];
-		e.sf.cal_shape_func_value(1.0/3.0, 1.0/3.0, n1.x, n1.y,
-								  _n2.x, _n2.y, _n3.x, _n3.y);
+		ShapeFuncValue &sf = e.sf;
+		sf.dN1_dx = (_n2.y - _n3.y) / e.area_2;
+		sf.dN1_dy = (_n3.x - _n2.x) / e.area_2;
+		sf.dN2_dx = (_n3.y -  n1.y) / e.area_2;
+		sf.dN2_dy = ( n1.x - _n3.x) / e.area_2;
+		sf.dN3_dx = ( n1.y - _n2.y) / e.area_2;
+		sf.dN3_dy = (_n2.x -  n1.x) / e.area_2;
+		//e.sf.cal_shape_func_value(1.0/3.0, 1.0/3.0, n1.x, n1.y,
+		//						  _n2.x, _n2.y, _n3.x, _n3.y);
 	}
 }
 
@@ -94,7 +102,7 @@ void Model_T2D_CHM_s::clear_mesh(void)
 
 void Model_T2D_CHM_s::init_pcls(size_t num,
 	double n, double m_s, double density_s, double density_f,
-	double E, double niu, double Kf, double k, double miu)
+	double _E, double _niu, double _Kf, double _k, double _miu)
 {
 	clear_pcls();
 	pcl_num = num;
@@ -122,13 +130,13 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 		pcl.s12 = 0.0;
 		pcl.s22 = 0.0;
 		pcl.p = 0.0;
-		// constitutive model
-		pcl.E = E;
-		pcl.niu = niu;
-		pcl.Kf = Kf;
-		pcl.k = k;
-		pcl.miu = miu;
 	}
+	// constitutive model
+	E = _E;
+	niu = _niu;
+	Kf = _Kf;
+	k = _k;
+	miu = _miu;
 }
 
 void Model_T2D_CHM_s::clear_pcls(void)
@@ -171,6 +179,7 @@ void Model_T2D_CHM_s::init_mesh(TriangleMesh &tri_mesh)
 		e.n2 = ext_e.n2;
 		e.n3 = ext_e.n3;
 		e.area_2 = ext_e.area;
+		e.area = e.area_2 * 0.5;
 		Node &n1 = nodes[e.n1];
 		Node &n2 = nodes[e.n2];
 		Node &n3 = nodes[e.n3];
@@ -181,10 +190,6 @@ void Model_T2D_CHM_s::init_mesh(TriangleMesh &tri_mesh)
 		sf.dN2_dy = (n1.x - n3.x) / e.area_2;
 		sf.dN3_dx = (n1.y - n2.y) / e.area_2;
 		sf.dN3_dy = (n2.x - n1.x) / e.area_2;
-		//std::cout << "outf: dN1_dx " << sf.dN1_dx << ", dN1_dy " << sf.dN1_dy
-		//		<< ", dN2_dx " << sf.dN2_dx << ", dN2_dy " << sf.dN2_dy
-		//		<< ", dN3_dx " << sf.dN3_dx << ", dN3_dy " << sf.dN3_dy << "\n";
-		//e.sf.cal_shape_func_value(1.0 / 3.0, 1.0 / 3.0, n1.x, n1.y, n2.x, n2.y, n3.x, n3.y);
 	}
 }
 
@@ -205,4 +210,42 @@ void Model_T2D_CHM_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
 		pcl.m_s *= ext_ppcl->vol;
 		ext_ppcl = mh_2_pcl.next(ext_ppcl);
 	}
+}
+
+int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
+{
+	// reset reaction force
+	rigid_circle.rfx = 0.0;
+	rigid_circle.rfy = 0.0;
+	rigid_circle.rm = 0.0;
+	// update state
+	rigid_circle.update(dtime);
+
+	for (size_t pcl_id = 0; pcl_id < rigid_circle.pcl_num; ++pcl_id)
+	{
+		RCParticle &pcl = rigid_circle.pcls[pcl_id];
+		apply_pcl_to_mesh(pcl);
+	}
+	
+	double fx, fy;
+	for (size_t n_id = 0; n_id < node_num; ++n_id)
+	{
+		Node &n = nodes[n_id];
+		if (n.has_rb && n.has_mp)
+		{
+			n.vx_rb /= n.vol_rb;
+			n.vy_rb /= n.vol_rb;
+			// rough contact for both solid and fluid phase
+			fx = -((n.vx_rb - n.vx_s) * n.m_s + (n.vx_rb - n.vx_f) * n.m_f) / dtime;
+			fy = -((n.vy_rb - n.vy_s) * n.m_s + (n.vy_rb - n.vy_f) * n.m_f) / dtime;
+			rigid_circle.add_reaction_force(n.x, n.y, fx, fy);
+			// modify nodal velocity
+			n.vx_s = n.vx_rb;
+			n.vy_s = n.vy_rb;
+			n.vx_f = n.vx_rb;
+			n.vy_f = n.vy_rb;
+		}
+	}
+
+	return 0;
 }

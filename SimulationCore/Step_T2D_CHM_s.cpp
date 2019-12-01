@@ -49,6 +49,8 @@ int solve_substep_T2D_CHM_s(void *_self)
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
 		Node_mpm &n = md.nodes[n_id];
+		// material point
+		n.has_mp = false;
 		// mixture phase
 		n.m_s = 0.0;
 		n.m_f = 0.0;
@@ -69,17 +71,24 @@ int solve_substep_T2D_CHM_s(void *_self)
 		// solid - fluid interaction
 		n.fx_drag = 0.0;
 		n.fy_drag = 0.0;
+		// rigid body
+		n.has_rb = false;
+		n.vx_rb = 0.0;
+		n.vy_rb = 0.0;
+		n.vol_rb = 0.0;
 	}
 
+	// init elements
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
 		Element_mpm &e = md.elems[e_id];
 		e.vol = 0.0;
-		e.n   = 0.0;
+		e.n = 0.0;
 		e.s11 = 0.0;
 		e.s22 = 0.0;
 		e.s12 = 0.0;
-		e.p   = 0.0;
+		e.p = 0.0;
+		e.pcls = nullptr;
 	}
 
 	// init particles
@@ -91,26 +100,28 @@ int solve_substep_T2D_CHM_s(void *_self)
 			if (!md.init_pcl_cal_var(pcl))
 				continue;
 
+			pcl.pe->add_pcl(pcl);
+
 			double mvx_s = pcl.m_s * pcl.vx_s;
 			double mvy_s = pcl.m_s * pcl.vy_s;
 			pcl.vol = pcl.vol_s / (1.0 - pcl.n);
 			pcl.m_f = pcl.n * pcl.density_f * pcl.vol;
 			double mvx_f = pcl.m_f * pcl.vx_f;
 			double mvy_f = pcl.m_f * pcl.vy_f;
-			double n2_miu_div_k = pcl.n * pcl.n * pcl.miu / pcl.k;
+			double n2_miu_div_k = pcl.n * pcl.n * md.miu / md.k;
 			double n2_miu_div_k_vrx_vol = n2_miu_div_k * (pcl.vx_f - pcl.vx_s) * pcl.vol;
 			double n2_miu_div_k_vry_vol = n2_miu_div_k * (pcl.vy_f - pcl.vy_s) * pcl.vol;
 			Element_mpm &e = *pcl.pe;
 			e.vol += pcl.vol;
-			e.n   += pcl.vol_s;
+			e.n += pcl.vol_s;
 			e.s11 += pcl.vol * pcl.s11;
 			e.s22 += pcl.vol * pcl.s22;
 			e.s12 += pcl.vol * pcl.s12;
-			e.p   += pcl.vol * pcl.p;
+			e.p += pcl.vol * pcl.p;
 
-			//if (self.get_total_time() > 0.9260 &&
-			//	self.get_total_time() < 0.9300 &&
-			//	pcl_id == 17)
+			//if (self.get_total_time() > 7.1259 &&
+			//	self.get_total_time() < 7.1300 &&
+			//	pcl_id == 51) // 51
 			//{
 			//	std::cout << "time: " << self.get_total_time()
 			//			  << " pcl: " << pcl_id << " in elem: " << e.id << "\n";
@@ -118,26 +129,28 @@ int solve_substep_T2D_CHM_s(void *_self)
 
 			// node 1
 			Node_mpm &n1 = md.nodes[e.n1];
+			n1.has_mp = true;
 			// solid phase
-			n1.m_s  += pcl.N1 * pcl.m_s;
+			n1.m_s += pcl.N1 * pcl.m_s;
 			n1.vx_s += pcl.N1 * mvx_s;
 			n1.vy_s += pcl.N1 * mvy_s;
 			// fluid phase
-			n1.m_f  += pcl.N1 * pcl.m_f;
+			n1.m_f += pcl.N1 * pcl.m_f;
 			n1.vx_f += pcl.N1 * mvx_f;
 			n1.vy_f += pcl.N1 * mvy_f;
 			// solid - fluid interaction
 			n1.fx_drag += pcl.N1 * n2_miu_div_k_vrx_vol;
 			n1.fy_drag += pcl.N1 * n2_miu_div_k_vry_vol;
-			
+
 			// node 2
 			Node_mpm &n2 = md.nodes[e.n2];
+			n2.has_mp = true;
 			// mixture phase
-			n2.m_s  += pcl.N2 * pcl.m_s;
+			n2.m_s += pcl.N2 * pcl.m_s;
 			n2.vx_s += pcl.N2 * mvx_s;
 			n2.vy_s += pcl.N2 * mvy_s;
 			// fluid phase
-			n2.m_f  += pcl.N2 * pcl.m_f;
+			n2.m_f += pcl.N2 * pcl.m_f;
 			n2.vx_f += pcl.N2 * mvx_f;
 			n2.vy_f += pcl.N2 * mvy_f;
 			// solid - fluid interaction
@@ -146,12 +159,13 @@ int solve_substep_T2D_CHM_s(void *_self)
 
 			// node 3
 			Node_mpm &n3 = md.nodes[e.n3];
+			n3.has_mp = true;
 			// mixture phase
-			n3.m_s  += pcl.N3 * pcl.m_s;
+			n3.m_s += pcl.N3 * pcl.m_s;
 			n3.vx_s += pcl.N3 * mvx_s;
 			n3.vy_s += pcl.N3 * mvy_s;
 			// fluid phase
-			n3.m_f  += pcl.N3 * pcl.m_f;
+			n3.m_f += pcl.N3 * pcl.m_f;
 			n3.vx_f += pcl.N3 * mvx_f;
 			n3.vy_f += pcl.N3 * mvy_f;
 			// solid - fluid interaction
@@ -160,6 +174,7 @@ int solve_substep_T2D_CHM_s(void *_self)
 		}
 	}
 
+	double de_vol_f_rate;
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
 		Element_mpm &e = md.elems[e_id];
@@ -169,22 +184,51 @@ int solve_substep_T2D_CHM_s(void *_self)
 			e.s11 /= e.vol;
 			e.s22 /= e.vol;
 			e.s12 /= e.vol;
-			e.p   /= e.vol;
+			e.p /= e.vol;
+			if (e.vol > e.area)
+				e.vol = e.area;
+
 			Node_mpm &n1 = md.nodes[e.n1];
+			Node_mpm &n2 = md.nodes[e.n2];
+			Node_mpm &n3 = md.nodes[e.n3];
+
+			// volume strain rate
+			de_vol_f_rate = -(1.0 - e.n) / e.n *
+							 (n1.vx_s * e.dN1_dx + n2.vx_s * e.dN2_dx + n3.vx_s * e.dN3_dx
+							+ n1.vy_s * e.dN1_dy + n2.vy_s * e.dN2_dy + n3.vy_s * e.dN3_dy)
+							-(n1.vx_f * e.dN1_dx + n2.vx_f * e.dN2_dx + n3.vx_f * e.dN3_dx
+							+ n1.vy_f * e.dN1_dy + n2.vy_f * e.dN2_dy + n3.vy_f * e.dN3_dy);
+			// add bulk viscosity
+			e.p -= self.bv_ratio * de_vol_f_rate;
+			
+			// node 1
 			n1.fx_int_s += (e.dN1_dx * (e.s11 - (1.0 - e.n) * e.p) + e.dN1_dy * e.s12) * e.vol;
 			n1.fy_int_s += (e.dN1_dx * e.s12 + e.dN1_dy * (e.s22 - (1.0 - e.n) * e.p)) * e.vol;
 			n1.fx_int_f += (e.dN1_dx * e.n * -e.p) * e.vol;
 			n1.fy_int_f += (e.dN1_dy * e.n * -e.p) * e.vol;
-			Node_mpm &n2 = md.nodes[e.n2];
+			// node 2
 			n2.fx_int_s += (e.dN2_dx * (e.s11 - (1.0 - e.n) * e.p) + e.dN2_dy * e.s12) * e.vol;
 			n2.fy_int_s += (e.dN2_dx * e.s12 + e.dN2_dy * (e.s22 - (1.0 - e.n) * e.p)) * e.vol;
 			n2.fx_int_f += (e.dN2_dx * e.n * -e.p) * e.vol;
 			n2.fy_int_f += (e.dN2_dy * e.n * -e.p) * e.vol;
-			Node_mpm &n3 = md.nodes[e.n3];
+			// node 3
 			n3.fx_int_s += (e.dN3_dx * (e.s11 - (1.0 - e.n) * e.p) + e.dN3_dy * e.s12) * e.vol;
 			n3.fy_int_s += (e.dN3_dx * e.s12 + e.dN3_dy * (e.s22 - (1.0 - e.n) * e.p)) * e.vol;
 			n3.fx_int_f += (e.dN3_dx * e.n * -e.p) * e.vol;
 			n3.fy_int_f += (e.dN3_dy * e.n * -e.p) * e.vol;
+			
+			//if (self.get_total_time() > 7.1259 &&
+			//	self.get_total_time() < 7.1300 &&
+			//	e.id == 33)
+			//{
+			//	std::cout << "time: " << self.get_total_time();
+			//	for (Particle_mpm *ppcl = e.pcls; ppcl; ppcl = ppcl->next)
+			//	{
+			//		Particle_mpm &pcl = *ppcl;
+			//		std::cout << " pcl " << pcl.id << ", p " << pcl.p;
+			//	}
+			//	std::cout << "\n";
+			//}
 		}
 	}
 
@@ -346,7 +390,7 @@ int solve_substep_T2D_CHM_s(void *_self)
 		n.ay_f = md.afys[a_id].a;
 	}
 
-	//if (self.get_total_time() > 0.9240 && self.get_total_time() < 0.9275)
+	//if (self.get_total_time() > 7.1259 && self.get_total_time() < 7.1300)
 	//{
 	//	double max_a = 0.0;
 	//	size_t max_a_n_id = 0;
@@ -364,7 +408,24 @@ int solve_substep_T2D_CHM_s(void *_self)
 	//		<< " ay: " << md.nodes[max_a_n_id].ay_s << "\n";
 	//}
 
-	// update nodal momentum of fluid phase
+	//if (self.get_total_time() > 7.1259 && self.get_total_time() < 7.1300)
+	//{
+	//	//std::cout << "time: " << self.get_total_time()
+	//	//	<< " n: " << 14
+	//	//	<< " f_int_s: " << md.nodes[14].fy_int_s
+	//	//	<< " f_int_f: " << md.nodes[14].fy_int_f
+	//	//	<< " f_ext_s: " << md.nodes[14].fy_ext_s
+	//	//	<< " f_ext_f: " << md.nodes[14].fy_ext_f 
+	//	//	<< " f_drag: " << md.nodes[14].fy_drag
+	//	//	<< "\n";
+	//	std::cout << "time: " << self.get_total_time()
+	//		<< " e1 p " << md.elems[33].p << " vol " << md.elems[33].vol
+	//		<< "; e2 p " << md.elems[42].p << " vol " << md.elems[42].vol
+	//		<< "; e3 p " << md.elems[44].p << " vol " << md.elems[44].vol
+	//		<< "\n";
+	//}
+
+	// update nodal momentum
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
 		Node_mpm &n = md.nodes[n_id];
@@ -380,6 +441,9 @@ int solve_substep_T2D_CHM_s(void *_self)
 			n.vy_f += n.ay_f * self.dtime;
 		}
 	}
+
+	// contact detection and velocity modification
+	md.apply_rigid_body_to_bg_mesh(self.dtime);
 
 	// apply velocity bc
 	for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
@@ -422,75 +486,95 @@ int solve_substep_T2D_CHM_s(void *_self)
 		}
 	}
 
-	// map variables back to and update variables particles
+	// map variables back to particles and update their variables
 	double de11, de22, de12;
 	double ds11, ds22, ds12;
-	double de_vol_s, de_vol_f, de_vol_f_rate;
-	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
+	double de_vol_s, de_vol_f;
+	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
-		Particle_mpm &pcl = md.pcls[pcl_id];
-		if (pcl.pe)
+		Element_mpm &e = md.elems[e_id];
+		if (e.pcls)
 		{
-			Element_mpm &e = *pcl.pe;
 			Node_mpm &n1 = md.nodes[e.n1];
 			Node_mpm &n2 = md.nodes[e.n2];
 			Node_mpm &n3 = md.nodes[e.n3];
-						
-			// velocity
-			pcl.vx_s += (n1.ax_s * pcl.N1 + n2.ax_s * pcl.N2 + n3.ax_s * pcl.N3) * self.dtime;
-			pcl.vy_s += (n1.ay_s * pcl.N1 + n2.ay_s * pcl.N2 + n3.ay_s * pcl.N3) * self.dtime;
-			pcl.vx_f += (n1.ax_f * pcl.N1 + n2.ax_f * pcl.N2 + n3.ax_f * pcl.N3) * self.dtime;
-			pcl.vy_f += (n1.ay_f * pcl.N1 + n2.ay_f * pcl.N2 + n3.ay_f * pcl.N3) * self.dtime;
-
-			// displacement
-			pcl.ux_s += n1.dux_s * pcl.N1 + n2.dux_s * pcl.N2 + n3.dux_s * pcl.N3;
-			pcl.uy_s += n1.duy_s * pcl.N1 + n2.duy_s * pcl.N2 + n3.duy_s * pcl.N3;
-			pcl.ux_f += n1.dux_f * pcl.N1 + n2.dux_f * pcl.N2 + n3.dux_f * pcl.N3;
-			pcl.uy_f += n1.duy_f * pcl.N1 + n2.duy_f * pcl.N2 + n3.duy_f * pcl.N3;
-
-			// update position
-			pcl.x = pcl.x_ori + pcl.ux_s;
-			pcl.y = pcl.y_ori + pcl.uy_s;
 
 			// strain increment
 			de11 = n1.dux_s * e.dN1_dx + n2.dux_s * e.dN2_dx + n3.dux_s * e.dN3_dx;
 			de22 = n1.duy_s * e.dN1_dy + n2.duy_s * e.dN2_dy + n3.duy_s * e.dN3_dy;
 			de12 = (n1.dux_s * e.dN1_dy + n2.dux_s * e.dN2_dy + n3.dux_s * e.dN3_dy
 				  + n1.duy_s * e.dN1_dx + n2.duy_s * e.dN2_dx + n3.duy_s * e.dN3_dx) * 0.5;
-			pcl.e11 += de11;
-			pcl.e22 += de22;
-			pcl.e12 += de12;
 
 			// update stress
-			double E_tmp = pcl.E / ((1.0 + pcl.niu) * (1.0 - 2.0 * pcl.niu));
-			ds11 = E_tmp * ((1.0 - pcl.niu) * de11 + pcl.niu * de22);
-			ds22 = E_tmp * (pcl.niu * de11 + (1.0 - pcl.niu) * de22);
-			ds12 = pcl.E / (2.0 * (1.0 + pcl.niu)) * 2.0 * de12;
-			pcl.s11 += ds11;
-			pcl.s22 += ds22;
-			pcl.s12 += ds12;
+			// need remapping back to yield surface
+			double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
+			ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
+			ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
+			ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
+			e.s11 += ds11;
+			e.s22 += ds22;
+			e.s12 += ds12;
 
 			// volumetric strain of solid phase
 			de_vol_s = de11 + de22;
-			
+
 			// "volumetric strain" of fluid phase, take compression as positive
-			de_vol_f = (1.0 - pcl.n) / pcl.n * -de_vol_s
+			de_vol_f = (1.0 - e.n) / e.n * -de_vol_s
 					 - (n1.dux_f * e.dN1_dx + n2.dux_f * e.dN2_dx + n3.dux_f * e.dN3_dx
 					  + n1.duy_f * e.dN1_dy + n2.duy_f * e.dN2_dy + n3.duy_f * e.dN3_dy);
-			// fluid density
-			pcl.density_f /= 1.0 - de_vol_f;
+			
+			// pore pressure
+			e.p += md.Kf * de_vol_f;
+			//e.p += md.Kf * de_vol_f - self.bv_ratio * de_vol_f / self.dtime; // bv_ratio related to dtime ??
 
-			// bulk viscosity, volume strain rate
-			de_vol_f_rate = -(1.0 - pcl.n) / pcl.n *
-						   (n1.vx_s * e.dN1_dx + n2.vx_s * e.dN2_dx + n3.vx_s * e.dN3_dx
-						  + n1.vy_s * e.dN1_dy + n2.vy_s * e.dN2_dy + n3.vy_s * e.dN3_dy)
-						 - (n1.vx_f * e.dN1_dx + n2.vx_f * e.dN2_dx + n3.vx_f * e.dN3_dx
-						  + n1.vy_f * e.dN1_dy + n2.vy_f * e.dN2_dy + n3.vy_f * e.dN3_dy);
-			// pore pressure (can use EOS and get p from density_f instead)
-			pcl.p += pcl.Kf * de_vol_f - self.bv_ratio * de_vol_f_rate;
+			//if (self.get_total_time() > 7.1259 &&
+			//	self.get_total_time() < 7.1300 &&
+			//	e.id == 33)
+			//{
+			//	std::cout << "time: " << self.get_total_time()
+			//		<< " dp " << md.Kf * de_vol_f
+			//		<< " bv " << self.bv_ratio * de_vol_f / self.dtime
+			//		<< "\n";
+			//}
 
-			// porosity
-			pcl.n = (de_vol_s + pcl.n) / (1.0 + de_vol_s);
+			for (Particle_mpm *ppcl = e.pcls; ppcl; ppcl = ppcl->next)
+			{
+				Particle_mpm &pcl = *ppcl;
+
+				// velocity
+				pcl.vx_s += (n1.ax_s * pcl.N1 + n2.ax_s * pcl.N2 + n3.ax_s * pcl.N3) * self.dtime;
+				pcl.vy_s += (n1.ay_s * pcl.N1 + n2.ay_s * pcl.N2 + n3.ay_s * pcl.N3) * self.dtime;
+				pcl.vx_f += (n1.ax_f * pcl.N1 + n2.ax_f * pcl.N2 + n3.ax_f * pcl.N3) * self.dtime;
+				pcl.vy_f += (n1.ay_f * pcl.N1 + n2.ay_f * pcl.N2 + n3.ay_f * pcl.N3) * self.dtime;
+
+				// displacement
+				pcl.ux_s += n1.dux_s * pcl.N1 + n2.dux_s * pcl.N2 + n3.dux_s * pcl.N3;
+				pcl.uy_s += n1.duy_s * pcl.N1 + n2.duy_s * pcl.N2 + n3.duy_s * pcl.N3;
+				pcl.ux_f += n1.dux_f * pcl.N1 + n2.dux_f * pcl.N2 + n3.dux_f * pcl.N3;
+				pcl.uy_f += n1.duy_f * pcl.N1 + n2.duy_f * pcl.N2 + n3.duy_f * pcl.N3;
+
+				// update position
+				pcl.x = pcl.x_ori + pcl.ux_s;
+				pcl.y = pcl.y_ori + pcl.uy_s;
+
+				// strain
+				pcl.e11 += de11;
+				pcl.e22 += de22;
+				pcl.e12 += de12;
+
+				// stress
+				// directly assign element-wise stress
+				pcl.s11 = e.s11;
+				pcl.s22 = e.s22;
+				pcl.s12 = e.s12;
+				pcl.p = e.p;
+
+				// fluid density
+				pcl.density_f /= 1.0 - de_vol_f;
+
+				// porosity
+				pcl.n = (de_vol_s + pcl.n) / (1.0 + de_vol_s);
+			}
 		}
 	}
 	

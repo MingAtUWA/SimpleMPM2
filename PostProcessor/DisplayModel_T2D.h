@@ -26,6 +26,7 @@ public:
 
 	int init_model(Model_T2D_CHM_s &md);
 	int init_points(GLfloat *n_coords, size_t num); // num = sizeof(n_coords) * 3
+	int init_rigid_circle(DispConRigidCircle &rc);
 
 protected:
 	// shader program
@@ -45,6 +46,12 @@ protected:
 	GLsizei pcls_id_num;
 	glm::mat4 pcls_mv_mat;
 	
+	// rigid circle
+	GLuint rc_vao;
+	GLuint rc_vbo;
+	GLsizei rc_pcls_id_num;
+	glm::mat4 rc_mv_mat;
+
 	// points
 	GLuint pt_vao;
 	GLuint pt_vbo;

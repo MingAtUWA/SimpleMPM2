@@ -69,6 +69,8 @@ add_library(
     Step_T2D_CHM_s.h Step_T2D_CHM_s.cpp
     ModelDataOutput_T2D_CHM_s.h ModelDataOutput_T2D_CHM_s.cpp
     TimeHistoryOutput_T2D_CHM_s.h TimeHistoryOutput_T2D_CHM_s.cpp
+    # Rigid ciricle controlled by displacement
+    DispConRigidCircle.h DispConRigidCircle.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

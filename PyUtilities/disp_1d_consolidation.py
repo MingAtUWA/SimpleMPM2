@@ -45,7 +45,7 @@ time, settlement = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\t2
 line1, = plot1.plot(time, settlement)
 
 #################################################################################################
-u0 = 10.0
+u0 = 50.0
 E = 1000.0
 niu = 0.2 # possion ratio
 kv = 1.0e-4

@@ -17,46 +17,6 @@
 
 #include "GA_T2D_CHM_s.h"
 
-void test_t2d_mpm_square(void)
-{
-	double n_coords[] = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
-	size_t e_ids[] = { 0, 1, 2, 0, 2, 3 };
-
-	Model_T2D_CHM_s model;
-	model.init_mesh(n_coords, 4, e_ids, 2);
-	model.init_pcls(2, 0.2, 800.0, 2000.0, 1000.0, 100.0, 0.2, 5000.0, 1.0e-4, 1.0);
-	model.pcls[0].x = 0.25;
-	model.pcls[0].y = 0.50;
-	model.pcls[1].x = 0.75;
-	model.pcls[1].y = 0.50;
-
-	model.tx_num = 2;
-	model.txs = new TractionBC_MPM[model.tx_num];
-	for (size_t t_id = 0; t_id < model.tx_num; ++t_id)
-	{
-		TractionBC_MPM &tbc = model.txs[t_id];
-		tbc.pcl_id = t_id;
-		tbc.t = 1.0;
-	}
-
-	//model.asx_num = 2;
-	//model.asxs = new AccelerationBC[model.asx_num];
-	//for (size_t a_id = 0; a_id < model.asx_num; ++a_id)
-	//{
-	//	AccelerationBC &abc = model.asxs[a_id];
-	//	abc.node_id = ;
-	//	abc.a = 0.0;
-	//}
-	
-	Step_T2D_CHM_s step;
-	step.set_model(model);
-	step.set_time(0.1);
-	step.set_dtime(0.1);
-	step.solve();
-
-	system("pause");
-}
-
 namespace
 {
 void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
@@ -113,15 +73,15 @@ void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 };
 
 
-void test_t2d_mpm_chm_s_1d_consolidation(void)
+void test_t2d_mpm_chm_s_t_bar(void)
 {
 	TriangleMesh tri_mesh;
-	tri_mesh.load_mesh("..\\..\\Asset\\rect.mesh_data");
-	//std::cout << "node num: " << tri_mesh.get_node_num() << "\n"
-	//		  << "elem num: " << tri_mesh.get_elem_num() << "\n";
+	tri_mesh.load_mesh("..\\..\\Asset\\rect10by15.mesh_data");
+	std::cout << "node num: " << tri_mesh.get_node_num() << "\n"
+			  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 	
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_even_div_num(2);
+	mh_2_pcl.set_even_div_num(1);
 	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
 	mh_2_pcl.generate_pcls();
 	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
@@ -136,6 +96,11 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//	area += e.area_2;
 	//}
 	//std::cout << area << "\n";
+
+	model.init_rigid_circle(2.5, 5.0, 10.0, 0.25);
+	model.set_rigid_circle_velocity(0.0, 0.05, 0.0);
+	model.get_rigid_circle().del_pcls_in_circle(mh_2_pcl);
+
 	model.init_pcls(mh_2_pcl, 0.2, 2.0, 1.0, 1000.0, 0.2, 50000.0, 1.0e-4, 1.0);
 	mh_2_pcl.clear();
 	//double pcl_area = 0.0;
@@ -144,52 +109,45 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[i];
 	//	pcl_area += pcl.m_s;
 	//}
-	//pcl_area /= (1.0 - 0.2) * 20.0;
+	//pcl_area /= (1.0 - 0.2) * 2.0;
 	//std::cout << pcl_area << "\n";
+
 
 	//find_bc_pcl_and_node(model);
 	//system("pause");
 	//return;
 
-	size_t vx_bc_n_id[] = { 0, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-							1, 2,  5,  6,  7,  8,  9, 10, 11, 12, 13 };
-	model.init_vsxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
-	for (size_t v_id = 0; v_id < model.vsx_num; ++v_id)
-	{
-		VelocityBC &vbc = model.vsxs[v_id];
-		vbc.node_id = vx_bc_n_id[v_id];
-		vbc.v = 0.0;
-	}
-	model.init_vfxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
-	for (size_t v_id = 0; v_id < model.vfx_num; ++v_id)
-	{
-		VelocityBC &vbc = model.vfxs[v_id];
-		vbc.node_id = vx_bc_n_id[v_id];
-		vbc.v = 0.0;
-	}
-	size_t vy_bc_n_id[] = { 0, 1, 4 };
-	model.init_vsys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
-	for (size_t v_id = 0; v_id < model.vsy_num; ++v_id)
-	{
-		VelocityBC &vbc = model.vsys[v_id];
-		vbc.node_id = vy_bc_n_id[v_id];
-		vbc.v = 0.0;
-	}
-	model.init_vfys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
-	for (size_t v_id = 0; v_id < model.vfy_num; ++v_id)
-	{
-		VelocityBC &vbc = model.vfys[v_id];
-		vbc.node_id = vy_bc_n_id[v_id];
-		vbc.v = 0.0;
-	}
-	size_t tbc_pcl_id[] = { 14, 15, 50, 51 };
-	model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
-	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	{
-		TractionBC_MPM &tbc = model.tys[t_id];
-		tbc.pcl_id = tbc_pcl_id[t_id];
-		tbc.t = 0.05 * -50.0;
-	}
+	//size_t vx_bc_n_id[] = { 0, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+	//						1, 2,  5,  6,  7,  8,  9, 10, 11, 12, 13 };
+	//model.init_vsxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
+	//for (size_t v_id = 0; v_id < model.vsx_num; ++v_id)
+	//{
+	//	VelocityBC &vbc = model.vsxs[v_id];
+	//	vbc.node_id = vx_bc_n_id[v_id];
+	//	vbc.v = 0.0;
+	//}
+	//model.init_vfxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
+	//for (size_t v_id = 0; v_id < model.vfx_num; ++v_id)
+	//{
+	//	VelocityBC &vbc = model.vfxs[v_id];
+	//	vbc.node_id = vx_bc_n_id[v_id];
+	//	vbc.v = 0.0;
+	//}
+	//size_t vy_bc_n_id[] = { 0, 1, 4 };
+	//model.init_vsys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
+	//for (size_t v_id = 0; v_id < model.vsy_num; ++v_id)
+	//{
+	//	VelocityBC &vbc = model.vsys[v_id];
+	//	vbc.node_id = vy_bc_n_id[v_id];
+	//	vbc.v = 0.0;
+	//}
+	//model.init_vfys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
+	//for (size_t v_id = 0; v_id < model.vfy_num; ++v_id)
+	//{
+	//	VelocityBC &vbc = model.vfys[v_id];
+	//	vbc.node_id = vy_bc_n_id[v_id];
+	//	vbc.v = 0.0;
+	//}
 
 	//pt_array.reserve(29 * 3);
 	//GLfloat pt_coord;
@@ -245,18 +203,18 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//pt_coord = 0.0f;
 	//pt_array.add(&pt_coord);
 
-	//DisplayModel_T2D disp_model;
-	//disp_model.init_win();
-	//disp_model.init_model(model);
+	DisplayModel_T2D disp_model;
+	disp_model.init_win();
+	disp_model.init_model(model);
+	disp_model.init_rigid_circle(model.get_rigid_circle());
 	//disp_model.init_points(pt_array.get_mem(), 1);
-	//disp_model.display(-0.05, 0.25, -0.05, 1.05);
-	//system("pause");
-	//return;
+	disp_model.display(-0.5, 10.5, -0.5, 15.5);
+	return;
 
 	ResultFile_PlainBin res_file_pb;
-	res_file_pb.init("t2d_mpm_1d_consolidation.bin");
+	res_file_pb.init("t2d_mpm_t_bar.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("t2d_mpm_1d_consolidation.xml");
+	res_file_xml.init("t2d_mpm_t_bar.xml");
 	
 	// output model
 	ModelDataOutput_T2D_CHM_s md;
@@ -301,15 +259,14 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	system("pause");
 }
 
-void test_animation_t2d_chm_s_1d_consolidation(void)
+void test_animation_t2d_chm_s_t_bar(void)
 {
-	double soil_height = 1.0;
-	double soil_width  = 0.2;
+	double soil_height = 15.0;
+	double soil_width  = 10.0;
 	double padding_height = soil_height * 0.05;
 	double padding_width  = soil_width * 0.05;
 	GA_T2D_CHM_s gen;
 	gen.generate(5.0, -padding_width, soil_width + padding_width,
 				 -padding_height, soil_height + padding_height,
-				 "t2d_mpm_1d_consolidation.bin",
-				 "t2d_mpm_1d_consolidation.gif");
+				 "t2d_mpm_t_bar.bin", "t2d_mpm_t_bar.gif");
 }

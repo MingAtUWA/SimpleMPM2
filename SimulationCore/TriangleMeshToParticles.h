@@ -12,10 +12,11 @@ class TriangleMeshToParticles
 public:
 	struct Particle
 	{
+		friend TriangleMeshToParticles;
 		double x, y, vol;
 	protected:
-		friend TriangleMeshToParticles;
 		Particle *prev;
+		Particle *next;
 	};
 	typedef MemoryUtilities::ItemBuffer<Particle> ParticleBuffer;
 	enum class GeneratorType : unsigned int
@@ -28,15 +29,19 @@ protected: // particle generator functions
 	typedef void(TriangleMeshToParticles::*GeneratorFunc)(Point &p1, Point &p2, Point &p3, double vol);
 
 public:
-	inline Particle *first(void) noexcept { return top; }
-	inline Particle *next(Particle *cur) noexcept { return cur->prev; }
+	inline Particle *first(void) noexcept { return head.next; }
+	inline Particle *next(Particle *cur) noexcept { return cur->next; }
+	inline bool not_end_yet(Particle *cur) noexcept { return cur != &head; }
+	inline bool is_end(Particle *cur) noexcept { return cur == &head; }
 
 public:
 	TriangleMeshToParticles(TriangleMesh &_mesh,
 		GeneratorType _type = GeneratorType::FirstOrderGaussPoint) : 
-		mesh(_mesh), top(nullptr), pcl_num(0),
-		evenly_div_num(1)
+		mesh(_mesh), pcl_num(0), evenly_div_num(1)
 	{
+		head.next = &head;
+		head.prev = &head;
+
 		if (unsigned int(_type) < generator_num)
 			type = _type;
 		else
@@ -49,7 +54,8 @@ public:
 
 	inline void clear(void) noexcept
 	{
-		top = nullptr;
+		head.next = &head;
+		head.prev = &head;
 		pcl_num = 0;
 		particle_buffer.clear();
 	}
@@ -78,16 +84,35 @@ protected:
 	GeneratorFunc cur_generator_func;
 	size_t cur_generator_pcl_num;
 
-	Particle *top;
+	Particle head;
 	size_t pcl_num;
 	ParticleBuffer particle_buffer;
 	inline Particle *add_pcl(void)
 	{
 		Particle *res = particle_buffer.alloc();
-		res->prev = top;
-		top = res;
+		res->next = &head;
+		res->prev = head.prev;
+		head.prev->next = res;
+		head.prev = res;
 		++pcl_num;
 		return res;
+	}
+
+public:
+	inline Particle *add_pcl(Particle &pcl)
+	{
+		Particle *res = add_pcl();
+		res->x = pcl.x;
+		res->y = pcl.y;
+		res->vol = pcl.vol;
+	}
+
+	inline void del_pcl(Particle &pcl)
+	{
+		pcl.prev->next = pcl.next;
+		pcl.next->prev = pcl.prev;
+		particle_buffer.del(&pcl);
+		--pcl_num;
 	}
 
 protected:

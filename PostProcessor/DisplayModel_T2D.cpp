@@ -185,6 +185,32 @@ int DisplayModel_T2D::init_bg_mesh(Model_T2D_CHM_s &md)
 	return 0;
 }
 
+int DisplayModel_T2D::init_rigid_circle(DispConRigidCircle &rc)
+{
+	rc_mv_mat = glm::mat4(1.0f);
+
+	glGenVertexArrays(1, &rc_vao);
+	glBindVertexArray(rc_vao);
+	glGenBuffers(1, &rc_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, rc_vbo);
+	rc_pcls_id_num = rc.get_pcl_num();
+	GLfloat *pcl_coords_data = new GLfloat[rc_pcls_id_num * 3];
+	const DispConRigidCircle::Particle *pcls = rc.get_pcls();
+	for (size_t pcl_id = 0; pcl_id < rc_pcls_id_num; ++pcl_id)
+	{
+		const DispConRigidCircle::Particle &pcl = pcls[pcl_id];
+		pcl_coords_data[pcl_id * 3] = GLfloat(pcl.x);
+		pcl_coords_data[pcl_id * 3 + 1] = GLfloat(pcl.y);
+		pcl_coords_data[pcl_id * 3 + 2] = 0.0f;
+	}
+	glBufferData(GL_ARRAY_BUFFER, rc_pcls_id_num * 3 * sizeof(GLfloat), pcl_coords_data, GL_STATIC_DRAW);
+	delete[] pcl_coords_data;
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
+	glEnableVertexAttribArray(0);
+
+	return 0;
+}
+
 int DisplayModel_T2D::init_pcls(Model_T2D_CHM_s &md)
 {
 	pcls_mv_mat = glm::mat4(1.0f);
@@ -237,6 +263,17 @@ void DisplayModel_T2D::render(void)
 		glBindVertexArray(pcls_vao);
 		glPointSize(10.0f);
 		glDrawArrays(GL_POINTS, 0, pcls_id_num);
+	}
+
+	// rigid circle
+	if (rc_vao)
+	{
+		shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(rc_mv_mat));
+		glm::vec4 dodgerblue(0.11765f, 0.56471f, 1.0f, 1.0f);
+		shader.set_uniform_vec4f(color_id, glm::value_ptr(dodgerblue));
+		glBindVertexArray(rc_vao);
+		glPointSize(5.0f);
+		glDrawArrays(GL_POINTS, 0, rc_pcls_id_num);
 	}
 
 	// pt

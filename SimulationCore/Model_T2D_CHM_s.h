@@ -353,7 +353,75 @@ public:
 		rigid_circle.set_velocity(_vx, _vy, _w);
 	}
 	inline DispConRigidCircle &get_rigid_circle(void) noexcept { return rigid_circle; }
+
+	// =========================================================
+	// ==================== background grid ====================
+protected:
+	struct PElement
+	{
+		Element *e;
+		PElement *next;
+	};
+
+	struct Grid
+	{
+		size_t x_id, y_id;
+		PElement *pelems;
+	};
+	
+	double grid_x_min, grid_x_max, grid_hx;
+	double grid_y_min, grid_y_max, grid_hy;
+	size_t grid_x_num, grid_y_num, grid_num;
+	Grid *bg_grids;
+
+	MemoryUtilities::ItemBuffer<PElement> pe_buffer;
+	inline void add_elem_to_grid(Grid &g, Element &e)
+	{
+		PElement *pe = pe_buffer.alloc();
+		pe->e = &e;
+		pe->next = g.pelems;
+		g.pelems = pe;
+	}
+
+	void add_elem_to_bg_grid(Element &e);
+
+public:
+	template <typename Point>
+	Element *find_in_which_element(Point &p);
+
+	int init_bg_mesh(double hx, double hy);
+	inline void clear_bg_mesh(void)
+	{
+		if (bg_grids)
+		{
+			delete[] bg_grids;
+			bg_grids = nullptr;
+		}
+		grid_num = 0;
+		grid_x_num = 0;
+		grid_y_num = 0;
+	}
 };
+
+template <typename Point>
+inline Model_T2D_CHM_s::Element *Model_T2D_CHM_s::find_in_which_element(Point &p)
+{
+	if (x < x_min || x > x_max || y < y_min || y > y_max)
+		return nullptr;
+	size_t x_id = size_t((x - x0) / h);
+	size_t y_id = size_t((y - y0) / h);
+	Grid &g = grids[grid_x_num * y_id + x_id];
+	PTriElement *pelem = g.pelems;
+	TriElement *elem;
+	while (pelem)
+	{
+		elem = pelem->e;
+		if (elem->is_in_triangle(p))
+			return elem;
+		pelem = pelem->next;
+	}
+	return nullptr;
+}
 
 #undef SHAPE_FUNC_VALUE_CONTENT
 #undef N1

@@ -11,7 +11,8 @@ Model_T2D_CHM_s::Model_T2D_CHM_s() :
 	asx_num(0), asy_num(0), asxs(nullptr), asys(nullptr),
 	vsx_num(0), vsy_num(0), vsxs(nullptr), vsys(nullptr),
 	afx_num(0), afy_num(0), afxs(nullptr), afys(nullptr),
-	vfx_num(0), vfy_num(0), vfxs(nullptr), vfys(nullptr) {}
+	vfx_num(0), vfy_num(0), vfxs(nullptr), vfys(nullptr),
+	grid_x_num(0), grid_y_num(0), grid_num(0), bg_grids(nullptr) {}
 
 Model_T2D_CHM_s::~Model_T2D_CHM_s()
 {
@@ -29,6 +30,7 @@ Model_T2D_CHM_s::~Model_T2D_CHM_s()
 	clear_vsys();
 	clear_vfxs();
 	clear_vfys();
+	clear_bg_mesh();
 }
 
 void Model_T2D_CHM_s::init_mesh(double *node_coords, size_t n_num,
@@ -231,7 +233,7 @@ int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
 	for (size_t n_id = 0; n_id < node_num; ++n_id)
 	{
 		Node &n = nodes[n_id];
-		if (n.has_rb && n.has_mp)
+		if (n.has_rb && n.has_mp && n.vol_rb != 0.0)
 		{
 			n.vx_rb /= n.vol_rb;
 			n.vy_rb /= n.vol_rb;
@@ -248,4 +250,172 @@ int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
 	}
 
 	return 0;
+}
+
+int Model_T2D_CHM_s::init_bg_mesh(double hx, double hy)
+{
+	if (elem_num == 0)
+		return -1;
+
+	clear_bg_mesh();
+	pe_buffer.reset();
+
+	grid_hx = hx;
+	grid_hy = hy;
+	pe_buffer.set_page_size(elem_num);
+
+	// get bounding box
+	grid_x_min = nodes[0].x;
+	grid_x_max = grid_x_min;
+	grid_y_min = nodes[0].y;
+	grid_y_max = grid_y_min;
+	for (size_t n_id = 1; n_id < node_num; ++n_id)
+	{
+		Node &n = nodes[n_id];
+		if (grid_x_min > n.x)
+			grid_x_min = n.x;
+		if (grid_x_max < n.x)
+			grid_x_max = n.x;
+		if (grid_y_min > n.y)
+			grid_y_min = n.y;
+		if (grid_y_max < n.y)
+			grid_y_max = n.y;
+	}
+
+	// init background grid
+	double x_padding, y_padding;
+	x_padding = (grid_x_max - grid_x_min) * 0.001;
+	y_padding = (grid_y_max - grid_y_min) * 0.001;
+	grid_x_min -= x_padding;
+	grid_x_max += x_padding;
+	grid_y_min -= y_padding;
+	grid_y_max += y_padding;
+	grid_x_num = size_t(ceil((grid_x_max - grid_x_min) / grid_hx));
+	grid_y_num = size_t(ceil((grid_y_max - grid_y_min) / grid_hy));
+	grid_num = grid_x_num * grid_y_num;
+	grid_x_max = grid_x_min + double(grid_x_num) * grid_hx;
+	grid_y_max = grid_y_min + double(grid_y_num) * grid_hy;
+	bg_grids = new Grid[grid_num];
+	size_t grid_id = 0;
+	for (size_t row_id = 0; row_id < grid_x_num; ++row_id)
+		for (size_t col_id = 0; col_id < grid_y_num; ++col_id)
+		{
+			Grid &g = bg_grids[grid_id];
+			g.x_id = col_id;
+			g.y_id = row_id;
+			g.pelems = nullptr;
+			++grid_id;
+		}
+
+	// add element to grids
+	for (size_t e_id = 0; e_id < elem_num; ++e_id)
+		add_elem_to_bg_grid(elems[e_id]);
+}
+
+inline void swap(double &a, double &b)
+{
+	double c = a;
+	a = b;
+	b = c;
+}
+
+bool test_AABB_triangle_intersection(double xl, double xu, double yl, double yu,
+	double x0, double y0, double x1, double y1, double x2, double y2)
+{
+	double hx, hy, xc, yc;
+	hx = xu - xl;
+	hy = yu - yl;
+	xc = (xl + xu) * 0.5;
+	yc = (yl + yu) * 0.5;
+	// translate triangle
+	// take grid centre as origin
+	x0 -= xc;
+	y0 -= yc;
+	x1 -= xc;
+	y1 -= yc;
+	x2 -= xc;
+	y2 -= yc;
+
+	double r, v_min, v_max;
+	// a31
+	r = (hx * abs(y1 - y0) + hy * abs(x1 - x0)) * 0.5;
+	v_min = x1 * y0 - x0 * y1;
+	v_max = (y0 - y1) * x2 + (x1 - x0) * y2;
+	if (v_min > v_max)
+		swap(v_min, v_max);
+	if (v_min > r || v_max < -r)
+		return false;
+	// a32
+	r = (hx * abs(y2 - y1) + hy * abs(x2 - x1)) * 0.5;
+	v_min = x2 * y1 - x1 * y2;
+	v_max = (y1 - y2) * x0 + (x2 - x1) * y0;
+	if (v_min > v_max)
+		swap(v_min, v_max);
+	if (v_min > r || v_max < -r)
+		return false;
+	// a33
+	r = (hx * abs(y0 - y2) + hy * abs(x0 - x2)) * 0.5;
+	v_min = x0 * y2 - x2 * y0;
+	v_max = (y2 - y0) * x1 + (x0 - x2) * y1;
+	if (v_min > v_max)
+		swap(v_min, v_max);
+	if (v_min > r || v_max < -r)
+		return false;
+
+	return true;
+}
+
+void Model_T2D_CHM_s::add_elem_to_bg_grid(Element &e)
+{
+	// get bounding box of element
+	double e_x_min, e_x_max, e_y_min, e_y_max;
+	// node 1
+	Node &n1 = nodes[e.n1];
+	e_x_min = n1.x;
+	e_x_max = e_x_min;
+	e_y_min = n1.y;
+	e_y_max = e_y_min;
+	// node 2
+	Node &n2 = nodes[e.n2];
+	if (e_x_min > n2.x)
+		e_x_min = n2.x;
+	if (e_x_max < n2.x)
+		e_x_max = n2.x;
+	if (e_y_min > n2.y)
+		e_y_min = n2.y;
+	if (e_y_max < n2.y)
+		e_y_max = n2.y;
+	// node 3
+	Node &n3 = nodes[e.n3];
+	if (e_x_min > n3.x)
+		e_x_min = n3.x;
+	if (e_x_max < n3.x)
+		e_x_max = n3.x;
+	if (e_y_min > n3.y)
+		e_y_min = n3.y;
+	if (e_y_max < n3.y)
+		e_y_max = n3.y;
+
+	// test elem intersection with bg grid
+	size_t min_x_id, max_x_id, min_y_id, max_y_id, grid_row_id;
+	double grid_xl, grid_xu, grid_yl, grid_yu;
+	min_x_id = size_t(floor((e_x_min - grid_x_min) / grid_hx));
+	max_x_id = size_t( ceil((e_x_max - grid_x_min) / grid_hx)) + 1;
+	min_y_id = size_t(floor((e_y_min - grid_y_min) / grid_hy));
+	max_y_id = size_t( ceil((e_y_max - grid_y_min) / grid_hy)) + 1;
+	for (size_t y_id = min_y_id; y_id < max_y_id; ++y_id)
+	{
+		grid_row_id = grid_x_num * y_id;
+		grid_yl = grid_y_min + double(y_id) * grid_hy;
+		grid_yu = grid_yl + grid_hy;
+		for (size_t x_id = min_x_id; x_id < max_x_id; ++x_id)
+		{
+			Grid &g = bg_grids[grid_row_id + x_id];
+			grid_xl = grid_x_min + double(x_id) * grid_hx;
+			grid_xu = grid_xl + grid_hx;
+			if (test_AABB_triangle_intersection(grid_xl, grid_xu, grid_yl, grid_yu,
+												n1.x, n1.y, n2.x, n2.y, n3.x, n3.y))
+				add_elem_to_grid(g, e);
+		}
+	}
 }

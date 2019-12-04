@@ -39,8 +39,7 @@ public:
 
 	int init(double _r, double _x, double _y, double max_pcl_size);
 	void del_pcls_in_circle(TriangleMeshToParticles &tri2pcl);
-	
-	void set_velocity(double _vx, double _vy, double _w) { vx = _vx; vy = _vy; w = _w; }
+	void set_velocity(double _vx, double _vy, double _w);
 	
 protected:
 	inline bool is_in_circle(double x, double y) noexcept
@@ -96,6 +95,7 @@ public: // get result
 	inline const State &get_state(void) noexcept { return state; }
 	inline size_t get_pcl_num(void) noexcept { return pcl_num; }
 	inline const Particle *get_pcls(void) noexcept { return pcls; }
+	inline bool is_init(void) noexcept { return pcl_num != 0; }
 };
 
 #endif

@@ -174,6 +174,40 @@ int solve_substep_T2D_CHM_s(void *_self)
 		}
 	}
 
+	// update nodal momentum
+	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	{
+		Node_mpm &n = md.nodes[n_id];
+		if (n.m_s != 0.0)
+		{
+			n.vx_s /= n.m_s;
+			n.vy_s /= n.m_s;
+			n.vx_f /= n.m_f;
+			n.vy_f /= n.m_f;
+		}
+	}
+	// apply velocity bc
+	for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
+	{
+		Node_mpm &n = md.nodes[md.vsxs[v_id].node_id];
+		n.vx_s = md.vsxs[v_id].v;
+	}
+	for (size_t v_id = 0; v_id < md.vsy_num; ++v_id)
+	{
+		Node_mpm &n = md.nodes[md.vsys[v_id].node_id];
+		n.vy_s = md.vsys[v_id].v;
+	}
+	for (size_t v_id = 0; v_id < md.vfx_num; ++v_id)
+	{
+		Node_mpm &n = md.nodes[md.vfxs[v_id].node_id];
+		n.vx_f = md.vfxs[v_id].v;
+	}
+	for (size_t v_id = 0; v_id < md.vfy_num; ++v_id)
+	{
+		Node_mpm &n = md.nodes[md.vfys[v_id].node_id];
+		n.vy_f = md.vfys[v_id].v;
+	}
+
 	double de_vol_f_rate;
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
@@ -431,19 +465,20 @@ int solve_substep_T2D_CHM_s(void *_self)
 		Node_mpm &n = md.nodes[n_id];
 		if (n.m_s != 0.0)
 		{
-			n.vx_s /= n.m_s;
+			//n.vx_s /= n.m_s;
 			n.vx_s += n.ax_s * self.dtime;
-			n.vy_s /= n.m_s;
+			//n.vy_s /= n.m_s;
 			n.vy_s += n.ay_s * self.dtime;
-			n.vx_f /= n.m_f;
+			//n.vx_f /= n.m_f;
 			n.vx_f += n.ax_f * self.dtime;
-			n.vy_f /= n.m_f;
+			//n.vy_f /= n.m_f;
 			n.vy_f += n.ay_f * self.dtime;
 		}
 	}
 
 	// contact detection and velocity modification
-	md.apply_rigid_body_to_bg_mesh(self.dtime);
+	if (md.get_rigid_circle().is_init())
+		md.apply_rigid_body_to_bg_mesh(self.dtime);
 
 	// apply velocity bc
 	for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)

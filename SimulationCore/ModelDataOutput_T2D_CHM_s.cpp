@@ -16,6 +16,7 @@ int model_data_output_func_t2d_chm_s_to_plain_bin_res_file(ModelDataOutput &_sel
 	
 	typedef ResultFile_PlainBin_DataStruct::ModelDataHeader ModelDataHeader;
 	typedef ResultFile_PlainBin_DataStruct::BackgroundMeshHeader_T2D BackgroundMeshHeader;
+	typedef ResultFile_PlainBin_DataStruct::DispConRigidCircleHeader DispConRigidCircleHeader;
 	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 	
 	// model data
@@ -52,6 +53,13 @@ int model_data_output_func_t2d_chm_s_to_plain_bin_res_file(ModelDataOutput &_sel
 	}
 	file.write(reinterpret_cast<char *>(e_n_ids), model.elem_num * 3 * sizeof(unsigned long long));
 	delete[] e_n_ids;
+
+	// rigid circle object
+	DispConRigidCircle &rc = model.get_rigid_circle();
+	DispConRigidCircleHeader rch;
+	rch.init();
+	rch.pcl_num = rc.get_pcl_num();
+	file.write(reinterpret_cast<char *>(&rch), sizeof(rch));
 
 	// material point object
 	MPObjectHeader mph;

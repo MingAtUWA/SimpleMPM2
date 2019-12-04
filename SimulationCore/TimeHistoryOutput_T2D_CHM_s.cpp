@@ -14,8 +14,11 @@ int time_history_output_func_t2d_chm_s_to_plain_bin_res_file(TimeHistoryOutput &
 	Step_T2D_CHM_s &step = static_cast<Step_T2D_CHM_s &>(th.get_step());
 	ResultFile_PlainBin &rf = static_cast<ResultFile_PlainBin &>(*th.res_file);
 	std::fstream &file = rf.get_file();
+	double *pcl_data;
+	size_t data_len;
 
 	typedef ResultFile_PlainBin_DataStruct::TimeHistoryHeader TimeHistoryHeader;
+	typedef ResultFile_PlainBin_DataStruct::DispConRigidCircleMotionHeader DispConRigidCircleMotionHeader;
 	typedef ResultFile_PlainBin_DataStruct::MPObjectHeader MPObjectHeader;
 	
 	// time history header
@@ -27,14 +30,52 @@ int time_history_output_func_t2d_chm_s_to_plain_bin_res_file(TimeHistoryOutput &
 	thh.total_time = step.get_total_time();
 	file.write(reinterpret_cast<char *>(&thh), sizeof(thh));
 
+	// rigid circle data
+	Model_T2D_CHM_s &md = static_cast<Model_T2D_CHM_s &>(step.get_model());
+	DispConRigidCircle &rc = md.get_rigid_circle();
+	size_t rc_pcl_num = rc.get_pcl_num();
+	if (rc_pcl_num != 0)
+	{
+		DispConRigidCircle::State state = rc.get_state();
+		DispConRigidCircle::Particle *rb_pcls = state.pcls;
+		DispConRigidCircleMotionHeader rcmh;
+		rcmh.init();
+		rcmh.x = state.cen_x;
+		rcmh.y = state.cen_y;
+		rcmh.theta = state.theta;
+		rcmh.vx = state.vx;
+		rcmh.vy = state.vy;
+		rcmh.w = state.w;
+		rcmh.rfx = state.rfx;
+		rcmh.rfy = state.rfy;
+		rcmh.rm = state.rm;
+		file.write(reinterpret_cast<char *>(&rcmh), sizeof(rcmh));
+		// rigid body pcl data
+		pcl_data = new double[rc_pcl_num];
+		data_len = sizeof(double) * rc_pcl_num;
+		// x
+		for (size_t pcl_id = 0; pcl_id < rc_pcl_num; ++pcl_id)
+			pcl_data[pcl_id] = rb_pcls[pcl_id].x;
+		file.write(reinterpret_cast<char *>(pcl_data), data_len);
+		// y
+		for (size_t pcl_id = 0; pcl_id < rc_pcl_num; ++pcl_id)
+			pcl_data[pcl_id] = rb_pcls[pcl_id].y;
+		file.write(reinterpret_cast<char *>(pcl_data), data_len);
+		// vol
+		for (size_t pcl_id = 0; pcl_id < rc_pcl_num; ++pcl_id)
+			pcl_data[pcl_id] = rb_pcls[pcl_id].vol;
+		file.write(reinterpret_cast<char *>(pcl_data), data_len);
+		delete[] pcl_data;
+	}
+
 	// output particles data
 	MPObjectHeader mph;
 	mph.init();
 	mph.pcl_num = model.pcl_num;
 	mph.fld_num = 4;
 	file.write(reinterpret_cast<char *>(&mph), sizeof(mph));
-	double *pcl_data = new double[mph.pcl_num];
-	size_t data_len = sizeof(double) * mph.pcl_num;
+	pcl_data = new double[mph.pcl_num];
+	data_len = sizeof(double) * mph.pcl_num;
 	// x
 	for (size_t pcl_id = 0; pcl_id < mph.pcl_num; ++pcl_id)
 		pcl_data[pcl_id] = model.pcls[pcl_id].x;
@@ -80,6 +121,47 @@ int time_history_output_func_t2d_chm_s_to_xml_res_file(TimeHistoryOutput &_self)
 		step.get_substep_num(),  step.get_total_substep_num(),
 		step.get_current_time(), step.get_total_time());
 	file.write(str_buffer, strlen(str_buffer));
+
+	// output rigid body data
+	Model_T2D_CHM_s &md = static_cast<Model_T2D_CHM_s &>(step.get_model());
+	DispConRigidCircle &rb = md.get_rigid_circle();
+	DispConRigidCircle::State state = rb.get_state();
+	const char *rigid_body_info = ""
+			"    <RigidBody>\n"
+			"        <x> %16.10e </x>\n"
+			"        <y> %16.10e </y>\n"
+			"        <theta> %16.10e </theta>\n"
+			"        <vx> %16.10e </vx>\n"
+			"        <vy> %16.10e </vy>\n"
+			"        <w> %16.10e </w>\n"
+			"        <rfx> %16.10e </rfx>\n"
+			"        <rfy> %16.10e </rfy>\n"
+			"        <rm> %16.10e </rm>\n"
+			"        <pcl_num> %zu </pcl_num>\n"
+			"        <pcl_data>\n"
+			"        <!-- x, y, vol, vx, vy -->\n";
+	snprintf(str_buffer, str_buffer_len, rigid_body_info,
+			 state.cen_x, state.cen_y, state.theta,
+			 state.vx, state.vy, state.w, 
+			 state.rfx, state.rfy, state.rm, state.pcl_num);
+	file.write(str_buffer, strlen(str_buffer));
+	for (size_t pcl_id = 0; pcl_id < state.pcl_num; ++pcl_id)
+	{
+		DispConRigidCircle::Particle &pcl = state.pcls[pcl_id];
+		file << "        ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.x);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.y);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.vol);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.vx);
+		file << str_buffer << ", ";
+		snprintf(str_buffer, str_buffer_len, "%16.10e", pcl.vy);
+		file << str_buffer << "\n";
+	}
+	file << "        </pcl_data>\n"
+			"    </RigidBody>\n";
 
 	// output material points data
 	Model_T2D_CHM_s &model = static_cast<Model_T2D_CHM_s &>(th.get_model());

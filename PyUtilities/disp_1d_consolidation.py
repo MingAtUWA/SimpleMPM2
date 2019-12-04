@@ -25,7 +25,7 @@ def extract_disp_time_curve_from_file(xml_file_name):
         mp_obj = th.find("MaterialPointObject")
         pcl_num = int(mp_obj.find("pcl_num").text)
         # The particle needed to read
-        pcl_id = 50 # last point
+        pcl_id = 133 # top point
         field_data_text = mp_obj.find("field_data").text
         field_data_buf = io.StringIO(field_data_text)
         field_data_buf.readline()

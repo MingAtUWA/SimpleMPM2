@@ -17,6 +17,7 @@ add_library(
     DisplayModel_T2D.h DisplayModel_T2D.cpp
     # color particle according to variables
     ColorGraph.h
+    ColorfulSquareParticleSystem.h ColorfulSquareParticleSystem.cpp
     GA_T2D_CHM_s_color.h GA_T2D_CHM_s_color.cpp
     )
 

@@ -51,6 +51,17 @@ namespace ResultFile_PlainBin_DataStruct
 		}
 	};
 	
+	struct DispConRigidCircleHeader
+	{
+		char tag[32];
+		unsigned long long pcl_num;
+		inline void init(void)
+		{
+			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
+			strcpy(tag, "DispConRigidCircleHeader");
+		}
+	};
+
 	// ================= time history ================= 
 	struct TimeHistoryHeader
 	{
@@ -77,6 +88,19 @@ namespace ResultFile_PlainBin_DataStruct
 		{
 			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
 			strcpy(tag, "RigObjMotion");
+		}
+	};
+
+	struct DispConRigidCircleMotionHeader
+	{
+		char tag[32];
+		double x, y, theta;
+		double vx, vy, w;
+		double rfx, rfy, rm;
+		inline void init(void)
+		{
+			memset(tag, 0, sizeof(tag) / sizeof(tag[0]));
+			strcpy(tag, "DispConRigidCircleMotionHeader");
 		}
 	};
 

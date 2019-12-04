@@ -4,10 +4,21 @@
 class ColorGraph
 {
 public:
-	struct Color { float r, g, b; };
+	struct Colori { int   r, g, b; };
+	struct Colorf { float r, g, b; };
 	struct ValueColorPair { double va; float r, g, b; };
 
-	ColorGraph() : pairs(nullptr), color_num(0) {}
+	ColorGraph() : pairs(nullptr), color_num(0)
+	{
+		// white
+		lower_bound_color.r = 1.0f;
+		lower_bound_color.g = 1.0f;
+		lower_bound_color.b = 1.0f;
+		// grey
+		upper_bound_color.r = 0.5f;
+		upper_bound_color.g = 0.5f;
+		upper_bound_color.b = 0.5f;
+	}
 	~ColorGraph() { clear(); }
 
 	int init(ValueColorPair *vcps, size_t num)
@@ -26,27 +37,46 @@ public:
 		return 0;
 	}
 
-	inline Color get_color(double va)
+	int init(double lower, double upper, Colori *colors, size_t num,
+			 bool apply_out_of_bound_color = false)
 	{
-		Color res;
+		clear();
+		if (!colors || num == 0) return -1;
+		pairs = new ValueColorPair[num];
+		color_num = num;
+		double intv = (upper - lower) / double(num - 1);
+		for (size_t i = 0; i < num; ++i)
+		{
+			pairs[i].va = lower + intv * double(i);
+			pairs[i].r = float(colors[i].r) / 255.0f;
+			pairs[i].g = float(colors[i].g) / 255.0f;
+			pairs[i].b = float(colors[i].b) / 255.0f;
+		}
+		if (apply_out_of_bound_color)
+		{
+			lower_bound_color.r = colors[0].r;
+			lower_bound_color.g = colors[0].g;
+			lower_bound_color.b = colors[0].b;
+			upper_bound_color.r = colors[num - 1].r;
+			upper_bound_color.g = colors[num - 1].g;
+			upper_bound_color.b = colors[num - 1].b;
+		}
+		return 0;
+	}
+
+	inline Colorf get_color(double va)
+	{
 		if (va < pairs[0].va)
 		{
-			// white
-			res.r = 1.0;
-			res.g = 1.0;
-			res.b = 1.0;
-			return res;
+			return lower_bound_color;
 		}
 		else if (va > pairs[color_num - 1].va)
 		{
-			// grep
-			res.r = 0.5;
-			res.g = 0.5;
-			res.b = 0.5;
-			return res;
+			return upper_bound_color;
 		}
 
 		// find va is in which internval
+		Colorf res;
 		size_t low_id = 0, up_id = color_num - 1, mid_id;
 		mid_id = (low_id + up_id) / 2;
 		do
@@ -62,13 +92,16 @@ public:
 		res.r = pairs[low_id].r + (pairs[up_id].r - pairs[low_id].r) / (pairs[up_id].va - pairs[low_id].va) * (va - pairs[low_id].va);
 		res.g = pairs[low_id].g + (pairs[up_id].g - pairs[low_id].g) / (pairs[up_id].va - pairs[low_id].va) * (va - pairs[low_id].va);
 		res.b = pairs[low_id].b + (pairs[up_id].b - pairs[low_id].b) / (pairs[up_id].va - pairs[low_id].va) * (va - pairs[low_id].va);
+		
 		return res;
 	}
 
 protected:
 	size_t color_num;
 	ValueColorPair *pairs;
+	Colorf lower_bound_color, upper_bound_color;
 
+protected:
 	void clear(void)
 	{
 		if (pairs)

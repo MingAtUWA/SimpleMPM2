@@ -5,7 +5,7 @@
 
 namespace
 {
-	void print_color(ColorGraph::Color &c)
+	void print_color(ColorGraph::Colorf &c)
 	{
 		std::cout << c.r << ", " << c.g << ", " << c.b << "\n";
 	}
@@ -22,7 +22,7 @@ void test_color_graph(void)
 	};
 	cg.init(vc_pairs, sizeof(vc_pairs) / sizeof(ColorGraph::ValueColorPair));
 
-	ColorGraph::Color c;
+	ColorGraph::Colorf c;
 	c = cg.get_color(-1.0);
 	print_color(c);
 	c = cg.get_color(1.0);

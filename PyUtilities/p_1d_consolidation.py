@@ -24,7 +24,7 @@ for th in root.findall("TimeHistory"):
     mp_obj = th.find("MaterialPointObject")
     pcl_num = int(mp_obj.find("pcl_num").text)
     # The particle needed to read
-    pcl_id = 0 # lowest point
+    pcl_id = 140 # lowest point
     field_data_text = mp_obj.find("field_data").text
     field_data_buf = io.StringIO(field_data_text)
     field_data_buf.readline()
@@ -37,6 +37,7 @@ for th in root.findall("TimeHistory"):
     if (is_first_time):
         is_first_time = False
         init_y = float(data_text[1])
+        print(init_y)
     settlement.append(cur_p)
 
 line1, = plot1.plot(time, settlement)

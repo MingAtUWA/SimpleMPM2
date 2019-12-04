@@ -14,6 +14,9 @@ int DispConRigidCircle::init(double _r, double _x, double _y, double max_pcl_siz
 	cen_x = _x;
 	cen_y = _y;
 	theta = 0.0;
+	rfx = 0.0;
+	rfy = 0.0;
+	rm  = 0.0;
 	// generate particles
 	clear_pcl();
 	double pcl_angle, pcl_size, pcl_r;
@@ -34,6 +37,17 @@ int DispConRigidCircle::init(double _r, double _x, double _y, double max_pcl_siz
 		pcl.y = cen_y + pcl.xr * sin(theta) + pcl.yr *  cos(theta);
 	}
 	return 0;
+}
+
+void DispConRigidCircle::set_velocity(double _vx, double _vy, double _w)
+{
+	vx = _vx; vy = _vy; w = _w;
+	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
+	{
+		Particle &pcl = pcls[pcl_id];
+		pcl.vx = vx + pcl.yr * -w;
+		pcl.vy = vy + pcl.xr *  w;
+	}
 }
 
 void DispConRigidCircle::del_pcls_in_circle(TriangleMeshToParticles &tri2pcl)
@@ -70,5 +84,7 @@ void DispConRigidCircle::update(double dt)
 		Particle &pcl = pcls[pcl_id];
 		pcl.x = cen_x + pcl.xr * cos(theta) + pcl.yr * -sin(theta);
 		pcl.y = cen_y + pcl.xr * sin(theta) + pcl.yr *  cos(theta);
+		pcl.vx = vx + pcl.yr * -w;
+		pcl.vy = vy + pcl.xr *  w;
 	}
 }

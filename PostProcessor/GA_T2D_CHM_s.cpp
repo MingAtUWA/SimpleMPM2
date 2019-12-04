@@ -2,9 +2,18 @@
 
 #include "GA_T2D_CHM_s.h"
 
-GA_T2D_CHM_s::GA_T2D_CHM_s() : mp_x_data(nullptr) {}
+// the format of bin file has been changed
+// need to be improved
+
+GA_T2D_CHM_s::GA_T2D_CHM_s() : 
+	rc_x_data(nullptr), mp_x_data(nullptr) {}
 GA_T2D_CHM_s::~GA_T2D_CHM_s()
 {
+	if (rc_x_data)
+	{
+		delete[] rc_x_data;
+		rc_x_data = nullptr;
+	}
 	if (mp_x_data)
 	{
 		delete[] mp_x_data;
@@ -72,9 +81,24 @@ int GA_T2D_CHM_s::init(const char *res_file_name)
 	delete[] e_indices;
 	delete[] indices;
 
+	// rigid circle
+	res_file.read(reinterpret_cast<char *>(&rch), sizeof(rch));
+	rc_pcl_num = rch.pcl_num;
+	if (rc_x_data)
+	{
+		delete[] rc_x_data;
+		rc_x_data = nullptr;
+	}
+	if (rc_pcl_num)
+	{
+		rc_x_data = new double[rc_pcl_num * 3];
+		rc_y_data = rc_x_data + rc_pcl_num;
+		rc_vol_data = rc_y_data + rc_pcl_num;
+	}
+	
 	// material point object
 	res_file.read(reinterpret_cast<char *>(&mph), sizeof(mph));
-	if (!mp_x_data)
+	if (mp_x_data)
 	{
 		delete[] mp_x_data;
 		mp_x_data = nullptr;
@@ -92,7 +116,17 @@ int GA_T2D_CHM_s::init(const char *res_file_name)
 	first_time_rcd_file_pos = res_file.tellg();
 	res_file.seekg(0, SEEK_END);
 	file_len = res_file.tellg();
-	time_rcd_len = sizeof(TimeHistoryHeader) + sizeof(MPObjectHeader) + mph.pcl_num * 4 * sizeof(double);
+	if (rch.pcl_num) // has rigid body
+	{
+		time_rcd_len = sizeof(TimeHistoryHeader)
+					 + sizeof(DispConRigidCircleMotionHeader) + rc_pcl_num * 3 * sizeof(double)
+					 + sizeof(MPObjectHeader) + mph.pcl_num * 4 * sizeof(double);
+	}
+	else
+	{
+		time_rcd_len = sizeof(TimeHistoryHeader)
+					 + sizeof(MPObjectHeader) + mph.pcl_num * 4 * sizeof(double);
+	}
 	time_rcd_num = (file_len - first_time_rcd_file_pos) / time_rcd_len;
 	// init time record
 	if (time_rcds)
@@ -136,6 +170,32 @@ int GA_T2D_CHM_s::render_frame(double xl, double xu, double yl, double yu)
 	bg_grid_data.use();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDrawElements(GL_TRIANGLES, elem_n_id_num, GL_UNSIGNED_INT, (GLvoid *)0);
+
+	// draw rigid circle
+	if (rc_pcl_num)
+	{
+		// model/view matrix
+		glm::mat4 identity_mat = glm::mat4(1.0f);
+		shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(identity_mat));
+		// color
+		glm::vec4 dodgerblue(0.11765f, 0.56471f, 1.0f, 1.0f);
+		shader.set_uniform_vec4f(color_id, glm::value_ptr(dodgerblue));
+		DispConRigidCircleMotionHeader rcmh;
+		res_file.seekg(first_time_rcd_file_pos + cur_time_rcd_id * time_rcd_len + sizeof(TimeHistoryHeader), SEEK_SET);
+		res_file.read(reinterpret_cast<char *>(&rcmh), sizeof(rcmh));
+		res_file.read(reinterpret_cast<char *>(rc_x_data), sizeof(double) * rc_pcl_num * 3);
+		rc_pcls_mem.reset();
+		for (size_t pcl_id = 0; pcl_id < rc_pcl_num; ++pcl_id)
+			rc_pcls_mem.add_pcl(rc_x_data[pcl_id], rc_y_data[pcl_id], rc_vol_data[pcl_id] * 0.25);
+		rc_data.clear();
+		rc_data.init_array_buffer(rc_pcls_mem.get_pcls(), rc_pcls_mem.get_point_num());
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
+		glEnableVertexAttribArray(0);
+		rc_data.init_elem_array_buffer(rc_pcls_mem.get_indices(), rc_pcls_mem.get_index_num());
+		// draw particles
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawElements(GL_TRIANGLES, rc_pcls_mem.get_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
+	}
 
 	// draw material points
 	// model/view matrix

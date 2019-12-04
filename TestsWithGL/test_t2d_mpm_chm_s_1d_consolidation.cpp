@@ -16,6 +16,7 @@
 #include "test_post_processor.h"
 
 #include "GA_T2D_CHM_s.h"
+#include "GA_T2D_CHM_s_color.h"
 
 void test_t2d_mpm_square(void)
 {
@@ -85,7 +86,8 @@ void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 			std::cout << n.id << ", ";
 	}
 	std::cout << "\n";
-	// top
+
+	// top particles
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
@@ -93,22 +95,22 @@ void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 			std::cout << pcl.id << ", ";
 	}
 	std::cout << "\n";
-	// corner
+	// bottom particles
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
-		if (pcl.y > 0.9)// && pcl.x > 0.175)
+		if (pcl.y < 0.02)// && pcl.x > 0.175)
 			std::cout << pcl.id << ", ";
 	}
 	std::cout << "\n";
-	// element
-	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
-	{
-		Model_T2D_CHM_s::Element &e = md.elems[e_id];
-		if (e.n1 == 14 || e.n2 == 14 || e.n3 == 14)
-			std::cout << e.id << ", ";
-	}
-	std::cout << "\n";
+	//// element
+	//for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
+	//{
+	//	Model_T2D_CHM_s::Element &e = md.elems[e_id];
+	//	if (e.n1 == 14 || e.n2 == 14 || e.n3 == 14)
+	//		std::cout << e.id << ", ";
+	//}
+	//std::cout << "\n";
 }
 };
 
@@ -182,15 +184,17 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 		vbc.node_id = vy_bc_n_id[v_id];
 		vbc.v = 0.0;
 	}
-	size_t tbc_pcl_id[] = { 14, 15, 50, 51 };
+	size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
+	//size_t tbc_pcl_id[] = { 140, 141, 160, 161 };
 	model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
 	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
 		TractionBC_MPM &tbc = model.tys[t_id];
 		tbc.pcl_id = tbc_pcl_id[t_id];
-		tbc.t = 0.05 * -50.0;
+		tbc.t = 0.05 * -10.0;
 	}
 
+	//MemoryUtilities::ItemArray<GLfloat> pt_array;
 	//pt_array.reserve(29 * 3);
 	//GLfloat pt_coord;
 	//for (size_t n_id = 0; n_id < sizeof(vx_bc_n_id)/sizeof(vx_bc_n_id[0]); ++n_id)
@@ -248,7 +252,7 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//DisplayModel_T2D disp_model;
 	//disp_model.init_win();
 	//disp_model.init_model(model);
-	//disp_model.init_points(pt_array.get_mem(), 1);
+	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num()/3);
 	//disp_model.display(-0.05, 0.25, -0.05, 1.05);
 	//system("pause");
 	//return;
@@ -277,9 +281,9 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	Step_T2D_CHM_s step;
 	step.set_model(model);
 	//step.set_damping_ratio(0.0); // local damping
-	step.set_bv_ratio(0.1); // bulk viscosity
+	step.set_bv_ratio(0.0); // bulk viscosity
 	step.set_time(15.0);
-	step.set_dtime(1.0e-5);
+	step.set_dtime(1.0e-4);
 	out1.set_interval_num(100);
 	step.add_time_history(out1);
 	out2.set_interval_num(100);
@@ -298,7 +302,7 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	////step2.add_time_history(out3);
 	//step2.solve();
 
-	system("pause");
+	//system("pause");
 }
 
 void test_animation_t2d_chm_s_1d_consolidation(void)
@@ -312,4 +316,32 @@ void test_animation_t2d_chm_s_1d_consolidation(void)
 				 -padding_height, soil_height + padding_height,
 				 "t2d_mpm_1d_consolidation.bin",
 				 "t2d_mpm_1d_consolidation.gif");
+}
+
+void test_color_animation_t2d_chm_s_1d_consolidation(void)
+{
+	double soil_height = 1.0;
+	double soil_width = 0.2;
+	double padding_height = soil_height * 0.05;
+	double padding_width = soil_width * 0.05;
+	// Abaqus "rainbow" spectrum scheme
+	ColorGraph::Colori colors[] = {
+		{ 0,   0,   255 },
+		{ 0,   93,  255 },
+		{ 0,   185, 255 },
+		{ 0,   255, 232 },
+		{ 0,   255, 139 },
+		{ 0,   255, 46 },
+		{ 46,  255, 0 },
+		{ 139, 255, 0 },
+		{ 232, 255, 0 },
+		{ 255, 185, 0 },
+		{ 255, 93,  0 },
+		{ 255, 0,   0 }
+	};
+	GA_T2D_CHM_s_color gen;
+	gen.init_color_graph(0.0, 10.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
+	gen.generate(5.0, -padding_width, soil_width + padding_width,
+				 -padding_height, soil_height + padding_height,
+				 "t2d_mpm_1d_consolidation.bin", "t2d_mpm_1d_consolidation.gif");
 }

@@ -19,6 +19,7 @@ DisplayModel_T2D::~DisplayModel_T2D()
 	{
 		glDeleteVertexArrays(1, &pcls_vao);
 		glDeleteBuffers(1, &pcls_vbo);
+		glDeleteBuffers(1, &pcls_veo);
 	}
 	if (pt_vao)
 	{
@@ -217,21 +218,21 @@ int DisplayModel_T2D::init_pcls(Model_T2D_CHM_s &md)
 
 	glGenVertexArrays(1, &pcls_vao);
 	glBindVertexArray(pcls_vao);
-	glGenBuffers(1, &pcls_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, pcls_vbo);
 	pcls_id_num = md.pcl_num;
-	GLfloat *pcl_coords_data = new GLfloat[md.pcl_num * 3];
+	pcls_mem.reset();
 	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = md.pcls[pcl_id];
-		pcl_coords_data[pcl_id * 3]     = GLfloat(pcl.x);
-		pcl_coords_data[pcl_id * 3 + 1] = GLfloat(pcl.y);
-		pcl_coords_data[pcl_id * 3 + 2] = 0.0f;
+		pcls_mem.add_pcl(pcl.x, pcl.y, pcl.m_s / ((1.0 - pcl.n) * pcl.density_s) * 0.25);
 	}
-	glBufferData(GL_ARRAY_BUFFER, md.pcl_num * 3 * sizeof(GLfloat), pcl_coords_data, GL_STATIC_DRAW);
-	delete[] pcl_coords_data;
+	glGenBuffers(1, &pcls_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, pcls_vbo);
+	glBufferData(GL_ARRAY_BUFFER, pcls_mem.get_point_num() * sizeof(GLfloat), pcls_mem.get_pcls(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
 	glEnableVertexAttribArray(0);
+	glGenBuffers(1, &pcls_veo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pcls_veo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pcls_mem.get_index_num() * sizeof(GLuint), pcls_mem.get_indices(), GL_STATIC_DRAW);
 
 	return 0;
 }
@@ -261,8 +262,9 @@ void DisplayModel_T2D::render(void)
 		glm::vec4 yellow(1.0f, 0.8f, 0.0f, 1.0f);
 		shader.set_uniform_vec4f(color_id, glm::value_ptr(yellow));
 		glBindVertexArray(pcls_vao);
-		glPointSize(10.0f);
-		glDrawArrays(GL_POINTS, 0, pcls_id_num);
+		// draw particles
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawElements(GL_TRIANGLES, pcls_mem.get_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
 	}
 
 	// rigid circle

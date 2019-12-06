@@ -63,7 +63,9 @@ int main(int argc, void **argv)
 	//test_color_animation_t2d_chm_s_1d_consolidation();
 
 	test_t2d_mpm_chm_s_t_bar();
-	test_animation_t2d_chm_s_t_bar();
+	//test_animation_t2d_chm_s_t_bar();
+
+	//test_triangle_searching();
 
 	//test_color_graph();
 

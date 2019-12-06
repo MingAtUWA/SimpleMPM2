@@ -23,7 +23,8 @@ public:
 	{
 		FirstOrderGaussPoint = 0,
 		SecondOrderGaussPoint = 1,
-		EvenlyDistributedPoint = 2
+		EvenlyDistributedPoint = 2,
+		RandomlyDistributedPoint = 3
 	};
 protected: // particle generator functions
 	typedef void(TriangleMeshToParticles::*GeneratorFunc)(Point &p1, Point &p2, Point &p3, double vol);
@@ -125,8 +126,13 @@ protected:
 
 	size_t evenly_div_num;
 	void EvenlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
+	void RandomlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
+
 public:
 	inline void set_even_div_num(size_t num) noexcept { evenly_div_num = num; }
+
+public:
+	void replace_with_grid_points(double xl, double xu, double yl, double yu, double pcl_w, double pcl_h);
 };
 
 #endif

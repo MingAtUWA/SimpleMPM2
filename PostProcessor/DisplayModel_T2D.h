@@ -3,6 +3,7 @@
 
 #include "ShaderProgram.h"
 #include "Geometry.h"
+#include "SquareParticleSystem.h"
 
 #include "Model_T2D_CHM_s.h"
 
@@ -43,6 +44,7 @@ protected:
 	// particles
 	GLuint pcls_vao;
 	GLuint pcls_vbo;
+	GLuint pcls_veo;
 	GLsizei pcls_id_num;
 	glm::mat4 pcls_mv_mat;
 	
@@ -57,6 +59,8 @@ protected:
 	GLuint pt_vbo;
 	GLsizei pt_num;
 	glm::mat4 pt_mv_mat;
+
+	SquareParticleSystem pcls_mem;
 
 protected:
 	int init_bg_mesh(Model_T2D_CHM_s &md);

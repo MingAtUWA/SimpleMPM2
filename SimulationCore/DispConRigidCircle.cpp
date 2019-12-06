@@ -50,10 +50,12 @@ void DispConRigidCircle::set_velocity(double _vx, double _vy, double _w)
 	}
 }
 
-void DispConRigidCircle::del_pcls_in_circle(TriangleMeshToParticles &tri2pcl)
+void DispConRigidCircle::del_pcls_in_circle(TriangleMeshToParticles &tri2pcl, double exp_r)
 {
 	TriangleMeshToParticles::Particle *ppcl;
 	ppcl = tri2pcl.first();
+	r += exp_r;
+	r2 = r * r;
 	while (tri2pcl.not_end_yet(ppcl))
 	{
 		if (is_in_circle(ppcl->x, ppcl->y))
@@ -66,6 +68,8 @@ void DispConRigidCircle::del_pcls_in_circle(TriangleMeshToParticles &tri2pcl)
 		}
 		ppcl = tri2pcl.next(ppcl);
 	}
+	r -= exp_r;
+	r2 = r * r;
 }
 
 void DispConRigidCircle::update(double dt)

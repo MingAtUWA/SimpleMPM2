@@ -12,6 +12,7 @@ Model_T2D_CHM_s::Model_T2D_CHM_s() :
 	vsx_num(0), vsy_num(0), vsxs(nullptr), vsys(nullptr),
 	afx_num(0), afy_num(0), afxs(nullptr), afys(nullptr),
 	vfx_num(0), vfy_num(0), vfxs(nullptr), vfys(nullptr),
+	grid_x_min(0.0), grid_x_max(0.0), grid_y_min(0.0), grid_y_max(0.0),
 	grid_x_num(0), grid_y_num(0), grid_num(0), bg_grids(nullptr) {}
 
 Model_T2D_CHM_s::~Model_T2D_CHM_s()
@@ -310,15 +311,15 @@ int Model_T2D_CHM_s::init_bg_mesh(double hx, double hy)
 	// add element to grids
 	for (size_t e_id = 0; e_id < elem_num; ++e_id)
 		add_elem_to_bg_grid(elems[e_id]);
+
+	return 0;
 }
 
-inline void swap(double &a, double &b)
-{
-	double c = a;
-	a = b;
-	b = c;
-}
+inline void swap(double &a, double &b) { double c = a; a = b; b = c; }
 
+// whether AABB and triangle intersect
+// return true:  intersect
+// return false: intersect
 bool test_AABB_triangle_intersection(double xl, double xu, double yl, double yu,
 	double x0, double y0, double x1, double y1, double x2, double y2)
 {
@@ -343,7 +344,7 @@ bool test_AABB_triangle_intersection(double xl, double xu, double yl, double yu,
 	v_max = (y0 - y1) * x2 + (x1 - x0) * y2;
 	if (v_min > v_max)
 		swap(v_min, v_max);
-	if (v_min > r || v_max < -r)
+	if (v_min >= r || v_max <= -r)
 		return false;
 	// a32
 	r = (hx * abs(y2 - y1) + hy * abs(x2 - x1)) * 0.5;
@@ -351,7 +352,7 @@ bool test_AABB_triangle_intersection(double xl, double xu, double yl, double yu,
 	v_max = (y1 - y2) * x0 + (x2 - x1) * y0;
 	if (v_min > v_max)
 		swap(v_min, v_max);
-	if (v_min > r || v_max < -r)
+	if (v_min >= r || v_max <= -r)
 		return false;
 	// a33
 	r = (hx * abs(y0 - y2) + hy * abs(x0 - x2)) * 0.5;
@@ -359,7 +360,7 @@ bool test_AABB_triangle_intersection(double xl, double xu, double yl, double yu,
 	v_max = (y2 - y0) * x1 + (x0 - x2) * y1;
 	if (v_min > v_max)
 		swap(v_min, v_max);
-	if (v_min > r || v_max < -r)
+	if (v_min >= r || v_max <= -r)
 		return false;
 
 	return true;

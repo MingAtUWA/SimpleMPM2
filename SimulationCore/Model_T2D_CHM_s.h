@@ -249,7 +249,7 @@ public:
 			&& 0.0 <= c && c <= elem.area_2;
 	}
 	
-protected:
+public:
 	inline bool is_in_triangle(Element &e, Particle &p)
 	{
 		Node &n1 = nodes[e.n1];
@@ -333,13 +333,15 @@ protected:
 	}
 	inline bool apply_pcl_to_mesh(RCParticle &pcl)
 	{
-		for (size_t e_id = 0; e_id < elem_num; ++e_id)
-		{
-			Element &e = elems[e_id];
-			if (is_in_triangle(e, pcl))
-				return true;
-		}
-		return false;
+		//for (size_t e_id = 0; e_id < elem_num; ++e_id)
+		//{
+		//	Element &e = elems[e_id];
+		//	if (is_in_triangle(e, pcl))
+		//		return true;
+		//}
+		//return false;
+
+		return find_in_which_element(pcl) ? true : false;	
 	}
 	int apply_rigid_body_to_bg_mesh(double dtime);
 	
@@ -397,6 +399,10 @@ public:
 			delete[] bg_grids;
 			bg_grids = nullptr;
 		}
+		grid_x_min = 0.0;
+		grid_x_max = 0.0;
+		grid_y_min = 0.0;
+		grid_y_max = 0.0;
 		grid_num = 0;
 		grid_x_num = 0;
 		grid_y_num = 0;
@@ -406,17 +412,18 @@ public:
 template <typename Point>
 inline Model_T2D_CHM_s::Element *Model_T2D_CHM_s::find_in_which_element(Point &p)
 {
-	if (x < x_min || x > x_max || y < y_min || y > y_max)
+	if (p.x < grid_x_min || p.x > grid_x_max ||
+		p.y < grid_y_min || p.y > grid_y_max)
 		return nullptr;
-	size_t x_id = size_t((x - x0) / h);
-	size_t y_id = size_t((y - y0) / h);
-	Grid &g = grids[grid_x_num * y_id + x_id];
-	PTriElement *pelem = g.pelems;
-	TriElement *elem;
+	size_t x_id = size_t((p.x - grid_x_min) / grid_hx);
+	size_t y_id = size_t((p.y - grid_y_min) / grid_hy);
+	Grid &g = bg_grids[grid_x_num * y_id + x_id];
+	PElement *pelem = g.pelems;
+	Element *elem;
 	while (pelem)
 	{
 		elem = pelem->e;
-		if (elem->is_in_triangle(p))
+		if (is_in_triangle(*elem, p))
 			return elem;
 		pelem = pelem->next;
 	}

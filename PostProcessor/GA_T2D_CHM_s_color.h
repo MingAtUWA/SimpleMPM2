@@ -45,7 +45,7 @@ protected:
 	ColorGraph color_graph;
 
 public:
-	GA_T2D_CHM_s_color();
+	GA_T2D_CHM_s_color(GLsizei win_w = 600, GLsizei win_h = 600);
 	~GA_T2D_CHM_s_color();
 	inline int init_color_graph(double lower, double upper, ColorGraph::Colori *colors, size_t num,
 								bool apply_out_of_bound_color = true)

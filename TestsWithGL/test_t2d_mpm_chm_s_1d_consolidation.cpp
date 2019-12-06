@@ -148,6 +148,7 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//}
 	//pcl_area /= (1.0 - 0.2) * 20.0;
 	//std::cout << pcl_area << "\n";
+	model.init_bg_mesh(0.05, 0.05);
 
 	//find_bc_pcl_and_node(model);
 	//system("pause");

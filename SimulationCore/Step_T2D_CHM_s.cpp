@@ -97,7 +97,11 @@ int solve_substep_T2D_CHM_s(void *_self)
 		Particle_mpm &pcl = md.pcls[pcl_id];
 		if (pcl.pe)
 		{
-			if (!md.init_pcl_cal_var(pcl))
+			//if (!md.init_pcl_cal_var(pcl))
+			//	continue;
+
+			pcl.pe = md.find_in_which_element(pcl);
+			if (!pcl.pe)
 				continue;
 
 			pcl.pe->add_pcl(pcl);

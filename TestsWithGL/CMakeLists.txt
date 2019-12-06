@@ -43,6 +43,8 @@ add_executable(
     test_imp_mpm_chm_s_uup_1d_consolidation.cpp
     # ColorGraph
     test_color_graph.cpp
+    # Search triangle
+    test_triangle_searching.cpp
     )
 
 target_include_directories(

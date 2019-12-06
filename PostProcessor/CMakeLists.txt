@@ -15,6 +15,7 @@ add_library(
     GA_T2D_CHM_s.h GA_T2D_CHM_s.cpp
     DisplayModel.h DisplayModel.cpp
     DisplayModel_T2D.h DisplayModel_T2D.cpp
+    SquareParticleSystem.h SquareParticleSystem.cpp
     # color particle according to variables
     ColorGraph.h
     ColorfulSquareParticleSystem.h ColorfulSquareParticleSystem.cpp

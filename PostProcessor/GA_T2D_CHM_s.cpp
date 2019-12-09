@@ -5,8 +5,10 @@
 // the format of bin file has been changed
 // need to be improved
 
-GA_T2D_CHM_s::GA_T2D_CHM_s() : 
+GA_T2D_CHM_s::GA_T2D_CHM_s(GLsizei win_w, GLsizei win_h) :
+	GenerateAnimation(win_w, win_h),
 	rc_x_data(nullptr), mp_x_data(nullptr) {}
+
 GA_T2D_CHM_s::~GA_T2D_CHM_s()
 {
 	if (rc_x_data)
@@ -205,7 +207,11 @@ int GA_T2D_CHM_s::render_frame(double xl, double xu, double yl, double yu)
 	shader.set_uniform_vec4f(color_id, glm::value_ptr(moccasin));
 	// init object buffer
 	MPObjectHeader mph;
-	res_file.seekg(first_time_rcd_file_pos + cur_time_rcd_id * time_rcd_len + sizeof(TimeHistoryHeader), SEEK_SET);
+	if (rc_pcl_num)
+		res_file.seekg(first_time_rcd_file_pos + cur_time_rcd_id * time_rcd_len + sizeof(TimeHistoryHeader)
+					 + sizeof(DispConRigidCircleMotionHeader) + rc_pcl_num * 3 * sizeof(double), SEEK_SET);
+	else
+		res_file.seekg(first_time_rcd_file_pos + cur_time_rcd_id * time_rcd_len + sizeof(TimeHistoryHeader), SEEK_SET);
 	res_file.read(reinterpret_cast<char *>(&mph), sizeof(mph));
 	res_file.read(reinterpret_cast<char *>(mp_x_data), sizeof(double) * mph.pcl_num * 4);
 	pcls_mem.reset();

@@ -36,7 +36,7 @@ protected:
 	size_t time_rcd_len;
 
 public:
-	GA_T2D_CHM_s();
+	GA_T2D_CHM_s(GLsizei win_w = 600, GLsizei win_h = 600);
 	~GA_T2D_CHM_s();
 
 protected: // helper functions of generate()

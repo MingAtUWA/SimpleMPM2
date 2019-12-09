@@ -62,8 +62,12 @@ int main(int argc, void **argv)
 	//test_animation_t2d_chm_s_1d_consolidation();
 	//test_color_animation_t2d_chm_s_1d_consolidation();
 
-	test_t2d_mpm_chm_s_t_bar();
+	//test_t2d_mpm_chm_s_t_bar();
 	//test_animation_t2d_chm_s_t_bar();
+	//test_color_animation_t2d_chm_s_t_bar();
+
+	//test_t2d_mpm_chm_s_t_bar_coarser();
+	test_color_animation_t2d_chm_s_t_bar_coarser();
 
 	//test_triangle_searching();
 

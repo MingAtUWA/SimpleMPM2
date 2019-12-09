@@ -99,17 +99,18 @@ void get_top_and_bottom_n_ids(Model_T2D_CHM_s &md,
 };
 
 
-void test_t2d_mpm_chm_s_t_bar(void)
+void test_t2d_mpm_chm_s_t_bar_coarser(void)
 {
 	TriangleMesh tri_mesh;
-	tri_mesh.load_mesh("..\\..\\Asset\\rect10by15_hole.mesh_data");
+	tri_mesh.load_mesh("..\\..\\Asset\\rect_t_bar_coarser.mesh_data");
 	std::cout << "node num: " << tri_mesh.get_node_num() << "\n"
 			  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 	
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
-	mh_2_pcl.generate_pcls();
-	mh_2_pcl.replace_with_grid_points(7.5, 22.5, 7.5, 32.5, 0.05, 0.05);
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::FirstOrderGaussPoint);
+	//mh_2_pcl.generate_pcls();
+	//mh_2_pcl.replace_with_grid_points(10.0, 20.0, 10.0, 30.0, 0.25, 0.25);
+	mh_2_pcl.replace_with_grid_points(0.0, 20.0, 0.0, 30.0, 0.15, 0.15);
 	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
 
 	Model_T2D_CHM_s model;
@@ -123,11 +124,11 @@ void test_t2d_mpm_chm_s_t_bar(void)
 	//}
 	//std::cout << area << "\n";
 
-	model.init_rigid_circle(2.5, 15.0, 25.0, 0.25);
-	model.set_rigid_circle_velocity(0.0, -2.0, 0.0);
+	model.init_rigid_circle(2.5, 10.0, 20.0, 0.25);
+	model.set_rigid_circle_velocity(0.0, -1.0, 0.0);
 	model.get_rigid_circle().del_pcls_in_circle(mh_2_pcl, 0.1);
 
-	model.init_pcls(mh_2_pcl, 0.2, 2.0, 1.0, 1000.0, 0.4, 40000.0, 1.0e-4, 1.0);
+	model.init_pcls(mh_2_pcl, 0.2, 200.0, 100.0, 100.0, 0.4, 4000.0, 1.0e-4, 1.0);
 	mh_2_pcl.clear();
 	//double pcl_area = 0.0;
 	//for (size_t i = 0; i < model.pcl_num; i++)
@@ -247,9 +248,9 @@ void test_t2d_mpm_chm_s_t_bar(void)
 	//return;
 
 	ResultFile_PlainBin res_file_pb;
-	res_file_pb.init("t2d_mpm_t_bar.bin");
+	res_file_pb.init("t2d_mpm_t_bar_coarser.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("t2d_mpm_t_bar.xml");
+	res_file_xml.init("t2d_mpm_t_bar_coarser.xml");
 	
 	// output model
 	ModelDataOutput_T2D_CHM_s md;
@@ -269,10 +270,10 @@ void test_t2d_mpm_chm_s_t_bar(void)
 
 	Step_T2D_CHM_s step;
 	step.set_model(model);
-	//step.set_damping_ratio(0.0); // local damping
+	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity
-	step.set_time(0.1);
-	step.set_dtime(1.0e-5);
+	step.set_time(1.0);
+	step.set_dtime(1.0e-6);
 	out1.set_interval_num(100);
 	step.add_time_history(out1);
 	out2.set_interval_num(100);
@@ -294,7 +295,8 @@ void test_t2d_mpm_chm_s_t_bar(void)
 	//system("pause");
 }
 
-void test_animation_t2d_chm_s_t_bar(void)
+
+void test_animation_t2d_chm_s_t_bar_coarser(void)
 {
 	double soil_height = 40.0;
 	double soil_width = 30.0;
@@ -303,14 +305,14 @@ void test_animation_t2d_chm_s_t_bar(void)
 	GA_T2D_CHM_s gen(1000, 1000);
 	gen.generate(5.0, -padding_width, soil_width + padding_width,
 		-padding_height, soil_height + padding_height,
-		"t2d_mpm_t_bar.bin", "t2d_mpm_t_bar.gif");
+		"t2d_mpm_t_bar_coarser.bin", "t2d_mpm_t_bar_coarser.gif");
 }
 
 
-void test_color_animation_t2d_chm_s_t_bar(void)
+void test_color_animation_t2d_chm_s_t_bar_coarser(void)
 {
-	double soil_height = 40.0;
-	double soil_width  = 30.0;
+	double soil_height = 30.0;
+	double soil_width  = 20.0;
 	double padding_height = soil_height * 0.05;
 	double padding_width  = soil_width * 0.05;
 	// Abaqus "rainbow" spectrum scheme
@@ -329,8 +331,8 @@ void test_color_animation_t2d_chm_s_t_bar(void)
 		{ 255, 0,   0 }
 	};
 	GA_T2D_CHM_s_color gen(1000, 1000);
-	gen.init_color_graph(-1000.0, 1000.0, colors, sizeof(colors) / sizeof(ColorGraph::Colori));
+	gen.init_color_graph(-2000.0, 2000.0, colors, sizeof(colors) / sizeof(ColorGraph::Colori));
 	gen.generate(5.0, -padding_width, soil_width + padding_width,
 				 -padding_height, soil_height + padding_height,
-				 "t2d_mpm_t_bar.bin", "t2d_mpm_t_bar.gif");
+				 "t2d_mpm_t_bar_coarser.bin", "t2d_mpm_t_bar_coarser.gif");
 }

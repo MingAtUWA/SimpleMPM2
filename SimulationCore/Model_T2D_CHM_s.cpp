@@ -75,15 +75,12 @@ void Model_T2D_CHM_s::init_mesh(double *node_coords, size_t n_num,
 		e.area = e.area_2 * 0.5;
 		Node &_n2 = nodes[e.n2];
 		Node &_n3 = nodes[e.n3];
-		ShapeFuncValue &sf = e.sf;
-		sf.dN1_dx = (_n2.y - _n3.y) / e.area_2;
-		sf.dN1_dy = (_n3.x - _n2.x) / e.area_2;
-		sf.dN2_dx = (_n3.y -  n1.y) / e.area_2;
-		sf.dN2_dy = ( n1.x - _n3.x) / e.area_2;
-		sf.dN3_dx = ( n1.y - _n2.y) / e.area_2;
-		sf.dN3_dy = (_n2.x -  n1.x) / e.area_2;
-		//e.sf.cal_shape_func_value(1.0/3.0, 1.0/3.0, n1.x, n1.y,
-		//						  _n2.x, _n2.y, _n3.x, _n3.y);
+		e.dN1_dx = (_n2.y - _n3.y) / e.area_2;
+		e.dN1_dy = (_n3.x - _n2.x) / e.area_2;
+		e.dN2_dx = (_n3.y -  n1.y) / e.area_2;
+		e.dN2_dy = ( n1.x - _n3.x) / e.area_2;
+		e.dN3_dx = ( n1.y - _n2.y) / e.area_2;
+		e.dN3_dy = (_n2.x -  n1.x) / e.area_2;
 	}
 }
 
@@ -186,13 +183,12 @@ void Model_T2D_CHM_s::init_mesh(TriangleMesh &tri_mesh)
 		Node &n1 = nodes[e.n1];
 		Node &n2 = nodes[e.n2];
 		Node &n3 = nodes[e.n3];
-		ShapeFuncValue &sf = e.sf;
-		sf.dN1_dx = (n2.y - n3.y) / e.area_2;
-		sf.dN1_dy = (n3.x - n2.x) / e.area_2;
-		sf.dN2_dx = (n3.y - n1.y) / e.area_2;
-		sf.dN2_dy = (n1.x - n3.x) / e.area_2;
-		sf.dN3_dx = (n1.y - n2.y) / e.area_2;
-		sf.dN3_dy = (n2.x - n1.x) / e.area_2;
+		e.dN1_dx = (n2.y - n3.y) / e.area_2;
+		e.dN1_dy = (n3.x - n2.x) / e.area_2;
+		e.dN2_dx = (n3.y - n1.y) / e.area_2;
+		e.dN2_dy = (n1.x - n3.x) / e.area_2;
+		e.dN3_dx = (n1.y - n2.y) / e.area_2;
+		e.dN3_dy = (n2.x - n1.x) / e.area_2;
 	}
 }
 

@@ -25,7 +25,8 @@ def extract_disp_time_curve_from_file(xml_file_name):
         mp_obj = th.find("MaterialPointObject")
         pcl_num = int(mp_obj.find("pcl_num").text)
         # The particle needed to read
-        pcl_id = 133 # top point
+        pcl_id = 499 # top point
+        #pcl_id = 133 # top point
         field_data_text = mp_obj.find("field_data").text
         field_data_buf = io.StringIO(field_data_text)
         field_data_buf.readline()
@@ -45,9 +46,9 @@ time, settlement = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\t2
 line1, = plot1.plot(time, settlement)
 
 #################################################################################################
-u0 = 50.0
+u0 = 250.0
 E = 1000.0
-niu = 0.2 # possion ratio
+niu = 0.0 # possion ratio
 kv = 1.0e-4
 miu = 1.0 # dynamic viscosity
 H = 1.0

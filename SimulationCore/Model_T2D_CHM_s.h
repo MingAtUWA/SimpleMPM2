@@ -22,6 +22,7 @@
 #define dN1_deta  (0.0)
 #define dN2_deta  (1.0)
 #define dN3_deta (-1.0)
+#define N_tol (1.0e-30)
 
 struct ShapeFuncValue
 {
@@ -57,9 +58,6 @@ public:
 		dN2_dy = dN2_dxi * dxi_dy + dN2_deta * deta_dy;
 		dN3_dx = dN3_dxi * dxi_dx + dN3_deta * deta_dx;
 		dN3_dy = dN3_dxi * dxi_dy + dN3_deta * deta_dy;
-		//std::cout << "func: dN1_dx " << dN1_dx << ", dN1_dy " << dN1_dy 
-		//		<< ", dN2_dx " << dN2_dx << ", dN2_dy " << dN2_dy
-		//		<< ", dN3_dx " << dN3_dx << ", dN3_dy " << dN3_dy << "\n";
 	}
 };
 
@@ -68,11 +66,13 @@ int solve_substep_T2D_CHM_s(void *_self);
 struct Model_T2D_CHM_s : public Model
 {
 	friend int solve_substep_T2D_CHM_s(void *_self);
+	friend int solve_substep_T2D_CHM_s_SE(void *_self);
 public: // Node, Element and Particle data structures
 	struct Node
 	{
 		size_t id;
 		double x, y;
+
 		// material point
 		bool has_mp;
 		// solid phase
@@ -94,6 +94,9 @@ public: // Node, Element and Particle data structures
 		// rigid body
 		bool has_rb;
 		double vx_rb, vy_rb, vol_rb;
+
+		// for strain enhancement approach
+		double vol, de_vol_s, de_vol_f;
 	};
 	
 	struct Element;
@@ -124,27 +127,41 @@ public: // Node, Element and Particle data structures
 		double x_ori, y_ori;
 		double vol, m_f;
 		Element *pe;
-		// shape function value
-		union { struct { SHAPE_FUNC_VALUE_CONTENT; }; ShapeFuncValue sf; };
 
+		// shape function value
+		double N1, N2, N3;
+		
 		// Used by Element
-		Particle *next;
+		Particle *next;		
 	};
 
 	struct Element
 	{
-		size_t id, n1, n2, n3; // node index, topology
+		// index
+		size_t id;
+		//topology
+		size_t n1, n2, n3;
 		double area, area_2; // 2 * A
+		
 		// shape function of element centre
-		union { struct { SHAPE_FUNC_VALUE_CONTENT; };  ShapeFuncValue sf; };
+		double dN1_dx, dN1_dy;
+		double dN2_dx, dN2_dy;
+		double dN3_dx, dN3_dy;
+		
 		// calculation variables
 		double vol, n, s11, s22, s12, p;
+		
+		// particles list
 		Particle *pcls;
 		inline void add_pcl(Particle &pcl) noexcept
 		{
 			pcl.next = pcls;
 			pcls = &pcl;
 		}
+
+		// strain enhancement apprach
+		double dde11, dde22, de12;
+		double de_vol_s, de_vol_f;
 	};
 
 public:
@@ -263,10 +280,15 @@ public:
 				&& 0.0 <= c && c <= e.area_2;
 		if (res)
 		{
-			ShapeFuncValue &sf = p.sf;
-			sf.N1 = a / e.area_2;
-			sf.N2 = b / e.area_2;
-			sf.N3 = 1.0 - sf.N1 - sf.N2;
+			p.N1 = a / e.area_2;
+			p.N2 = b / e.area_2;
+			p.N3 = 1.0 - p.N1 - p.N2;
+			if (p.N1 < N_tol)
+				p.N1 = N_tol;
+			if (p.N2 < N_tol)
+				p.N2 = N_tol;
+			if (p.N3 < N_tol)
+				p.N3 = N_tol;
 		}
 		return res;
 	}
@@ -308,6 +330,12 @@ protected:
 			p.N1 = a / e.area_2;
 			p.N2 = b / e.area_2;
 			p.N3 = 1.0 - p.N1 - p.N2;
+			if (p.N1 < N_tol)
+				p.N1 = N_tol;
+			if (p.N2 < N_tol)
+				p.N2 = N_tol;
+			if (p.N3 < N_tol)
+				p.N3 = N_tol;
 			// map rigid body velocity to nodes
 			double n_vol;
 			// node 1
@@ -440,5 +468,6 @@ inline Model_T2D_CHM_s::Element *Model_T2D_CHM_s::find_in_which_element(Point &p
 #undef dN1_deta
 #undef dN2_deta
 #undef dN3_deta
+#undef N_tol
 
 #endif

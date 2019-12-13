@@ -7,10 +7,16 @@
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
 #include "Model_T2D_CHM_s.h"
+
 #include "Step_T2D_CHM_s.h"
+#include "Step_T2D_CHM_s_SE.h"
+
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
+
 #include "TimeHistoryOutput_T2D_CHM_s.h"
+#include "TimeHistoryOutput_T2D_CHM_s_SE.h"
+
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
 #include "test_post_processor.h"
@@ -62,30 +68,30 @@ namespace
 {
 void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 {
-	// left
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	{
-		Model_T2D_CHM_s::Node &n = md.nodes[n_id];
-		if (n.x < 1.0e-3)
-			std::cout << n.id << ", ";
-	}
-	std::cout << "\n";
-	// right
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	{
-		Model_T2D_CHM_s::Node &n = md.nodes[n_id];
-		if (n.x > 0.2 - 1.0e-3)
-			std::cout << n.id << ", ";
-	}
-	std::cout << "\n";
-	// bottom
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	{
-		Model_T2D_CHM_s::Node &n = md.nodes[n_id];
-		if (n.y < 1.0e-3)
-			std::cout << n.id << ", ";
-	}
-	std::cout << "\n";
+	//// left
+	//for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	//{
+	//	Model_T2D_CHM_s::Node &n = md.nodes[n_id];
+	//	if (n.x < 1.0e-3)
+	//		std::cout << n.id << ", ";
+	//}
+	//std::cout << "\n";
+	//// right
+	//for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	//{
+	//	Model_T2D_CHM_s::Node &n = md.nodes[n_id];
+	//	if (n.x > 0.2 - 1.0e-3)
+	//		std::cout << n.id << ", ";
+	//}
+	//std::cout << "\n";
+	//// bottom
+	//for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	//{
+	//	Model_T2D_CHM_s::Node &n = md.nodes[n_id];
+	//	if (n.y < 1.0e-3)
+	//		std::cout << n.id << ", ";
+	//}
+	//std::cout << "\n";
 
 	// top particles
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
@@ -95,6 +101,7 @@ void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 			std::cout << pcl.id << ", ";
 	}
 	std::cout << "\n";
+
 	// bottom particles
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
 	{
@@ -103,6 +110,7 @@ void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 			std::cout << pcl.id << ", ";
 	}
 	std::cout << "\n";
+
 	//// element
 	//for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	//{
@@ -123,9 +131,10 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//		  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 	
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_even_div_num(2);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
-	mh_2_pcl.generate_pcls();
+	//mh_2_pcl.set_even_div_num(2);
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
+	//mh_2_pcl.generate_pcls();
+	mh_2_pcl.replace_with_grid_points(0.0, 0.2, 0.0, 1.0, 0.02, 0.02);
 	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
 
 	Model_T2D_CHM_s model;
@@ -138,7 +147,7 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//	area += e.area_2;
 	//}
 	//std::cout << area << "\n";
-	model.init_pcls(mh_2_pcl, 0.2, 2.0, 1.0, 1000.0, 0.2, 50000.0, 1.0e-4, 1.0);
+	model.init_pcls(mh_2_pcl, 0.4, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
 	mh_2_pcl.clear();
 	//double pcl_area = 0.0;
 	//for (size_t i = 0; i < model.pcl_num; i++)
@@ -185,14 +194,15 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 		vbc.node_id = vy_bc_n_id[v_id];
 		vbc.v = 0.0;
 	}
-	size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
-	//size_t tbc_pcl_id[] = { 140, 141, 160, 161 };
+	
+	//size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
+	size_t tbc_pcl_id[] = { 490, 491, 492, 493, 494, 495, 496, 497, 498, 499 };
 	model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
 	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
 		TractionBC_MPM &tbc = model.tys[t_id];
 		tbc.pcl_id = tbc_pcl_id[t_id];
-		tbc.t = 0.05 * -10.0;
+		tbc.t = 0.02 * -250.0;
 	}
 
 	//MemoryUtilities::ItemArray<GLfloat> pt_array;
@@ -271,27 +281,27 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s out1;
+	TimeHistoryOutput_T2D_CHM_s_SE out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s out2;
+	TimeHistoryOutput_T2D_CHM_s_SE out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
 
-	Step_T2D_CHM_s step;
+	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
 	//step.set_damping_ratio(0.0); // local damping
 	step.set_bv_ratio(0.0); // bulk viscosity
 	step.set_time(15.0);
-	step.set_dtime(1.0e-4);
+	step.set_dtime(1.0e-6);
 	out1.set_interval_num(100);
 	step.add_time_history(out1);
 	out2.set_interval_num(100);
 	step.add_time_history(out2);
 	step.add_time_history(out3);
 	step.solve();
-
+	
 	//Step_T2D_CHM_s step2;
 	//step2.set_prev_step(step);
 	//step2.set_time(0.01);
@@ -341,7 +351,7 @@ void test_color_animation_t2d_chm_s_1d_consolidation(void)
 		{ 255, 0,   0 }
 	};
 	GA_T2D_CHM_s_color gen;
-	gen.init_color_graph(0.0, 10.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
+	gen.init_color_graph(0.0, 250.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
 	gen.generate(5.0, -padding_width, soil_width + padding_width,
 				 -padding_height, soil_height + padding_height,
 				 "t2d_mpm_1d_consolidation.bin", "t2d_mpm_1d_consolidation.gif");

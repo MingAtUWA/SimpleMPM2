@@ -26,6 +26,16 @@ int Step_T2D_CHM_s_SE::init_calculation(void)
 		pcl.uy_s = 0.0;
 		pcl.ux_f = 0.0;
 		pcl.uy_f = 0.0;
+
+		// init APIC
+		pcl.Cs[0][0] = 0.0;
+		pcl.Cs[0][1] = 0.0;
+		pcl.Cs[1][0] = 0.0;
+		pcl.Cs[1][1] = 0.0;
+		pcl.Cf[0][0] = 0.0;
+		pcl.Cf[0][1] = 0.0;
+		pcl.Cf[1][0] = 0.0;
+		pcl.Cf[1][1] = 0.0;
 	}
 
 	return 0;
@@ -95,6 +105,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 	}
 
 	// init particles
+	double N_m_s, N_m_f;
 	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
 	{
 		Particle_mpm &pcl = md.pcls[pcl_id];
@@ -104,12 +115,8 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 				continue;
 			pcl.pe->add_pcl(pcl);
 
-			double mvx_s = pcl.m_s * pcl.vx_s;
-			double mvy_s = pcl.m_s * pcl.vy_s;
 			pcl.vol = pcl.vol_s / (1.0 - pcl.n);
 			pcl.m_f = pcl.n * pcl.density_f * pcl.vol;
-			double mvx_f = pcl.m_f * pcl.vx_f;
-			double mvy_f = pcl.m_f * pcl.vy_f;
 			double n2_miu_div_k = pcl.n * pcl.n * md.miu / md.k;
 			double n2_miu_div_k_vrx_vol = n2_miu_div_k * (pcl.vx_f - pcl.vx_s) * pcl.vol;
 			double n2_miu_div_k_vry_vol = n2_miu_div_k * (pcl.vy_f - pcl.vy_s) * pcl.vol;
@@ -125,14 +132,18 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			// node 1
 			Node_mpm &n1 = md.nodes[e.n1];
 			n1.has_mp = true;
+			pcl.dist_x1 = n1.x - pcl.x;
+			pcl.dist_y1 = n1.y - pcl.y;
 			// solid phase
-			n1.m_s += pcl.N1 * pcl.m_s;
-			n1.vx_s += pcl.N1 * mvx_s;
-			n1.vy_s += pcl.N1 * mvy_s;
+			N_m_s = pcl.N1 * pcl.m_s;
+			n1.m_s += N_m_s;
+			n1.vx_s += N_m_s * (pcl.vx_s + pcl.Cs[0][0] * pcl.dist_x1 + pcl.Cs[0][1] * pcl.dist_y1);
+			n1.vy_s += N_m_s * (pcl.vy_s + pcl.Cs[1][0] * pcl.dist_x1 + pcl.Cs[1][1] * pcl.dist_y1);
 			// fluid phase
-			n1.m_f += pcl.N1 * pcl.m_f;
-			n1.vx_f += pcl.N1 * mvx_f;
-			n1.vy_f += pcl.N1 * mvy_f;
+			N_m_f = pcl.N1 * pcl.m_f;
+			n1.m_f += N_m_f;
+			n1.vx_f += N_m_f * (pcl.vx_f + pcl.Cf[0][0] * pcl.dist_x1 + pcl.Cf[0][1] * pcl.dist_y1);
+			n1.vy_f += N_m_f * (pcl.vy_f + pcl.Cf[1][0] * pcl.dist_x1 + pcl.Cf[1][1] * pcl.dist_y1);
 			// solid - fluid interaction
 			n1.fx_drag += pcl.N1 * n2_miu_div_k_vrx_vol;
 			n1.fy_drag += pcl.N1 * n2_miu_div_k_vry_vol;
@@ -140,14 +151,18 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			// node 2
 			Node_mpm &n2 = md.nodes[e.n2];
 			n2.has_mp = true;
+			pcl.dist_x2 = n2.x - pcl.x;
+			pcl.dist_y2 = n2.y - pcl.y;
 			// mixture phase
-			n2.m_s += pcl.N2 * pcl.m_s;
-			n2.vx_s += pcl.N2 * mvx_s;
-			n2.vy_s += pcl.N2 * mvy_s;
+			N_m_s = pcl.N2 * pcl.m_s;
+			n2.m_s += N_m_s;
+			n2.vx_s += N_m_s * (pcl.vx_s + pcl.Cs[0][0] * pcl.dist_x2 + pcl.Cs[0][1] * pcl.dist_y2);
+			n2.vy_s += N_m_s * (pcl.vy_s + pcl.Cs[1][0] * pcl.dist_x2 + pcl.Cs[1][1] * pcl.dist_y2);
 			// fluid phase
-			n2.m_f += pcl.N2 * pcl.m_f;
-			n2.vx_f += pcl.N2 * mvx_f;
-			n2.vy_f += pcl.N2 * mvy_f;
+			N_m_f = pcl.N2 * pcl.m_f;
+			n2.m_f += N_m_f;
+			n2.vx_f += N_m_f * (pcl.vx_f + pcl.Cf[0][0] * pcl.dist_x2 + pcl.Cf[0][1] * pcl.dist_y2);
+			n2.vy_f += N_m_f * (pcl.vy_f + pcl.Cf[1][0] * pcl.dist_x2 + pcl.Cf[1][1] * pcl.dist_y2);
 			// solid - fluid interaction
 			n2.fx_drag += pcl.N2 * n2_miu_div_k_vrx_vol;
 			n2.fy_drag += pcl.N2 * n2_miu_div_k_vry_vol;
@@ -155,14 +170,18 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			// node 3
 			Node_mpm &n3 = md.nodes[e.n3];
 			n3.has_mp = true;
+			pcl.dist_x3 = n3.x - pcl.x;
+			pcl.dist_y3 = n3.y - pcl.y;
 			// mixture phase
-			n3.m_s += pcl.N3 * pcl.m_s;
-			n3.vx_s += pcl.N3 * mvx_s;
-			n3.vy_s += pcl.N3 * mvy_s;
+			N_m_s = pcl.N3 * pcl.m_s;
+			n3.m_s += N_m_s;
+			n3.vx_s += N_m_s * (pcl.vx_s + pcl.Cs[0][0] * pcl.dist_x3 + pcl.Cs[0][1] * pcl.dist_y3);
+			n3.vy_s += N_m_s * (pcl.vy_s + pcl.Cs[1][0] * pcl.dist_x3 + pcl.Cs[1][1] * pcl.dist_y3);
 			// fluid phase
-			n3.m_f += pcl.N3 * pcl.m_f;
-			n3.vx_f += pcl.N3 * mvx_f;
-			n3.vy_f += pcl.N3 * mvy_f;
+			N_m_f = pcl.N3 * pcl.m_f;
+			n3.m_f += N_m_f;
+			n3.vx_f += N_m_f * (pcl.vx_f + pcl.Cf[0][0] * pcl.dist_x3 + pcl.Cf[0][1] * pcl.dist_y3);
+			n3.vy_f += N_m_f * (pcl.vy_f + pcl.Cf[1][0] * pcl.dist_x3 + pcl.Cf[1][1] * pcl.dist_y3);
 			// solid - fluid interaction
 			n3.fx_drag += pcl.N3 * n2_miu_div_k_vrx_vol;
 			n3.fy_drag += pcl.N3 * n2_miu_div_k_vry_vol;
@@ -538,7 +557,9 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			Node_mpm &n1 = md.nodes[e.n1];
 			Node_mpm &n2 = md.nodes[e.n2];
 			Node_mpm &n3 = md.nodes[e.n3];
+			// solid volumetric strain
 			//e.de_vol_s = (n1.de_vol_s + n2.de_vol_s + n3.de_vol_s) / 3.0;
+			// fluid volumetric strain
 			e.de_vol_f = (n1.de_vol_f + n2.de_vol_f + n3.de_vol_f) / 3.0;
 			e.p += md.Kf * e.de_vol_f;
 		}
@@ -556,21 +577,68 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			Node_mpm &n2 = md.nodes[e.n2];
 			Node_mpm &n3 = md.nodes[e.n3];
 
-			// velocity
-			//pcl.vx_s = n1.vx_s * pcl.N1 + n2.vx_s * pcl.N2 + n3.vx_s * pcl.N3;
-			//pcl.vy_s = n1.vy_s * pcl.N1 + n2.vy_s * pcl.N2 + n3.vy_s * pcl.N3;
-			//pcl.vx_f = n1.vx_f * pcl.N1 + n2.vx_f * pcl.N2 + n3.vx_f * pcl.N3;
-			//pcl.vy_f = n1.vy_f * pcl.N1 + n2.vy_f * pcl.N2 + n3.vy_f * pcl.N3;
-			pcl.vx_s += (n1.ax_s * pcl.N1 + n2.ax_s * pcl.N2 + n3.ax_s * pcl.N3) * self.dtime;
-			pcl.vy_s += (n1.ay_s * pcl.N1 + n2.ay_s * pcl.N2 + n3.ay_s * pcl.N3) * self.dtime;
-			pcl.vx_f += (n1.ax_f * pcl.N1 + n2.ax_f * pcl.N2 + n3.ax_f * pcl.N3) * self.dtime;
-			pcl.vy_f += (n1.ay_f * pcl.N1 + n2.ay_f * pcl.N2 + n3.ay_f * pcl.N3) * self.dtime;
+			//// FLIP
+			//// velocity
+			////pcl.vx_s = n1.vx_s * pcl.N1 + n2.vx_s * pcl.N2 + n3.vx_s * pcl.N3;
+			////pcl.vy_s = n1.vy_s * pcl.N1 + n2.vy_s * pcl.N2 + n3.vy_s * pcl.N3;
+			////pcl.vx_f = n1.vx_f * pcl.N1 + n2.vx_f * pcl.N2 + n3.vx_f * pcl.N3;
+			////pcl.vy_f = n1.vy_f * pcl.N1 + n2.vy_f * pcl.N2 + n3.vy_f * pcl.N3;
+			//pcl.vx_s += (n1.ax_s * pcl.N1 + n2.ax_s * pcl.N2 + n3.ax_s * pcl.N3) * self.dtime;
+			//pcl.vy_s += (n1.ay_s * pcl.N1 + n2.ay_s * pcl.N2 + n3.ay_s * pcl.N3) * self.dtime;
+			//pcl.vx_f += (n1.ax_f * pcl.N1 + n2.ax_f * pcl.N2 + n3.ax_f * pcl.N3) * self.dtime;
+			//pcl.vy_f += (n1.ay_f * pcl.N1 + n2.ay_f * pcl.N2 + n3.ay_f * pcl.N3) * self.dtime;
 
+			//// displacement
+			//pcl.ux_s += n1.dux_s * pcl.N1 + n2.dux_s * pcl.N2 + n3.dux_s * pcl.N3;
+			//pcl.uy_s += n1.duy_s * pcl.N1 + n2.duy_s * pcl.N2 + n3.duy_s * pcl.N3;
+			//pcl.ux_f += n1.dux_f * pcl.N1 + n2.dux_f * pcl.N2 + n3.dux_f * pcl.N3;
+			//pcl.uy_f += n1.duy_f * pcl.N1 + n2.duy_f * pcl.N2 + n3.duy_f * pcl.N3;
+
+			// APIC
+			double D[2][2], inv_D[2][2], B[2][2];
+			// D
+			D[0][0] = pcl.N1 * pcl.dist_x1 * pcl.dist_x1 + pcl.N2 * pcl.dist_x2 * pcl.dist_x2 + pcl.N3 * pcl.dist_x3 * pcl.dist_x3;
+			D[0][1] = pcl.N1 * pcl.dist_x1 * pcl.dist_y1 + pcl.N2 * pcl.dist_x2 * pcl.dist_y2 + pcl.N3 * pcl.dist_x3 * pcl.dist_y3;
+			D[1][1] = pcl.N1 * pcl.dist_y1 * pcl.dist_y1 + pcl.N2 * pcl.dist_y2 * pcl.dist_y2 + pcl.N3 * pcl.dist_y3 * pcl.dist_y3;
+			// inversion of D
+			double D_det = D[0][0] * D[1][1] - D[0][1] * D[0][1];
+			inv_D[0][0] =  D[1][1] / D_det;
+			inv_D[0][1] = -D[0][1] / D_det;
+			inv_D[1][0] = inv_D[0][1];
+			inv_D[1][1] =  D[0][0] / D_det;
+
+			// B - solid phase
+			B[0][0] = pcl.N1 * n1.vx_s * pcl.dist_x1 + pcl.N2 * n2.vx_s * pcl.dist_x2 + pcl.N3 * n3.vx_s * pcl.dist_x3;
+			B[0][1] = pcl.N1 * n1.vx_s * pcl.dist_y1 + pcl.N2 * n2.vx_s * pcl.dist_y2 + pcl.N3 * n3.vx_s * pcl.dist_y3;
+			B[1][0] = pcl.N1 * n1.vy_s * pcl.dist_x1 + pcl.N2 * n2.vy_s * pcl.dist_x2 + pcl.N3 * n3.vy_s * pcl.dist_x3;
+			B[1][1] = pcl.N1 * n1.vy_s * pcl.dist_y1 + pcl.N2 * n2.vy_s * pcl.dist_y2 + pcl.N3 * n3.vy_s * pcl.dist_y3;
+			// Cs = B * inv_D
+			pcl.Cs[0][0] = B[0][0] * inv_D[0][0] + B[0][1] * inv_D[1][0];
+			pcl.Cs[0][1] = B[0][0] * inv_D[0][1] + B[0][1] * inv_D[1][1];
+			pcl.Cs[1][0] = B[1][0] * inv_D[0][0] + B[1][1] * inv_D[1][1];
+			pcl.Cs[1][1] = B[1][0] * inv_D[0][1] + B[1][1] * inv_D[1][1];
+			
+			// B - fluid phase
+			B[0][0] = pcl.N1 * n1.vx_f * pcl.dist_x1 + pcl.N2 * n2.vx_f * pcl.dist_x2 + pcl.N3 * n3.vx_f * pcl.dist_x3;
+			B[0][1] = pcl.N1 * n1.vx_f * pcl.dist_y1 + pcl.N2 * n2.vx_f * pcl.dist_y2 + pcl.N3 * n3.vx_f * pcl.dist_y3;
+			B[1][0] = pcl.N1 * n1.vy_f * pcl.dist_x1 + pcl.N2 * n2.vy_f * pcl.dist_x2 + pcl.N3 * n3.vy_f * pcl.dist_x3;
+			B[1][1] = pcl.N1 * n1.vy_f * pcl.dist_y1 + pcl.N2 * n2.vy_f * pcl.dist_y2 + pcl.N3 * n3.vy_f * pcl.dist_y3;
+			// Cf = B * inv_D
+			pcl.Cf[0][0] = B[0][0] * inv_D[0][0] + B[0][1] * inv_D[1][0];
+			pcl.Cf[0][1] = B[0][0] * inv_D[0][1] + B[0][1] * inv_D[1][1];
+			pcl.Cf[1][0] = B[1][0] * inv_D[0][0] + B[1][1] * inv_D[1][0];
+			pcl.Cf[1][1] = B[1][0] * inv_D[0][1] + B[1][1] * inv_D[1][1];
+			
+			// velocity
+			pcl.vx_s = n1.vx_s * pcl.N1 + n2.vx_s * pcl.N2 + n3.vx_s * pcl.N3;
+			pcl.vy_s = n1.vy_s * pcl.N1 + n2.vy_s * pcl.N2 + n3.vy_s * pcl.N3;
+			pcl.vx_f = n1.vx_f * pcl.N1 + n2.vx_f * pcl.N2 + n3.vx_f * pcl.N3;
+			pcl.vy_f = n1.vy_f * pcl.N1 + n2.vy_f * pcl.N2 + n3.vy_f * pcl.N3;
 			// displacement
-			pcl.ux_s += n1.dux_s * pcl.N1 + n2.dux_s * pcl.N2 + n3.dux_s * pcl.N3;
-			pcl.uy_s += n1.duy_s * pcl.N1 + n2.duy_s * pcl.N2 + n3.duy_s * pcl.N3;
-			pcl.ux_f += n1.dux_f * pcl.N1 + n2.dux_f * pcl.N2 + n3.dux_f * pcl.N3;
-			pcl.uy_f += n1.duy_f * pcl.N1 + n2.duy_f * pcl.N2 + n3.duy_f * pcl.N3;
+			pcl.ux_s += pcl.vx_s * self.dtime;
+			pcl.uy_s += pcl.vy_s * self.dtime;
+			pcl.ux_f += pcl.vx_f * self.dtime;
+			pcl.uy_f += pcl.vy_f * self.dtime;
 
 			// update position
 			pcl.x = pcl.x_ori + pcl.ux_s;
@@ -578,6 +646,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 
 			// strain enhancement appraoch
 			de_vol_s = n1.de_vol_s * pcl.N1 + n2.de_vol_s * pcl.N2 + n3.de_vol_s * pcl.N3;
+			//de_vol_s = e.de_vol_s;
 			// porosity
 			pcl.n = (de_vol_s + pcl.n) / (1.0 + de_vol_s);
 

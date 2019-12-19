@@ -58,7 +58,7 @@ int main(int argc, void **argv)
 	//test_animation_chm_s_uup_1d_consolidation();
 
 	//test_t2d_mpm_square();
-	//test_t2d_mpm_chm_s_1d_consolidation();
+	test_t2d_mpm_chm_s_1d_consolidation();
 	//test_animation_t2d_chm_s_1d_consolidation();
 	test_color_animation_t2d_chm_s_1d_consolidation();
 

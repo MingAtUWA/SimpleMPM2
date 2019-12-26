@@ -131,10 +131,10 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//		  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 	
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_even_div_num(2);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
-	mh_2_pcl.generate_pcls();
-	//mh_2_pcl.replace_with_grid_points(0.0, 0.2, 0.0, 1.0, 0.02, 0.02);
+	//mh_2_pcl.set_even_div_num(2);
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
+	//mh_2_pcl.generate_pcls();
+	mh_2_pcl.replace_with_grid_points(0.0, 0.2, 0.0, 1.0, 0.02, 0.02);
 	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
 
 	Model_T2D_CHM_s model;
@@ -195,14 +195,14 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 		vbc.v = 0.0;
 	}
 	
-	size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
-	//size_t tbc_pcl_id[] = { 490, 491, 492, 493, 494, 495, 496, 497, 498, 499 };
+	//size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
+	size_t tbc_pcl_id[] = { 490, 491, 492, 493, 494, 495, 496, 497, 498, 499 };
 	model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
 	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
 		TractionBC_MPM &tbc = model.tys[t_id];
 		tbc.pcl_id = tbc_pcl_id[t_id];
-		tbc.t = 0.05 * -10.0;
+		tbc.t = 0.02 * -250.0;
 	}
 
 	//MemoryUtilities::ItemArray<GLfloat> pt_array;
@@ -293,8 +293,8 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	step.set_model(model);
 	//step.set_damping_ratio(0.0); // local damping
 	step.set_bv_ratio(0.0); // bulk viscosity
-	step.set_time(4.0e-4);
-	step.set_dtime(1.0e-5);
+	step.set_time(15.0);
+	step.set_dtime(1.0e-6);
 	out1.set_interval_num(100);
 	step.add_time_history(out1);
 	out2.set_interval_num(100);

@@ -37,7 +37,7 @@ void TimeHistoryOutput_ConsoleProgressBar::print_progress(void)
 
 int TimeHistoryOutput_ConsoleProgressBar::init_per_step(void)
 {
-	prev_pos = 0;
+	prev_pos = 101; // in order to print 0%
 	print_progress();
 	start_time = std::chrono::system_clock::now();
 	return 0;

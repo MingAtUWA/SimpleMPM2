@@ -134,11 +134,8 @@ public: // Node, Element and Particle data structures
 		// Used by Element
 		Particle *next;
 
-		// APIC
-		double Cs[2][2], Cf[2][2];
-		double dist_x1, dist_y1;
-		double dist_x2, dist_y2;
-		double dist_x3, dist_y3;
+		//// APIC
+		//double Cs[2][2], Cf[2][2];
 	};
 
 	struct Element

@@ -237,8 +237,8 @@ void test_t2d_mpm_me_s_t_bar_coarser(void)
 	step.set_model(model);
 	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity
-	step.set_time(2.0);
-	step.set_dtime(1.0e-5);
+	step.set_time(4.0);
+	step.set_dtime(5.0e-6);
 	out1.set_interval_num(100);
 	step.add_time_history(out1);
 	out2.set_interval_num(100);
@@ -282,8 +282,8 @@ void test_color_animation_t2d_me_s_t_bar_coarser(void)
 		{ 255, 0,   0   }
 	};
 	GA_T2D_ME_s_color gen(1000, 1000);
-	gen.init_color_graph(-2000.0, 2000.0, colors, sizeof(colors) / sizeof(ColorGraph::Colori));
+	gen.init_color_graph(-200.0, 200.0, colors, sizeof(colors) / sizeof(ColorGraph::Colori));
 	gen.generate(5.0, -padding_width, soil_width + padding_width,
 				 -padding_height, soil_height + padding_height,
-				 "t2d_mpm_t_bar_coarser.bin", "t2d_mpm_t_bar_coarser.gif");
+				 "t2d_mpm_me_t_bar_coarser.bin", "t2d_mpm_me_t_bar_coarser.gif");
 }

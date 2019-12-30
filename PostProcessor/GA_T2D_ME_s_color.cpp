@@ -5,6 +5,7 @@
 GA_T2D_ME_s_color::GA_T2D_ME_s_color(GLsizei win_w, GLsizei win_h) :
 	GenerateAnimation(win_w, win_h),
 	rc_x_data(nullptr), mp_x_data(nullptr) {}
+
 GA_T2D_ME_s_color::~GA_T2D_ME_s_color()
 {
 	if (rc_x_data)

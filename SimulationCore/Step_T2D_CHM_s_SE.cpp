@@ -508,7 +508,6 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			Node_mpm &n1 = md.nodes[e.n1];
 			Node_mpm &n2 = md.nodes[e.n2];
 			Node_mpm &n3 = md.nodes[e.n3];
-
 			// strain increment
 			de11 = n1.dux_s * e.dN1_dx + n2.dux_s * e.dN2_dx + n3.dux_s * e.dN3_dx;
 			de22 = n1.duy_s * e.dN1_dy + n2.duy_s * e.dN2_dy + n3.duy_s * e.dN3_dy;

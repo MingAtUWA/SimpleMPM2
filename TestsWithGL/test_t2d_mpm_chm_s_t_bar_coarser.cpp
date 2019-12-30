@@ -7,13 +7,17 @@
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
 #include "Model_T2D_CHM_s.h"
+
 #include "Step_T2D_CHM_s.h"
+#include "Step_T2D_CHM_s_SE.h"
+
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
+
 #include "TimeHistoryOutput_T2D_CHM_s.h"
+#include "TimeHistoryOutput_T2D_CHM_s_SE.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
-#include "ItemArray.hpp"
 #include "test_post_processor.h"
 
 #include "GA_T2D_CHM_s.h"
@@ -21,6 +25,7 @@
 
 namespace
 {
+
 void find_bc_pcl_and_node(Model_T2D_CHM_s &md)
 {
 	// left
@@ -243,7 +248,7 @@ void test_t2d_mpm_chm_s_t_bar_coarser(void)
 	//disp_model.init_win();
 	//disp_model.init_model(model);
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	//disp_model.display(-0.5, 30.5, -0.5, 40.5);
 	//return;
 
@@ -260,15 +265,15 @@ void test_t2d_mpm_chm_s_t_bar_coarser(void)
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s out1;
+	TimeHistoryOutput_T2D_CHM_s_SE out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s out2;
+	TimeHistoryOutput_T2D_CHM_s_SE out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
 
-	Step_T2D_CHM_s step;
+	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
 	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity
@@ -298,8 +303,8 @@ void test_t2d_mpm_chm_s_t_bar_coarser(void)
 
 void test_animation_t2d_chm_s_t_bar_coarser(void)
 {
-	double soil_height = 40.0;
-	double soil_width = 30.0;
+	double soil_height = 30.0;
+	double soil_width = 20.0;
 	double padding_height = soil_height * 0.05;
 	double padding_width = soil_width * 0.05;
 	GA_T2D_CHM_s gen(1000, 1000);

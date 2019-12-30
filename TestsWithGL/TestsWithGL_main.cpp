@@ -57,10 +57,18 @@ int main(int argc, void **argv)
 	//test_imp_mpm_chm_s_uup_1d_consolidation();
 	//test_animation_chm_s_uup_1d_consolidation();
 
+	// trianglur mesh mpm me
+	//test_t2d_mpm_me_s_1d_compression();
+	//test_color_animation_t2d_me_s_1d_compression();
+	
+	test_t2d_mpm_me_s_t_bar_coarser();
+	//test_color_animation_t2d_me_s_t_bar_coarser();
+
+	// trianglur mesh mpm chm
 	//test_t2d_mpm_square();
 	//test_t2d_mpm_chm_s_1d_consolidation();
 	//test_animation_t2d_chm_s_1d_consolidation();
-	test_color_animation_t2d_chm_s_1d_consolidation();
+	//test_color_animation_t2d_chm_s_1d_consolidation();
 
 	//test_t2d_mpm_chm_s_t_bar();
 	//test_animation_t2d_chm_s_t_bar();

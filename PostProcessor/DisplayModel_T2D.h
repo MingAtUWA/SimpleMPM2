@@ -5,6 +5,7 @@
 #include "Geometry.h"
 #include "SquareParticleSystem.h"
 
+#include "Model_T2D_ME_s.h"
 #include "Model_T2D_CHM_s.h"
 
 // Usage:
@@ -26,6 +27,8 @@ public:
 	int display(double left, double right, double bottom, double top);
 
 	int init_model(Model_T2D_CHM_s &md);
+	int init_model(Model_T2D_ME_s &md);
+
 	int init_points(GLfloat *n_coords, size_t num); // num = sizeof(n_coords) * 3
 	int init_rigid_circle(DispConRigidCircle &rc);
 
@@ -63,9 +66,13 @@ protected:
 	SquareParticleSystem pcls_mem;
 
 protected:
+	int init_bg_mesh(Model_T2D_ME_s &md);
+	int init_pcls(Model_T2D_ME_s &md);
+
 	int init_bg_mesh(Model_T2D_CHM_s &md);
 	int init_pcls(Model_T2D_CHM_s &md);
-	
+
+protected:
 	void render(void);
 };
 

@@ -2,6 +2,7 @@
 #define __Disp_Con_Rigid_Circle_H__
 
 class TriangleMeshToParticles;
+class Model_T2D_ME_s;
 class Model_T2D_CHM_s;
 
 // Rigid ciricle to simulate T-bar penetration
@@ -10,6 +11,7 @@ class Model_T2D_CHM_s;
 
 class DispConRigidCircle
 {
+	friend Model_T2D_ME_s;
 	friend Model_T2D_CHM_s;
 
 public:

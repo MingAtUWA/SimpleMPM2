@@ -28,4 +28,10 @@ inline double distance(Rect &rec, Point &p)
 bool clip_line(double xl, double xu, double yl, double yu,
 			   double &x1, double &y1, double &x2, double &y2);
 
+// whether AABB and triangle intersect
+// return true:  intersect
+// return false: intersect
+bool test_AABB_triangle_intersection(double xl, double xu, double yl, double yu,
+	double x0, double y0, double x1, double y1, double x2, double y2);
+
 #endif

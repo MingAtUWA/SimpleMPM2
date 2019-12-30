@@ -2,22 +2,20 @@
 
 #include "Geometry.h"
 
-#include "Model_T2D_CHM_s.h"
+#include "Model_T2D_ME_s.h"
 
-Model_T2D_CHM_s::Model_T2D_CHM_s() :
-	Model("Model_T2D_CHM_s"),
+Model_T2D_ME_s::Model_T2D_ME_s() :
+	Model("Model_T2D_ME_s"),
 	elems(nullptr), elem_num(0), nodes(nullptr), node_num(0),
 	pcls(nullptr), pcl_num(0),
 	bfx_num(0), bfy_num(0), bfxs(nullptr), bfys(nullptr),
 	tx_num(0),  ty_num(0),  txs(nullptr),  tys(nullptr),
-	asx_num(0), asy_num(0), asxs(nullptr), asys(nullptr),
-	vsx_num(0), vsy_num(0), vsxs(nullptr), vsys(nullptr),
-	afx_num(0), afy_num(0), afxs(nullptr), afys(nullptr),
-	vfx_num(0), vfy_num(0), vfxs(nullptr), vfys(nullptr),
+	ax_num(0), ay_num(0), axs(nullptr), ays(nullptr),
+	vx_num(0), vy_num(0), vxs(nullptr), vys(nullptr),
 	grid_x_min(0.0), grid_x_max(0.0), grid_y_min(0.0), grid_y_max(0.0),
 	grid_x_num(0), grid_y_num(0), grid_num(0), bg_grids(nullptr) {}
 
-Model_T2D_CHM_s::~Model_T2D_CHM_s()
+Model_T2D_ME_s::~Model_T2D_ME_s()
 {
 	clear_mesh();
 	clear_pcls();
@@ -25,18 +23,14 @@ Model_T2D_CHM_s::~Model_T2D_CHM_s()
 	clear_bfys();
 	clear_txs();
 	clear_tys();
-	clear_asxs();
-	clear_asys();
-	clear_afxs();
-	clear_afys();
-	clear_vsxs();
-	clear_vsys();
-	clear_vfxs();
-	clear_vfys();
+	clear_axs();
+	clear_ays();
+	clear_vxs();
+	clear_vys();
 	clear_bg_mesh();
 }
 
-void Model_T2D_CHM_s::init_mesh(double *node_coords, size_t n_num,
+void Model_T2D_ME_s::init_mesh(double *node_coords, size_t n_num,
 								size_t *elem_n_ids,  size_t e_num)
 {
 	clear_mesh();
@@ -86,7 +80,7 @@ void Model_T2D_CHM_s::init_mesh(double *node_coords, size_t n_num,
 	}
 }
 
-void Model_T2D_CHM_s::clear_mesh(void)
+void Model_T2D_ME_s::clear_mesh(void)
 {
 	if (nodes)
 	{
@@ -102,9 +96,7 @@ void Model_T2D_CHM_s::clear_mesh(void)
 	elem_num = 0;
 }
 
-void Model_T2D_CHM_s::init_pcls(size_t num,
-	double n, double m_s, double density_s, double density_f,
-	double _E, double _niu, double _Kf, double _k, double _miu)
+void Model_T2D_ME_s::init_pcls(size_t num, double m, double density, double _E, double _niu)
 {
 	clear_pcls();
 	pcl_num = num;
@@ -113,35 +105,25 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 	{
 		Particle &pcl = pcls[pcl_id];
 		pcl.id = pcl_id;
-		pcl.ux_s = 0.0;
-		pcl.uy_s = 0.0;
-		pcl.vx_s = 0.0;
-		pcl.vy_s = 0.0;
-		pcl.vx_f = 0.0;
-		pcl.vy_f = 0.0;
-		pcl.ux_f = 0.0;
-		pcl.uy_f = 0.0;
-		pcl.n = n;
-		pcl.m_s = m_s;
-		pcl.density_s = density_s;
-		pcl.density_f = density_f;
+		pcl.ux = 0.0;
+		pcl.uy = 0.0;
+		pcl.vx = 0.0;
+		pcl.vy = 0.0;
+		pcl.m = m;
+		pcl.density = density;
 		pcl.e11 = 0.0;
 		pcl.e22 = 0.0;
 		pcl.e12 = 0.0;
 		pcl.s11 = 0.0;
 		pcl.s12 = 0.0;
 		pcl.s22 = 0.0;
-		pcl.p = 0.0;
 	}
 	// constitutive model
 	E = _E;
 	niu = _niu;
-	Kf = _Kf;
-	k = _k;
-	miu = _miu;
 }
 
-void Model_T2D_CHM_s::clear_pcls(void)
+void Model_T2D_ME_s::clear_pcls(void)
 {
 	if (pcls)
 	{
@@ -151,7 +133,7 @@ void Model_T2D_CHM_s::clear_pcls(void)
 	pcl_num = 0;
 }
 
-void Model_T2D_CHM_s::init_mesh(TriangleMesh &tri_mesh)
+void Model_T2D_ME_s::init_mesh(TriangleMesh &tri_mesh)
 {
 	clear_mesh();
 	node_num = tri_mesh.get_node_num();
@@ -194,26 +176,25 @@ void Model_T2D_CHM_s::init_mesh(TriangleMesh &tri_mesh)
 	}
 }
 
-void Model_T2D_CHM_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
-	double n, double density_s, double density_f,
-	double E, double niu, double Kf, double k, double miu)
+void Model_T2D_ME_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
+								double density, double E, double niu)
 {
 	pcl_num = mh_2_pcl.get_pcl_num();
 	if (pcl_num == 0)
 		return;
-	init_pcls(pcl_num, n, (1.0-n)*density_s, density_s, density_f, E, niu, Kf, k, miu);
+	init_pcls(pcl_num, density, density, E, niu);
 	TriangleMeshToParticles::Particle *ext_ppcl = mh_2_pcl.first();
 	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
 	{
 		Particle &pcl = pcls[pcl_id];
 		pcl.x = ext_ppcl->x;
 		pcl.y = ext_ppcl->y;
-		pcl.m_s *= ext_ppcl->vol;
+		pcl.m *= ext_ppcl->vol;
 		ext_ppcl = mh_2_pcl.next(ext_ppcl);
 	}
 }
 
-int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
+int Model_T2D_ME_s::apply_rigid_body_to_bg_mesh(double dtime)
 {
 	// reset reaction force
 	rigid_circle.rfx = 0.0;
@@ -237,21 +218,19 @@ int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
 			n.vx_rb /= n.vol_rb;
 			n.vy_rb /= n.vol_rb;
 			// rough contact for both solid and fluid phase
-			fx = -((n.vx_rb - n.vx_s) * n.m_s + (n.vx_rb - n.vx_f) * n.m_f) / dtime;
-			fy = -((n.vy_rb - n.vy_s) * n.m_s + (n.vy_rb - n.vy_f) * n.m_f) / dtime;
+			fx = -(n.vx_rb - n.vx) * n.m / dtime;
+			fy = -(n.vy_rb - n.vy) * n.m / dtime;
 			rigid_circle.add_reaction_force(n.x, n.y, fx, fy);
 			// modify nodal velocity
-			n.vx_s = n.vx_rb;
-			n.vy_s = n.vy_rb;
-			n.vx_f = n.vx_rb;
-			n.vy_f = n.vy_rb;
+			n.vx = n.vx_rb;
+			n.vy = n.vy_rb;
 		}
 	}
 
 	return 0;
 }
 
-int Model_T2D_CHM_s::init_bg_mesh(double hx, double hy)
+int Model_T2D_ME_s::init_bg_mesh(double hx, double hy)
 {
 	if (elem_num == 0)
 		return -1;
@@ -313,7 +292,7 @@ int Model_T2D_CHM_s::init_bg_mesh(double hx, double hy)
 	return 0;
 }
 
-void Model_T2D_CHM_s::add_elem_to_bg_grid(Element &e)
+void Model_T2D_ME_s::add_elem_to_bg_grid(Element &e)
 {
 	// get bounding box of element
 	double e_x_min, e_x_max, e_y_min, e_y_max;

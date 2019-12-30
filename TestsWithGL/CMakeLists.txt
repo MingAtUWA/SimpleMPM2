@@ -25,6 +25,9 @@ add_executable(
     test_mpm_rigidbody_bar_compression.cpp
     test_slide_down_frictional_slope.cpp
     test_slide_down_frictional_slope2.cpp
+    # me - mpm
+    test_t2d_mpm_me_s_1d_compression.cpp
+    test_t2d_mpm_me_s_t_bar_coarser.cpp
     # chm - mpm
     test_mpm_chm_s_1d_consolidation.cpp
     test_t2d_mpm_chm_s_1d_consolidation.cpp

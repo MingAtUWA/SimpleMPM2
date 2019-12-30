@@ -43,4 +43,7 @@ void test_t2d_mpm_chm_s_t_bar_coarser(void);
 
 void test_triangle_searching(void);
 
+void test_t2d_mpm_me_s_1d_compression(void);
+void test_t2d_mpm_me_s_t_bar_coarser(void);
+
 #endif

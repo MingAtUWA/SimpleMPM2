@@ -65,6 +65,12 @@ add_library(
     ModelDataOutput_S2D_CHM_s_uUp.h ModelDataOutput_S2D_CHM_s_uUp.cpp
     TimeHistoryOutput_S2D_CHM_s_uUp.h TimeHistoryOutput_S2D_CHM_s_uUp.cpp
     # Triangular 2D Mesh
+    # 2D ME MPM
+    Model_T2D_ME_s.h Model_T2D_ME_s.cpp
+    Step_T2D_ME_s.h Step_T2D_ME_s.cpp
+    #ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
+    #TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
+    # 2D CHM MPM
     Model_T2D_CHM_s.h Model_T2D_CHM_s.cpp
     Step_T2D_CHM_s.h Step_T2D_CHM_s.cpp
     ModelDataOutput_T2D_CHM_s.h ModelDataOutput_T2D_CHM_s.cpp
@@ -74,6 +80,8 @@ add_library(
     # Strain enhancement
     Step_T2D_CHM_s_SE.h Step_T2D_CHM_s_SE.cpp
     TimeHistoryOutput_T2D_CHM_s_SE.h TimeHistoryOutput_T2D_CHM_s_SE.cpp
+    ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
+    TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

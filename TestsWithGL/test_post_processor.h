@@ -24,5 +24,6 @@ void test_color_graph(void);
 
 void test_color_animation_t2d_me_s_1d_compression(void);
 void test_color_animation_t2d_me_s_t_bar_coarser(void);
+void test_color_animation_t2d_me_s_t_bar_above_ground(void);
 
 #endif

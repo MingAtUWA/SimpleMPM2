@@ -278,7 +278,8 @@ int solve_substep_T2D_ME_s(void *_self)
 
 	// contact detection and velocity modification
 	if (md.get_rigid_circle().is_init())
-		md.apply_rigid_body_to_bg_mesh(self.dtime);
+		//md.apply_rigid_body_to_bg_mesh(self.dtime);
+		md.apply_contact_force_to_bg_mesh(self.dtime);
 
 	// apply velocity bc
 	for (size_t v_id = 0; v_id < md.vx_num; ++v_id)

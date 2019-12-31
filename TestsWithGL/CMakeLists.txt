@@ -49,6 +49,9 @@ add_executable(
     test_color_graph.cpp
     # Search triangle
     test_triangle_searching.cpp
+    # Panelty method contact
+    test_t2d_mpm_me_s_t_bar_above_ground.cpp
+    test_t2d_mpm_chm_s_t_bar_above_ground.cpp
     )
 
 target_include_directories(

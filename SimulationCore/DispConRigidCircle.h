@@ -53,6 +53,16 @@ protected:
 		return true;
 	}
 
+	inline double get_overlay_and_norm(double x, double y, double &norm_x, double &norm_y)
+	{
+		double x_diff = x - cen_x;
+		double y_diff = y - cen_y;
+		double dist = sqrt(x_diff * x_diff + y_diff * y_diff);
+		norm_x = x_diff / dist;
+		norm_y = y_diff / dist;
+		return r - dist;
+	}
+
 	// update rigid body state
 	void update(double dt);
 

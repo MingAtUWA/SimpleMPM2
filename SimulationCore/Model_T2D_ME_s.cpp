@@ -230,6 +230,67 @@ int Model_T2D_ME_s::apply_rigid_body_to_bg_mesh(double dtime)
 	return 0;
 }
 
+int Model_T2D_ME_s::apply_contact_force_to_bg_mesh(double dtime)
+{
+	// reset reaction force
+	rigid_circle.rfx = 0.0;
+	rigid_circle.rfy = 0.0;
+	rigid_circle.rm = 0.0;
+	// update state
+	rigid_circle.update(dtime);
+
+	double dist, norm_x, norm_y;
+	double f_cont, fx_cont, fy_cont;
+	double nfx_cont, nfy_cont, ndax, nday;
+	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
+	{
+		Particle &pcl = pcls[p_id];
+		if (pcl.pe && rigid_circle.is_in_circle(pcl.x, pcl.y))
+		{
+			dist = rigid_circle.get_overlay_and_norm(pcl.x, pcl.y, norm_x, norm_y);
+			f_cont = K_cont * dist;
+			fx_cont = f_cont * norm_x;
+			fy_cont = f_cont * norm_y;
+			// reaction force by the rigid object
+			rigid_circle.add_reaction_force(pcl.x, pcl.y, fx_cont, fy_cont);
+			// adjust velocity at nodes
+			Element &e = *pcl.pe;
+			// node 1
+			Node &n1 = nodes[e.n1];
+			nfx_cont = pcl.N1 * fx_cont;
+			nfy_cont = pcl.N1 * fy_cont;
+			ndax = nfx_cont / n1.m;
+			nday = nfy_cont / n1.m;
+			n1.ax += ndax;
+			n1.ay += nday;
+			n1.vx += ndax * dtime;
+			n1.vy += nday * dtime;
+			// node 2
+			Node &n2 = nodes[e.n2];
+			nfx_cont = pcl.N2 * fx_cont;
+			nfy_cont = pcl.N2 * fy_cont;
+			ndax = nfx_cont / n2.m;
+			nday = nfy_cont / n2.m;
+			n2.ax += ndax;
+			n2.ay += nday;
+			n2.vx += ndax * dtime;
+			n2.vy += nday * dtime;
+			// node 3
+			Node &n3 = nodes[e.n3];
+			nfx_cont = pcl.N3 * fx_cont;
+			nfy_cont = pcl.N3 * fy_cont;
+			ndax = nfx_cont / n3.m;
+			nday = nfy_cont / n3.m;
+			n3.ax += ndax;
+			n3.ay += nday;
+			n3.vx += ndax * dtime;
+			n3.vy += nday * dtime;
+		}
+	}
+
+	return 0;
+}
+
 int Model_T2D_ME_s::init_bg_mesh(double hx, double hy)
 {
 	if (elem_num == 0)

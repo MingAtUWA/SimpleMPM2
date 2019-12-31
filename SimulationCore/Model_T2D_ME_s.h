@@ -134,6 +134,8 @@ public:
 	double E;   // Elastic modulus
 	double niu; // Poisson ratio
 	
+	double K_cont; // contact stiffness
+
 public:
 	Model_T2D_ME_s();
 	~Model_T2D_ME_s();
@@ -294,8 +296,11 @@ protected:
 	{
 		return find_in_which_element(pcl) ? true : false;	
 	}
+	// velocity control
 	int apply_rigid_body_to_bg_mesh(double dtime);
-	
+	// force control (panelty function)
+	int apply_contact_force_to_bg_mesh(double dtime);
+
 public:
 	inline void init_rigid_circle(double _r, double _x, double _y, double max_pcl_size)
 	{
@@ -306,6 +311,7 @@ public:
 		rigid_circle.set_velocity(_vx, _vy, _w);
 	}
 	inline DispConRigidCircle &get_rigid_circle(void) noexcept { return rigid_circle; }
+	inline void set_contact_stiffness(double _K_cont) noexcept { K_cont = _K_cont; }
 
 	// =========================================================
 	// ==================== background grid ====================

@@ -34,7 +34,7 @@ void get_left_and_right_n_ids(Model_T2D_CHM_s &md,
 	}
 }
 
-void get_top_n_ids(Model_T2D_CHM_s &md,
+void get_bottom_n_ids(Model_T2D_CHM_s &md,
 	MemoryUtilities::ItemArray<size_t> &n_ids)
 {
 	n_ids.reset();
@@ -66,9 +66,9 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 
 	model.init_rigid_circle(2.5, 10.0, 17.6, 0.25);
 	model.set_rigid_circle_velocity(0.0, -1.0, 0.0);
-	//model.set_contact_stiffness(200.0);
+	model.set_contact_stiffness(150.0, 150.0);
 
-	//model.init_pcls(mh_2_pcl, 20.0, 100.0, 0.0);
+	model.init_pcls(mh_2_pcl, 0.4, 20.0, 10.0, 100.0, 0.0, 1000.0, 1.0e-4, 1.0);
 	mh_2_pcl.clear();
 
 	model.init_bg_mesh(0.5, 0.5);
@@ -101,7 +101,7 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	//	pt_array.add(&pt_coord);
 	//}
 
-	get_top_n_ids(model, bc_n_ids_mem);
+	get_bottom_n_ids(model, bc_n_ids_mem);
 	bc_n_ids = bc_n_ids_mem.get_mem();
 	model.init_vsys(bc_n_ids_mem.get_num());
 	for (size_t v_id = 0; v_id < model.vsy_num; ++v_id)
@@ -135,13 +135,13 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	//pt_coord = 0.0f;
 	//pt_array.add(&pt_coord);
 
-	//DisplayModel_T2D disp_model;
-	//disp_model.init_win();
-	//disp_model.init_model(model);
-	//disp_model.init_rigid_circle(model.get_rigid_circle());
-	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
-	//disp_model.display(-0.5, 20.5, -0.5, 20.5);
-	//return;
+	DisplayModel_T2D disp_model;
+	disp_model.init_win();
+	disp_model.init_model(model);
+	disp_model.init_rigid_circle(model.get_rigid_circle());
+	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	disp_model.display(-0.5, 20.5, -0.5, 20.5);
+	return;
 
 	ResultFile_PlainBin res_file_pb;
 	res_file_pb.init("t2d_mpm_chm_t_bar_above_ground.bin");
@@ -168,8 +168,8 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	step.set_model(model);
 	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity
-	step.set_time(3.0);
-	step.set_dtime(5.0e-6);
+	step.set_time(1.0);
+	step.set_dtime(1.0e-6);
 	out1.set_interval_num(100);
 	step.add_time_history(out1);
 	out2.set_interval_num(100);

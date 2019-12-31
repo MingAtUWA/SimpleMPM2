@@ -251,6 +251,97 @@ int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
 	return 0;
 }
 
+int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(double dtime)
+{
+	// reset reaction force
+	rigid_circle.rfx = 0.0;
+	rigid_circle.rfy = 0.0;
+	rigid_circle.rm = 0.0;
+	// update state
+	rigid_circle.update(dtime);
+
+	double dist, norm_x, norm_y;
+	double fs_cont, fsx_cont, fsy_cont;
+	double ff_cont, ffx_cont, ffy_cont;
+	double nfsx_cont, nfsy_cont, ndasx, ndasy;
+	double nffx_cont, nffy_cont, ndafx, ndafy;
+	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
+	{
+		Particle &pcl = pcls[p_id];
+		if (pcl.pe && rigid_circle.is_in_circle(pcl.x, pcl.y))
+		{
+			dist = rigid_circle.get_overlay_and_norm(pcl.x, pcl.y, norm_x, norm_y);
+			fs_cont = Ks_cont * dist;
+			fsx_cont = fs_cont * norm_x;
+			fsy_cont = fs_cont * norm_y;
+			ff_cont = Kf_cont * dist;
+			ffx_cont = ff_cont * norm_x;
+			ffy_cont = ff_cont * norm_y;
+			// reaction force by the rigid object
+			rigid_circle.add_reaction_force(pcl.x, pcl.y,
+				fsx_cont + ffx_cont, fsy_cont + ffy_cont);
+			// adjust velocity at nodes
+			Element &e = *pcl.pe;
+			// node 1
+			Node &n1 = nodes[e.n1];
+			nfsx_cont = pcl.N1 * fsx_cont;
+			nfsy_cont = pcl.N1 * fsy_cont;
+			ndasx = nfsx_cont / n1.m_s;
+			ndasy = nfsy_cont / n1.m_s;
+			n1.ax_s += ndasx;
+			n1.ay_s += ndasy;
+			n1.vx_s += ndasx * dtime;
+			n1.vy_s += ndasy * dtime;
+			nffx_cont = pcl.N1 * ffx_cont;
+			nffy_cont = pcl.N1 * ffy_cont;
+			ndafx = nffx_cont / n1.m_f;
+			ndafy = nffy_cont / n1.m_f;
+			n1.ax_f += ndafx;
+			n1.ay_f += ndafy;
+			n1.vx_f += ndafx * dtime;
+			n1.vy_f += ndafy * dtime;
+			// node 2
+			Node &n2 = nodes[e.n2];
+			nfsx_cont = pcl.N2 * fsx_cont;
+			nfsy_cont = pcl.N2 * fsy_cont;
+			ndasx = nfsx_cont / n2.m_s;
+			ndasy = nfsy_cont / n2.m_s;
+			n2.ax_s += ndasx;
+			n2.ay_s += ndasy;
+			n2.vx_s += ndasx * dtime;
+			n2.vy_s += ndasy * dtime;
+			nffx_cont = pcl.N2 * ffx_cont;
+			nffy_cont = pcl.N2 * ffy_cont;
+			ndafx = nffx_cont / n2.m_f;
+			ndafy = nffy_cont / n2.m_f;
+			n2.ax_f += ndafx;
+			n2.ay_f += ndafy;
+			n2.vx_f += ndafx * dtime;
+			n2.vy_f += ndafy * dtime;
+			// node 3
+			Node &n3 = nodes[e.n3];
+			nfsx_cont = pcl.N3 * fsx_cont;
+			nfsy_cont = pcl.N3 * fsy_cont;
+			ndasx = nfsx_cont / n3.m_s;
+			ndasy = nfsy_cont / n3.m_s;
+			n3.ax_s += ndasx;
+			n3.ay_s += ndasy;
+			n3.vx_s += ndasx * dtime;
+			n3.vy_s += ndasy * dtime;
+			nffx_cont = pcl.N3 * ffx_cont;
+			nffy_cont = pcl.N3 * ffy_cont;
+			ndafx = nffx_cont / n3.m_f;
+			ndafy = nffy_cont / n3.m_f;
+			n3.ax_f += ndafx;
+			n3.ay_f += ndafy;
+			n3.vx_f += ndafx * dtime;
+			n3.vy_f += ndafy * dtime;
+		}
+	}
+
+	return 0;
+}
+
 int Model_T2D_CHM_s::init_bg_mesh(double hx, double hy)
 {
 	if (elem_num == 0)

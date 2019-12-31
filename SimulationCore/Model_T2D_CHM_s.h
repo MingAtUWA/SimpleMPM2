@@ -199,6 +199,10 @@ public:
 	double k;   // Permeability
 	double miu; // Dynamic viscosity
 	
+	// contact modulus
+	double Ks_cont;
+	double Kf_cont;
+
 public:
 	Model_T2D_CHM_s();
 	~Model_T2D_CHM_s();
@@ -374,8 +378,11 @@ protected:
 
 		return find_in_which_element(pcl) ? true : false;	
 	}
+	// velocity control
 	int apply_rigid_body_to_bg_mesh(double dtime);
-	
+	// force control (panelty function)
+	int apply_contact_force_to_bg_mesh(double dtime);
+
 public:
 	inline void init_rigid_circle(double _r, double _x, double _y, double max_pcl_size)
 	{
@@ -385,6 +392,7 @@ public:
 	{
 		rigid_circle.set_velocity(_vx, _vy, _w);
 	}
+	inline void set_contact_stiffness(double _Ks_cont, double _Kf_cont) noexcept { Ks_cont = _Ks_cont; Kf_cont = _Kf_cont; }
 	inline DispConRigidCircle &get_rigid_circle(void) noexcept { return rigid_circle; }
 
 	// =========================================================

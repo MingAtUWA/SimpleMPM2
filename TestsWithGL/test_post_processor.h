@@ -19,6 +19,7 @@ void test_color_animation_t2d_chm_s_t_bar(void);
 
 void test_animation_t2d_chm_s_t_bar_coarser(void);
 void test_color_animation_t2d_chm_s_t_bar_coarser(void);
+void test_color_animation_t2d_chm_s_t_bar_above_ground(void);
 
 void test_color_graph(void);
 

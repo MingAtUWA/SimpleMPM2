@@ -8,11 +8,11 @@
 #include "TriangleMeshToParticles.h"
 #include "Model_T2D_CHM_s.h"
 
-#include "Step_T2D_CHM_s.h"
+#include "Step_T2D_CHM_s_SE.h"
 
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
-#include "TimeHistoryOutput_T2D_CHM_s.h"
+#include "TimeHistoryOutput_T2D_CHM_s_SE.h"
 
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
@@ -135,13 +135,13 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	//pt_coord = 0.0f;
 	//pt_array.add(&pt_coord);
 
-	DisplayModel_T2D disp_model;
-	disp_model.init_win();
-	disp_model.init_model(model);
-	disp_model.init_rigid_circle(model.get_rigid_circle());
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
-	disp_model.display(-0.5, 20.5, -0.5, 20.5);
-	return;
+	//DisplayModel_T2D disp_model;
+	//disp_model.init_win();
+	//disp_model.init_model(model);
+	//disp_model.init_rigid_circle(model.get_rigid_circle());
+	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	//disp_model.display(-0.5, 20.5, -0.5, 20.5);
+	//return;
 
 	ResultFile_PlainBin res_file_pb;
 	res_file_pb.init("t2d_mpm_chm_t_bar_above_ground.bin");
@@ -156,15 +156,15 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s out1;
+	TimeHistoryOutput_T2D_CHM_s_SE out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s out2;
+	TimeHistoryOutput_T2D_CHM_s_SE out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
 
-	Step_T2D_CHM_s step;
+	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
 	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity

@@ -68,6 +68,7 @@ add_library(
     # 2D ME MPM
     Model_T2D_ME_s.h Model_T2D_ME_s.cpp
     Step_T2D_ME_s.h Step_T2D_ME_s.cpp
+    Step_T2D_ME_s_Geostatic.h Step_T2D_ME_s_Geostatic.cpp
     #ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
     #TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
     # 2D CHM MPM

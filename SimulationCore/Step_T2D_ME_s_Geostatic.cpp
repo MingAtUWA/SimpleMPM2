@@ -19,25 +19,39 @@ int Step_T2D_ME_s_Geostatic::init_calculation(void)
 		Particle &pcl = md.pcls[pcl_id];
 		pcl.pe = md.elems;
 		pcl.vol = pcl.m / pcl.density;
-		pcl.x_ori = pcl.x;
-		pcl.y_ori = pcl.y;
-		pcl.ux = 0.0;
-		pcl.uy = 0.0;
 	}
 
 	// convergence criteria
+	// unbalanced force
 	init_f_ub = 0.0;
 	init_f_ub_is_init = false;
 	f_ub_ratio = 1.0;
+	// kinematic energy
 	e_kin_max = 0.0;
 	e_kin_max_is_init = false;
 	e_kin_prev = 0.0;
 	e_kin_ratio = 1.0;
 
+	//out_file.open("ratio_res.txt", std::ios::out | std::ios::binary);
+
 	return 0;
 }
 
-int Step_T2D_ME_s_Geostatic::finalize_calculation(void) { return 0; }
+int Step_T2D_ME_s_Geostatic::finalize_calculation(void)
+{
+	Model_T2D_ME_s &md = *model;
+
+	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
+	{
+		Particle &pcl = md.pcls[pcl_id];
+		pcl.vx = 0.0;
+		pcl.vy = 0.0;
+	}
+
+	//out_file.close();
+
+	return 0;
+}
 
 namespace
 {
@@ -57,8 +71,6 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 		Node_mpm &n = md.nodes[n_id];
 		// material point
 		n.has_mp = false;
-		n.vol = 0.0;
-		n.de_vol = 0.0;
 		n.m = 0.0;
 		n.vx = 0.0;
 		n.vy = 0.0;
@@ -66,11 +78,6 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 		n.fy_ext = 0.0;
 		n.fx_int = 0.0;
 		n.fy_int = 0.0;
-		// rigid body
-		n.has_rb = false;
-		n.vx_rb = 0.0;
-		n.vy_rb = 0.0;
-		n.vol_rb = 0.0;
 	}
 
 	// init elements
@@ -93,10 +100,9 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 			pcl.pe = md.find_in_which_element(pcl);
 			if (!pcl.pe)
 				continue;
-			pcl.pe->add_pcl(pcl);
 
 			Element_mpm &e = *pcl.pe;
-			pcl.vol = pcl.m / pcl.density;
+			e.add_pcl(pcl);
 			e.vol += pcl.vol;
 			e.s11 += pcl.vol * pcl.s11;
 			e.s22 += pcl.vol * pcl.s22;
@@ -229,36 +235,19 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 			n3.fy_ext += pcl.N3 * tf.t;
 		}
 	}
-	// pore pressure force...
 
 	// update nodal acceleration of fluid pahse
-	double fx_ub, fy_ub;
-	double f_ub2 = 0.0;
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
 		Node_mpm &n = md.nodes[n_id];
-		if (n.has_mp) // or n.m_f != 0.0
+		if (n.has_mp)
 		{
 			// fx
-			fx_ub = n.fx_ext - n.fx_int;
-			n.ax = fx_ub / n.m;
+			n.ax = (n.fx_ext - n.fx_int) / n.m;
 			// fy
-			fy_ub = n.fy_ext - n.fy_int;
-			n.ay = fy_ub / n.m;
-
-			f_ub2 += fx_ub * fx_ub + fy_ub * fy_ub;
+			n.ay = (n.fy_ext - n.fy_int) / n.m;
 		}
 	}
-
-	// initial unbalanced force
-	if (!self.init_f_ub_is_init)
-	{
-		self.init_f_ub_is_init = true;
-		self.init_f_ub = f_ub2;
-	}
-
-	if (self.init_f_ub_is_init)
-		self.f_ub_ratio = f_ub2 / self.init_f_ub;
 
 	// apply acceleration bc
 	for (size_t a_id = 0; a_id < md.ax_num; ++a_id)
@@ -298,36 +287,77 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 		n.vy = md.vys[v_id].v;
 		n.ay = 0.0;
 	}
+
+	double f_ub = 0.0;
+	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	{
+		Node_mpm &n = md.nodes[n_id];
+		if (n.has_mp)
+			f_ub += n.m * n.m * (n.ax * n.ax + n.ay * n.ay);
+	}
+	// initial unbalanced force
+	if (!self.init_f_ub_is_init)
+	{
+		self.init_f_ub_is_init = true;
+		self.init_f_ub = f_ub;
+	}
+
+	if (self.init_f_ub_is_init)
+		self.f_ub_ratio = sqrt(f_ub / self.init_f_ub);
 	
 	// cal kinetic energy
 	double e_kin = 0.0;
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
 		Node_mpm &n = md.nodes[n_id];
-		e_kin += n.m * (n.vx * n.vx + n.vy * n.vy);
+		if (n.has_mp)
+			e_kin += n.m * (n.vx * n.vx + n.vy * n.vy);
 	}
 
+	// kinetic damping
 	if (e_kin < self.e_kin_prev)
 	{
-		// reset velocity
-		for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-		{
-			Node_mpm &n = md.nodes[n_id];
-			n.vx = 0.0;
-			n.vy = 0.0;
-		}
-
 		if (!self.e_kin_max_is_init)
 		{
-			self.e_kin_max = self.e_kin_prev;
 			self.e_kin_max_is_init = true;
+			self.e_kin_max = self.e_kin_prev;
 		}
+
+		// reset pcl velocity
+		for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+		{
+			Particle_mpm &pcl = md.pcls[p_id];
+			pcl.vx = 0.0;
+			pcl.vy = 0.0;
+		}
+		self.e_kin_prev = 0.0;
 	}
-	self.e_kin_prev = e_kin;
+	else
+	{
+		self.e_kin_prev = e_kin;
+	}
 
 	if (self.e_kin_max_is_init)
-		self.e_kin_ratio = e_kin / self.e_kin_max;
+		self.e_kin_ratio = sqrt(self.e_kin_prev / self.e_kin_max);
 
+	//// output to file
+	//if (self.substep_num % 100 == 1)
+	//{
+	//	const char *rcd_str = "%lf, %lf, %lf, %lf, %lf, %lf\n";
+	//	char rcd[100];
+	//	snprintf(rcd, sizeof(rcd) / sizeof(rcd[0]), rcd_str,
+	//		self.current_time, self.f_ub_ratio, self.e_kin_ratio, f_ub, e_kin,
+	//		md.pcls[20].s22);
+	//	self.out_file.write(rcd, strlen(rcd));
+	//}
+
+	if (e_kin < self.e_kin_prev)
+		if (self.e_kin_ratio < self.e_kin_ratio_bound &&
+			self.f_ub_ratio  < self.f_ub_ratio_bound)
+			return 2;
+		else
+			return 1;
+	
 	// update displacement increment of both phases
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
 	{
@@ -340,66 +370,13 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 	}
 
 	// map variables back to particles and update their variables
-	double de11, de22, de12, de_vol;
-	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
-	{
-		Element_mpm &e = md.elems[e_id];
-		if (e.pcls)
-		{
-			Node_mpm &n1 = md.nodes[e.n1];
-			Node_mpm &n2 = md.nodes[e.n2];
-			Node_mpm &n3 = md.nodes[e.n3];
-
-			// strain increment
-			de11 = n1.dux * e.dN1_dx + n2.dux * e.dN2_dx + n3.dux * e.dN3_dx;
-			de22 = n1.duy * e.dN1_dy + n2.duy * e.dN2_dy + n3.duy * e.dN3_dy;
-			de12 = (n1.dux * e.dN1_dy + n2.dux * e.dN2_dy + n3.dux * e.dN3_dy
-				  + n1.duy * e.dN1_dx + n2.duy * e.dN2_dx + n3.duy * e.dN3_dx) * 0.5;
-			de_vol = (de11 + de22) / 3.0;
-			e.dde11 = de11 - de_vol;
-			e.dde22 = de22 - de_vol;
-			e.de12 = de12;
-			e.de_vol = de_vol;
-		}
-	}
-
-	// strain enhancement
+	double de11, de22, de12, ds11, ds22, ds12;
 	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
 	{
 		Particle_mpm &pcl = md.pcls[pcl_id];
 		if (pcl.pe)
 		{
 			Element_mpm &e = *pcl.pe;
-			double vol_de_vol = pcl.vol * e.de_vol;
-			// node 1
-			Node_mpm &n1 = md.nodes[e.n1];
-			n1.vol += pcl.N1 * pcl.vol;
-			n1.de_vol += pcl.N1 * vol_de_vol;
-			// node 2
-			Node_mpm &n2 = md.nodes[e.n2];
-			n2.vol += pcl.N2 * pcl.vol;
-			n2.de_vol += pcl.N2 * vol_de_vol;
-			// node 3
-			Node_mpm &n3 = md.nodes[e.n3];
-			n3.vol += pcl.N3 * pcl.vol;
-			n3.de_vol += pcl.N3 * vol_de_vol;
-		}
-	}
-
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	{
-		Node_mpm &n = md.nodes[n_id];
-		if (n.has_mp)
-			n.de_vol /= n.vol;
-	}
-
-	double ds11, ds22, ds12;
-	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
-	{
-		Particle_mpm &pcl = md.pcls[pcl_id];
-		Element_mpm &e = *pcl.pe;
-		if (pcl.pe)
-		{
 			Node_mpm &n1 = md.nodes[e.n1];
 			Node_mpm &n2 = md.nodes[e.n2];
 			Node_mpm &n3 = md.nodes[e.n3];
@@ -408,26 +385,13 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 			pcl.vx += (n1.ax * pcl.N1 + n2.ax * pcl.N2 + n3.ax * pcl.N3) * self.dtime;
 			pcl.vy += (n1.ay * pcl.N1 + n2.ay * pcl.N2 + n3.ay * pcl.N3) * self.dtime;
 
-			// displacement
-			pcl.ux += n1.dux * pcl.N1 + n2.dux * pcl.N2 + n3.dux * pcl.N3;
-			pcl.uy += n1.duy * pcl.N1 + n2.duy * pcl.N2 + n3.duy * pcl.N3;
-
-			// update position
-			pcl.x = pcl.x_ori + pcl.ux;
-			pcl.y = pcl.y_ori + pcl.uy;
-
 			// strain
-			//de_vol = n1.de_vol * pcl.N1 + n2.de_vol * pcl.N2 + n3.de_vol * pcl.N3;
-			de_vol = (n1.de_vol + n2.de_vol + n3.de_vol) / 3.0;
-			de11 = e.dde11 + de_vol;
-			de22 = e.dde22 + de_vol;
-			de12 = e.de12;
-			pcl.e11 += de11;
-			pcl.e22 += de22;
-			pcl.e12 += de12;
+			de11 = n1.dux * e.dN1_dx + n2.dux * e.dN2_dx + n3.dux * e.dN3_dx;
+			de22 = n1.duy * e.dN1_dy + n2.duy * e.dN2_dy + n3.duy * e.dN3_dy;
+			de12 = (n1.dux * e.dN1_dy + n2.dux * e.dN2_dy + n3.dux * e.dN3_dy
+				  + n1.duy * e.dN1_dx + n2.duy * e.dN2_dx + n3.duy * e.dN3_dx) * 0.5;
 
 			// stress
-			// update stress
 			double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
 			ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
 			ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
@@ -435,9 +399,6 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 			pcl.s11 += ds11;
 			pcl.s22 += ds22;
 			pcl.s12 += ds12;
-
-			// density
-			pcl.density /= 1.0 + de_vol;
 		}
 	}
 	

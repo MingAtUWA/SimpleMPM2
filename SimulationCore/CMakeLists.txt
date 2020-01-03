@@ -80,9 +80,11 @@ add_library(
     DispConRigidCircle.h DispConRigidCircle.cpp
     # Strain enhancement
     Step_T2D_CHM_s_SE.h Step_T2D_CHM_s_SE.cpp
+    Step_T2D_CHM_s_SE_Geostatic.h Step_T2D_CHM_s_SE_Geostatic.cpp
     TimeHistoryOutput_T2D_CHM_s_SE.h TimeHistoryOutput_T2D_CHM_s_SE.cpp
     ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
+    TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

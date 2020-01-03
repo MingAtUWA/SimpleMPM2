@@ -1,36 +1,38 @@
-#ifndef __Step_T2D_ME_s_Geostatic_H__
-#define __Step_T2D_ME_s_Geostatic_H__
+#ifndef __Step_T2D_CHM_s_SE_Geostatic_H__
+#define __Step_T2D_CHM_s_SE_Geostatic_H__
+
+#include <fstream>
 
 #include "Step.h"
-#include "Model_T2D_ME_s.h"
+#include "Model_T2D_CHM_s.h"
 
-int solve_substep_T2D_ME_s_Geostatic(void *_self);
+int solve_substep_T2D_CHM_s_SE_Geostatic(void *_self);
 
 // for single object only
-class Step_T2D_ME_s_Geostatic : public Step
+class Step_T2D_CHM_s_SE_Geostatic : public Step
 {
 public:
-	typedef Model_T2D_ME_s::Particle Particle;
-	typedef Model_T2D_ME_s::Element Element;
-	typedef Model_T2D_ME_s::Node Node;
+	typedef Model_T2D_CHM_s::Particle Particle;
+	typedef Model_T2D_CHM_s::Element Element;
+	typedef Model_T2D_CHM_s::Node Node;
 
 protected:
 	int init_calculation(void) override;
-	friend int solve_substep_T2D_ME_s_Geostatic(void *_self);
+	friend int solve_substep_T2D_CHM_s_SE_Geostatic(void *_self);
 	int finalize_calculation(void) override;
 
 public:
-	Step_T2D_ME_s_Geostatic();
-	~Step_T2D_ME_s_Geostatic();
+	Step_T2D_CHM_s_SE_Geostatic();
+	~Step_T2D_CHM_s_SE_Geostatic();
 
-	inline void set_model(Model_T2D_ME_s &md)
+	inline void set_model(Model_T2D_CHM_s &md)
 	{
 		Step::set_model(md);
 		model = &md;
 	}
 
 	// Restart from previous step
-	inline void set_prev_step(Step_T2D_ME_s_Geostatic &prev_step)
+	inline void set_prev_step(Step_T2D_CHM_s_SE_Geostatic &prev_step)
 	{
 		Step::set_prev_step(prev_step);
 		model = prev_step.model;
@@ -47,14 +49,8 @@ public:
 		dtime = max_dt;
 	}
 
-	inline void set_ratio_bound(double _f_ub_rb, double _e_k_rb) noexcept
-	{
-		f_ub_ratio_bound = _f_ub_rb;
-		e_kin_ratio_bound = _e_k_rb;
-	}
-
 protected:
-	Model_T2D_ME_s *model;
+	Model_T2D_CHM_s *model;
 	double min_dt, max_dt;
 
 	// convergence criteria
@@ -72,8 +68,8 @@ protected:
 	double e_kin_ratio_bound;
 
 	// for debugging
-//public:
-//	std::fstream out_file;
+public:
+	std::fstream out_file;
 };
 
 #endif

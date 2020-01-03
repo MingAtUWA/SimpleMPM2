@@ -68,8 +68,13 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_me_s_t_bar_above_ground();
 	//test_color_animation_t2d_me_s_t_bar_above_ground();
 
-	test_t2d_mpm_chm_s_t_bar_above_ground();
-	test_color_animation_t2d_chm_s_t_bar_above_ground();
+	//test_t2d_mpm_chm_s_t_bar_above_ground();
+	//test_color_animation_t2d_chm_s_t_bar_above_ground();
+
+	//test_t2d_mpm_me_s_geostatic();
+	
+	//test_t2d_mpm_chm_s_geostatic();
+	test_color_animation_t2d_mpm_chm_s_geostatic();
 
 	// trianglur mesh mpm chm
 	//test_t2d_mpm_square();

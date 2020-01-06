@@ -132,6 +132,7 @@ public:
 	inline void set_even_div_num(size_t num) noexcept { evenly_div_num = num; }
 
 public:
+	void clear_points_in_rect(double xl, double xu, double yl, double yu);
 	void replace_with_grid_points(double xl, double xu, double yl, double yu, double pcl_w, double pcl_h);
 };
 

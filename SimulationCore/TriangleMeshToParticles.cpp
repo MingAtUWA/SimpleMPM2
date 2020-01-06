@@ -211,6 +211,18 @@ void TriangleMeshToParticles::generate_pcls(double max_pcl_area)
 	}
 }
 
+void TriangleMeshToParticles::clear_points_in_rect(
+	double xl, double xu, double yl, double yu)
+{
+	for (Particle *ppcl = first(); not_end_yet(ppcl); ppcl = next(ppcl))
+	{
+		Particle &pcl = *ppcl;
+		if (pcl.x >= xl && pcl.x <= xu &&
+			pcl.y >= yl && pcl.y <= yu)
+			del_pcl(pcl);
+	}
+}
+
 void TriangleMeshToParticles::replace_with_grid_points(
 	double xl, double xu, double yl, double yu, double pcl_w, double pcl_h)
 {

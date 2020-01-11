@@ -62,11 +62,11 @@ void test_t2d_mpm_chm_s_t_bar_real(void)
 			  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_even_div_num(2);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
+	//mh_2_pcl.set_even_div_num(2);
+	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
 	mh_2_pcl.generate_pcls();
 	mh_2_pcl.clear_points_in_rect(-3.0, 3.0, 0.0, 0.3);
-	mh_2_pcl.replace_with_grid_points(-1.5, 1.5, -1.5, 0.0, 0.02, 0.02);
+	mh_2_pcl.replace_with_grid_points(-2.0, 2.0, -2.0, 0.0, 0.02, 0.02);
 	std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
 
 	Model_T2D_CHM_s model;
@@ -158,13 +158,14 @@ void test_t2d_mpm_chm_s_t_bar_real(void)
 	//pt_coord = 0.0f;
 	//pt_array.add(&pt_coord);
 
-	DisplayModel_T2D disp_model;
-	disp_model.init_win();
-	disp_model.init_model(model);
-	disp_model.init_rigid_circle(model.get_rigid_circle());
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
-	disp_model.display(-3.2, 3.2, -3.7, 0.5);
-	return;
+	//DisplayModel_T2D disp_model;
+	//disp_model.init_win();
+	//disp_model.init_model(model);
+	//disp_model.init_rigid_circle(model.get_rigid_circle());
+	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	//disp_model.display(-3.2, 3.2, -3.7, 0.5);
+	////disp_model.display(-1.2, 1.2, -1.2, 0.2);
+	//return;
 
 	ResultFile_PlainBin res_file_pb;
 	res_file_pb.init("t2d_mpm_chm_t_bar_real.bin");

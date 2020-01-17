@@ -122,6 +122,7 @@ public: // Node, Element and Particle data structures
 		double s11, s22, s12;
 		// pore pressure
 		double p;
+		double p_vis; // bulk viscosity component
 
 		// calculation variables
 		double x_ori, y_ori;
@@ -152,7 +153,7 @@ public: // Node, Element and Particle data structures
 		double dN3_dx, dN3_dy;
 		
 		// calculation variables
-		double vol, n, s11, s22, s12, p;
+		double vol, n, s11, s22, s12, p, p_stat;
 		
 		// particles list
 		Particle *pcls;

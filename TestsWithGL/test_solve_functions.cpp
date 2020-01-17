@@ -3,8 +3,11 @@
 #include "Step.h"
 #include "ModelDataOutput.h"
 #include "TimeHistoryOutput.h"
+#include "TimeHistoryOutput_ConsoleProgressBar.h"
 
 #include "test_sim_core.h"
+
+#include <Windows.h>
 
 int solve_substep_test(void *_self);
 class Step_test : public Step
@@ -16,9 +19,11 @@ public:
 int solve_substep_test(void *_self)
 {
 	Step_test &self = *reinterpret_cast<Step_test *>(_self);
-	std::cout << "Substep " << self.substep_num
-			  << " time: " << self.current_time
-			  << " dt: " << self.dtime << "\n"; return 0;
+	//std::cout << "Substep " << self.substep_num
+	//		  << " time: " << self.current_time
+	//		  << " dt: " << self.dtime << "\n";
+	Sleep(500);
+	return 0;
 }
 
 int model_data_output_func_test(ModelDataOutput &_self);
@@ -71,16 +76,21 @@ void test_solve_functions(void)
 
 	TimeHistoryOutput_test th2;
 	th2.set_interval_num(2);
+	
+	TimeHistoryOutput_ConsoleProgressBar cpb;
 
 	Step_test step;
 	step.set_time(1.0);
 	step.set_dtime(0.1);
-	step.use_solve_th_and_md();
+	//step.use_solve_th_and_md();
+	//step.use_solve_th_only();
 
-	step.add_time_history(th1);
-	step.add_time_history(th2);
+	//step.add_time_history(th1);
+	//step.add_time_history(th2);
 	//step.add_model_data(md1);
 	//step.add_model_data(md2);
+	
+	step.add_time_history(cpb);
 
 	step.solve();
 

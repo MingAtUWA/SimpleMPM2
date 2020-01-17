@@ -88,6 +88,7 @@ add_library(
     )
 
 add_subdirectory(TriangleMeshRigidBody/)
+add_subdirectory(MaterialModel/)
 
 target_include_directories(
     SimulationCore

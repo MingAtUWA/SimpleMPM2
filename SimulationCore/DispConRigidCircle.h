@@ -70,7 +70,7 @@ protected:
 	{
 		rfx += fx;
 		rfy += fy;
-		rm += (x - cen_x) * fy + (y - cen_y) * fx;
+		rm += (x - cen_x) * fy - (y - cen_y) * fx;
 	}
 
 public: // rigid body state

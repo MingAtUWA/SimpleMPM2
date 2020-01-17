@@ -279,7 +279,7 @@ int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(double dtime)
 			ffy_cont = ff_cont * norm_y;
 			// reaction force by the rigid object
 			rigid_circle.add_reaction_force(pcl.x, pcl.y,
-				fsx_cont + ffx_cont, fsy_cont + ffy_cont);
+				-(fsx_cont + ffx_cont), -(fsy_cont + ffy_cont));
 			// adjust velocity at nodes
 			Element &e = *pcl.pe;
 			// node 1

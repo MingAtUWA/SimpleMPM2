@@ -64,7 +64,7 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_me_s_t_bar_coarser();
 	//test_color_animation_t2d_me_s_t_bar_coarser();
 
-	// t bar penetrate from above ground
+	// t-bar penetrate from above ground
 	//test_t2d_mpm_me_s_t_bar_above_ground();
 	//test_color_animation_t2d_me_s_t_bar_above_ground();
 
@@ -79,9 +79,13 @@ int main(int argc, void **argv)
 
 	// trianglur mesh mpm chm
 	//test_t2d_mpm_square();
-	//test_t2d_mpm_chm_s_1d_consolidation();
+	test_t2d_mpm_chm_s_1d_consolidation();
 	//test_animation_t2d_chm_s_1d_consolidation();
-	//test_color_animation_t2d_chm_s_1d_consolidation();
+	test_color_animation_t2d_chm_s_1d_consolidation();
+
+	// 1d consolidation wave propagation
+	//test_t2d_mpm_chm_s_1d_wave();
+	//test_color_animation_t2d_chm_s_1d_wave();
 
 	//test_t2d_mpm_chm_s_t_bar();
 	//test_animation_t2d_chm_s_t_bar();
@@ -95,8 +99,8 @@ int main(int argc, void **argv)
 	//test_color_graph();
 
 	// a realistic case of t-bar penetration
-	test_t2d_mpm_chm_s_t_bar_real();
-	test_color_animation_t2d_chm_s_t_bar_real();
+	//test_t2d_mpm_chm_s_t_bar_real();
+	//test_color_animation_t2d_chm_s_t_bar_real();
 
 	//system("pause");
 	return 0;

@@ -53,4 +53,6 @@ void test_t2d_mpm_chm_s_t_bar_real(void);
 void test_t2d_mpm_me_s_geostatic(void);
 void test_t2d_mpm_chm_s_geostatic(void);
 
+void test_t2d_mpm_chm_s_1d_wave(void);
+
 #endif

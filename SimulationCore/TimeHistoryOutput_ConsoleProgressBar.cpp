@@ -12,10 +12,7 @@
 TimeHistoryOutput_ConsoleProgressBar::TimeHistoryOutput_ConsoleProgressBar() :
 	TimeHistoryOutput("ConsoleProgressBar", &time_history_output_func_console_progress_bar),
 	width (DEFAULT_WIDTH), width_div_100(DEFAULT_WINDTH_DIV_100),
-	prev_pos(0), cur_pos(0)
-{
-	interval_num = 100;
-}
+	prev_pos(0), cur_pos(0) { interval_num = 100; }
 
 TimeHistoryOutput_ConsoleProgressBar::~TimeHistoryOutput_ConsoleProgressBar() {}
 
@@ -25,21 +22,35 @@ TimeHistoryOutput_ConsoleProgressBar::~TimeHistoryOutput_ConsoleProgressBar() {}
 					"##################################################"
 void TimeHistoryOutput_ConsoleProgressBar::print_progress(void)
 {
-	cur_pos = (size_t)(100.0 * (step->get_current_time() + step->get_dtime())/ step->get_step_time());
+	cur_pos = (size_t)(100.0 * (step->get_current_time() + step->get_dtime() * 0.001)/ step->get_step_time());
 	cur_pos = cur_pos > 100 ? 100 : cur_pos;
 	if (cur_pos == prev_pos) return;
 	prev_pos = cur_pos;
 	int lpad = (int)(cur_pos * width_div_100);
 	int rpad = width - lpad;
-	printf("\r%3zd%% [%.*s%*s]", cur_pos, lpad, PADDING_STR, rpad, "");
+	if (cur_pos)
+	{
+		std::chrono::system_clock::time_point cur_time = std::chrono::system_clock::now();
+		std::chrono::milliseconds elapsed_time
+			= std::chrono::duration_cast<std::chrono::milliseconds>(cur_time - start_time);
+		size_t remaining_time = elapsed_time.count() * (100 - cur_pos) / cur_pos;
+		size_t hr = remaining_time / 3600000;
+		remaining_time -= 3600000 * hr;
+		size_t min = remaining_time / 60000;
+		remaining_time -= 60000 * min;
+		double sec = double(remaining_time) / 1000.0;
+		printf("\r%3zd%% [%.*s%*s] %zuh %zum %.2lfs left...  ", cur_pos, lpad, PADDING_STR, rpad, "", hr, min, sec);
+	}
+	else
+		printf("\r%3zd%% [%.*s%*s] estimating time...", cur_pos, lpad, PADDING_STR, rpad, "");
 	fflush(stdout);
 }
 
 int TimeHistoryOutput_ConsoleProgressBar::init_per_step(void)
 {
 	prev_pos = 101; // in order to print 0%
-	print_progress();
 	start_time = std::chrono::system_clock::now();
+	print_progress();
 	return 0;
 }
 

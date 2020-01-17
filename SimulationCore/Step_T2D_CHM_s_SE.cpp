@@ -26,6 +26,7 @@ int Step_T2D_CHM_s_SE::init_calculation(void)
 		pcl.uy_s = 0.0;
 		pcl.ux_f = 0.0;
 		pcl.uy_f = 0.0;
+		pcl.p_vis = 0.0;
 
 		//// init APIC
 		//pcl.Cs[0][0] = 0.0;
@@ -101,6 +102,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 		e.s22 = 0.0;
 		e.s12 = 0.0;
 		e.p = 0.0;
+		e.p_stat = 0.0;
 		e.pcls = nullptr;
 	}
 
@@ -127,7 +129,8 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			e.s11 += pcl.vol * pcl.s11;
 			e.s22 += pcl.vol * pcl.s22;
 			e.s12 += pcl.vol * pcl.s12;
-			e.p += pcl.vol * pcl.p;
+			e.p += pcl.vol * (pcl.p + pcl.p_vis);
+			e.p_stat += pcl.vol * pcl.p;
 
 			//double x_diff, y_diff;
 			// node 1
@@ -201,42 +204,41 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 		}
 	}
 
-	// update nodal momentum
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	{
-		Node_mpm &n = md.nodes[n_id];
-		if (n.has_mp)
-		{
-			n.vx_s /= n.m_s;
-			n.vy_s /= n.m_s;
-			n.vx_f /= n.m_f;
-			n.vy_f /= n.m_f;
-		}
-	}
+	//// update nodal momentum
+	//for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	//{
+	//	Node_mpm &n = md.nodes[n_id];
+	//	if (n.has_mp)
+	//	{
+	//		n.vx_s /= n.m_s;
+	//		n.vy_s /= n.m_s;
+	//		n.vx_f /= n.m_f;
+	//		n.vy_f /= n.m_f;
+	//	}
+	//}
 
-	// apply velocity bc
-	for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
-	{
-		Node_mpm &n = md.nodes[md.vsxs[v_id].node_id];
-		n.vx_s = md.vsxs[v_id].v;
-	}
-	for (size_t v_id = 0; v_id < md.vsy_num; ++v_id)
-	{
-		Node_mpm &n = md.nodes[md.vsys[v_id].node_id];
-		n.vy_s = md.vsys[v_id].v;
-	}
-	for (size_t v_id = 0; v_id < md.vfx_num; ++v_id)
-	{
-		Node_mpm &n = md.nodes[md.vfxs[v_id].node_id];
-		n.vx_f = md.vfxs[v_id].v;
-	}
-	for (size_t v_id = 0; v_id < md.vfy_num; ++v_id)
-	{
-		Node_mpm &n = md.nodes[md.vfys[v_id].node_id];
-		n.vy_f = md.vfys[v_id].v;
-	}
+	//// apply velocity bc
+	//for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
+	//{
+	//	Node_mpm &n = md.nodes[md.vsxs[v_id].node_id];
+	//	n.vx_s = md.vsxs[v_id].v;
+	//}
+	//for (size_t v_id = 0; v_id < md.vsy_num; ++v_id)
+	//{
+	//	Node_mpm &n = md.nodes[md.vsys[v_id].node_id];
+	//	n.vy_s = md.vsys[v_id].v;
+	//}
+	//for (size_t v_id = 0; v_id < md.vfx_num; ++v_id)
+	//{
+	//	Node_mpm &n = md.nodes[md.vfxs[v_id].node_id];
+	//	n.vx_f = md.vfxs[v_id].v;
+	//}
+	//for (size_t v_id = 0; v_id < md.vfy_num; ++v_id)
+	//{
+	//	Node_mpm &n = md.nodes[md.vfys[v_id].node_id];
+	//	n.vy_f = md.vfys[v_id].v;
+	//}
 
-	double de_vol_f_rate;
 	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
 	{
 		Element_mpm &e = md.elems[e_id];
@@ -247,22 +249,14 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			e.s22 /= e.vol;
 			e.s12 /= e.vol;
 			e.p /= e.vol;
+			e.p_stat /= e.vol;
 			if (e.vol > e.area)
 				e.vol = e.area;
 
 			Node_mpm &n1 = md.nodes[e.n1];
 			Node_mpm &n2 = md.nodes[e.n2];
 			Node_mpm &n3 = md.nodes[e.n3];
-
-			//// volume strain rate
-			//de_vol_f_rate = -(1.0 - e.n) / e.n *
-			//				 (n1.vx_s * e.dN1_dx + n2.vx_s * e.dN2_dx + n3.vx_s * e.dN3_dx
-			//				+ n1.vy_s * e.dN1_dy + n2.vy_s * e.dN2_dy + n3.vy_s * e.dN3_dy)
-			//				-(n1.vx_f * e.dN1_dx + n2.vx_f * e.dN2_dx + n3.vx_f * e.dN3_dx
-			//				+ n1.vy_f * e.dN1_dy + n2.vy_f * e.dN2_dy + n3.vy_f * e.dN3_dy);
-			//// add bulk viscosity
-			//e.p -= self.bv_ratio * de_vol_f_rate;
-			
+						
 			// node 1
 			n1.fx_int_s += (e.dN1_dx * (e.s11 - (1.0 - e.n) * e.p) + e.dN1_dy * e.s12) * e.vol;
 			n1.fy_int_s += (e.dN1_dx * e.s12 + e.dN1_dy * (e.s22 - (1.0 - e.n) * e.p)) * e.vol;
@@ -445,6 +439,10 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 		Node_mpm &n = md.nodes[n_id];
 		if (n.has_mp)
 		{
+			n.vx_s /= n.m_s;
+			n.vy_s /= n.m_s;
+			n.vx_f /= n.m_f;
+			n.vy_f /= n.m_f;
 			n.vx_s += n.ax_s * self.dtime;
 			n.vy_s += n.ay_s * self.dtime;
 			n.vx_f += n.ax_f * self.dtime;
@@ -454,8 +452,8 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 
 	// contact detection and velocity modification
 	if (md.get_rigid_circle().is_init())
-		//md.apply_rigid_body_to_bg_mesh(self.dtime);
 		md.apply_contact_force_to_bg_mesh(self.dtime);
+		//md.apply_rigid_body_to_bg_mesh(self.dtime);
 
 	// apply velocity bc
 	for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
@@ -574,7 +572,8 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			//e.de_vol_s = (n1.de_vol_s + n2.de_vol_s + n3.de_vol_s) / 3.0;
 			// fluid volumetric strain
 			e.de_vol_f = (n1.de_vol_f + n2.de_vol_f + n3.de_vol_f) / 3.0;
-			e.p += md.Kf * e.de_vol_f;
+			//e.p += md.Kf * e.de_vol_f;
+			e.p_stat += md.Kf * e.de_vol_f;
 		}
 	}
 
@@ -666,7 +665,8 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			// pore pressure
 			//de_vol_f = n1.de_vol_f * pcl.N1 + n2.de_vol_f * pcl.N2 + n3.de_vol_f * pcl.N3;
 			//pcl.p += md.Kf * de_vol_f;
-			pcl.p = e.p;
+			pcl.p = e.p_stat;
+			pcl.p_vis = -self.bv_ratio * e.de_vol_f / self.dtime;
 			// fluid density
 			pcl.density_f /= 1.0 - e.de_vol_f;
 			//pcl.density_f /= 1.0 - de_vol_f;

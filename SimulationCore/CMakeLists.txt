@@ -88,12 +88,12 @@ add_library(
     )
 
 add_subdirectory(TriangleMeshRigidBody/)
-add_subdirectory(MaterialModel/)
 
 target_include_directories(
     SimulationCore
     PRIVATE
         ${SIMULATIONCORE_INCLUDE_DIR}
+        ${CONSTITUTIVEMODEL_INCLUDE_DIR}
         ${UTILITIES_INCLUDE_DIR}
         ${EIGEN_INCLUDE_DIR}
         ${OPENGL_INCLUDE_DIR}

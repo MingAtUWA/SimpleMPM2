@@ -4,7 +4,9 @@
 
 GA_T2D_CHM_s_color::GA_T2D_CHM_s_color(GLsizei win_w, GLsizei win_h) :
 	GenerateAnimation(win_w, win_h),
-	rc_x_data(nullptr), mp_x_data(nullptr) {}
+	rc_x_data(nullptr), mp_x_data(nullptr),
+	cbar_pt_data(nullptr), cbar_id_data(nullptr), cbar_is_init(false) {}
+
 GA_T2D_CHM_s_color::~GA_T2D_CHM_s_color()
 {
 	if (rc_x_data)
@@ -16,6 +18,16 @@ GA_T2D_CHM_s_color::~GA_T2D_CHM_s_color()
 	{
 		delete[] mp_x_data;
 		mp_x_data = nullptr;
+	}
+	if (cbar_pt_data)
+	{
+		delete[] cbar_pt_data;
+		cbar_pt_data = nullptr;
+	}
+	if (cbar_id_data)
+	{
+		delete[] cbar_id_data;
+		cbar_id_data = nullptr;
 	}
 }
 
@@ -154,12 +166,95 @@ int GA_T2D_CHM_s_color::init(const char *res_file_name)
 		}
 	}
 
+	// color bar
+	if (cbar_is_init)
+	{
+		cbar_data.init_array_buffer(cbar_pt_data, color_num * 24);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (GLvoid *)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (GLvoid *)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+		cbar_data.init_elem_array_buffer(cbar_id_data, color_num * 6);
+		//for (size_t i = 0; i < color_num * 4; i++)
+		//{
+		//	std::cout << cbar_pt_data[6 * i + 0] << " "
+		//		<< cbar_pt_data[6 * i + 1] << " "
+		//		<< cbar_pt_data[6 * i + 2] << " "
+		//		<< cbar_pt_data[6 * i + 3] << " "
+		//		<< cbar_pt_data[6 * i + 4] << " "
+		//		<< cbar_pt_data[6 * i + 5] << "\n";
+		//}
+		//for (size_t i = 0; i < color_num * 2; i++)
+		//{
+		//	std::cout << cbar_id_data[3 * i + 0] << " "
+		//			  << cbar_id_data[3 * i + 1] << " "
+		//			  << cbar_id_data[3 * i + 2] << "\n";
+		//}
+		delete[] cbar_pt_data;
+		cbar_pt_data = nullptr;
+		delete[] cbar_id_data;
+		cbar_id_data = nullptr;
+	}
+
 	return 0;
+}
+
+int GA_T2D_CHM_s_color::init_color_graph(
+	double bar_xpos, double bar_ypos, double bar_wid, double bar_len,
+	double lower, double upper, ColorGraph::Colori *colors, size_t num,
+	bool apply_out_of_bound_color)
+{
+	int res = color_graph.init(lower, upper, colors, num, apply_out_of_bound_color);
+	
+	color_num = num;
+
+	GLfloat y_inv = bar_len / GLfloat(num);
+	cbar_pt_data = new GLfloat[num * 24];
+	cbar_id_data = new GLuint[num * 6];
+	for (size_t i = 0; i < num; ++i)
+	{
+		ColorGraph::Colori &co = colors[i];
+		cbar_pt_data[24 * i + 0] = bar_xpos;
+		cbar_pt_data[24 * i + 1] = bar_ypos + GLfloat(i) * y_inv;
+		cbar_pt_data[24 * i + 2] = 0.0f;
+		cbar_pt_data[24 * i + 3] = co.r / 255.0;
+		cbar_pt_data[24 * i + 4] = co.g / 255.0;
+		cbar_pt_data[24 * i + 5] = co.b / 255.0;
+		cbar_pt_data[24 * i + 6] = bar_xpos + bar_wid;
+		cbar_pt_data[24 * i + 7] = bar_ypos + GLfloat(i) * y_inv;
+		cbar_pt_data[24 * i + 8] = 0.0f;
+		cbar_pt_data[24 * i + 9] = co.r / 255.0;
+		cbar_pt_data[24 * i + 10] = co.g / 255.0;
+		cbar_pt_data[24 * i + 11] = co.b / 255.0;
+		cbar_pt_data[24 * i + 12] = bar_xpos + bar_wid;
+		cbar_pt_data[24 * i + 13] = bar_ypos + GLfloat(i+1) * y_inv;
+		cbar_pt_data[24 * i + 14] = 0.0f;
+		cbar_pt_data[24 * i + 15] = co.r / 255.0;
+		cbar_pt_data[24 * i + 16] = co.g / 255.0;
+		cbar_pt_data[24 * i + 17] = co.b / 255.0;
+		cbar_pt_data[24 * i + 18] = bar_xpos;
+		cbar_pt_data[24 * i + 19] = bar_ypos + GLfloat(i+1) * y_inv;
+		cbar_pt_data[24 * i + 20] = 0.0f;
+		cbar_pt_data[24 * i + 21] = co.r / 255.0;
+		cbar_pt_data[24 * i + 22] = co.g / 255.0;
+		cbar_pt_data[24 * i + 23] = co.b / 255.0;
+		cbar_id_data[6 * i + 0] = 4 * i;
+		cbar_id_data[6 * i + 1] = 4 * i + 1;
+		cbar_id_data[6 * i + 2] = 4 * i + 2;
+		cbar_id_data[6 * i + 3] = 4 * i;
+		cbar_id_data[6 * i + 4] = 4 * i + 2;
+		cbar_id_data[6 * i + 5] = 4 * i + 3;
+	}
+
+	cbar_is_init = true;
+
+	return res;
 }
 
 int GA_T2D_CHM_s_color::render_frame(double xl, double xu, double yl, double yu)
 {
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // white
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// set display scope
@@ -168,15 +263,16 @@ int GA_T2D_CHM_s_color::render_frame(double xl, double xu, double yl, double yu)
 	shader.set_uniform_matrix4f(proj_mat_id, glm::value_ptr(proj_mat));
 	shader_color.use();
 	shader_color.set_uniform_matrix4f(c_proj_mat_id, glm::value_ptr(proj_mat));
-
+	
 	// draw bg grid
 	// model/view matrix
 	shader.use();
 	glm::mat4 identity_mat = glm::mat4(1.0f);
 	shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(identity_mat));
 	// color
-	glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-	shader.set_uniform_vec4f(color_id, glm::value_ptr(white));
+	//glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+	glm::vec4 grey(0.3f, 0.3f, 0.3f, 1.0f);
+	shader.set_uniform_vec4f(color_id, glm::value_ptr(grey));
 	// draw
 	bg_grid_data.use();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -248,6 +344,22 @@ int GA_T2D_CHM_s_color::render_frame(double xl, double xu, double yl, double yu)
 	//glLineWidth(2.0f);
 	//glDrawElements(GL_LINES, pcls_mem.get_bl_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
 	//mp_data.clear_add_buffer(pb_ibo);
+
+	// color bar
+	if (cbar_is_init)
+	{
+		// adjust viewport
+		glViewport(0, 0, win_width, win_height);
+		// mvp mat
+		glm::mat4 win_proj_mat = glm::ortho(0.0f, GLfloat(win_width), 0.0f, GLfloat(win_height));
+		shader_color.set_uniform_matrix4f(c_proj_mat_id, glm::value_ptr(win_proj_mat));
+		// draw particles
+		cbar_data.use();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawElements(GL_TRIANGLES, color_num * 6, GL_UNSIGNED_INT, (GLvoid *)0);
+		// recover viewport
+		glViewport(md_vp_x, md_vp_y, md_vp_width, md_vp_height);
+	}
 
 	return 0;
 }

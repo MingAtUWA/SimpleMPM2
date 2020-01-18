@@ -341,7 +341,8 @@ void test_color_animation_t2d_chm_s_1d_consolidation(void)
 		{ 255, 0,   0 }
 	};
 	GA_T2D_CHM_s_color gen;
-	gen.init_color_graph(0.0, 1.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
+	gen.init_color_graph(500.0, 60.0, 40.0, 480.0,
+			0.0, 1.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
 	gen.generate(5.0, -padding_width, soil_width + padding_width,
 				 -padding_height, soil_height + padding_height,
 				 "t2d_mpm_1d_consolidation.bin", "t2d_mpm_1d_consolidation.gif");

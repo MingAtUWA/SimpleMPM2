@@ -93,6 +93,9 @@ public: // animation generation
 	GLsizei win_width, win_height;
 	// viewport
 	double vp_hw_ratio, vp_wh_ratio;
+	// viewport parameters for model
+	GLint md_vp_x, md_vp_y;
+	GLsizei md_vp_width, md_vp_height;
 
 public:
 	GenerateAnimation(GLsizei win_w = 600, GLsizei win_h = 600);

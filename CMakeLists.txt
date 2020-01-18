@@ -42,11 +42,18 @@ set(SIMULATIONCORE_INCLUDE_DIR
     ${CMAKE_SOURCE_DIR}/SimulationCore/TriangleMeshRigidBody/
     )
 
+# ConstitutiveModel header
+set(CONSTITUTIVEMODEL_INCLUDE_DIR
+    ${CMAKE_SOURCE_DIR}/ConstitutiveModel/
+    )
+
 # Subprojects
 # Utilities
 add_subdirectory(Utilities/)
 # SimulationCore
 add_subdirectory(SimulationCore/)
+# ConstitutiveModel
+add_subdirectory(ConstitutiveModel/)
 # PostProcessor
 add_subdirectory(PostProcessor/)
 # TestWithGL (using OpenGL)

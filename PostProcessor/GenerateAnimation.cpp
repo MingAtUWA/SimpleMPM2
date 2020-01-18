@@ -42,6 +42,10 @@ static void resize_window(GLFWwindow *window, GLsizei width, GLsizei height)
 		vp_width = width;
 		padding = (height - vp_height) / 2;
 		glViewport(0, padding, vp_width, vp_height);
+		cur_gen.md_vp_x = 0;
+		cur_gen.md_vp_y = padding;
+		cur_gen.md_vp_width = vp_width;
+		cur_gen.md_vp_height = vp_height;
 	}
 	else
 	{
@@ -49,6 +53,10 @@ static void resize_window(GLFWwindow *window, GLsizei width, GLsizei height)
 		vp_width = height * cur_gen.vp_wh_ratio;
 		padding = (width - vp_width) / 2;
 		glViewport(padding, 0, vp_width, vp_height);
+		cur_gen.md_vp_x = padding;
+		cur_gen.md_vp_y = 0;
+		cur_gen.md_vp_width = vp_width;
+		cur_gen.md_vp_height = vp_height;
 	}
 }
 

@@ -3,6 +3,7 @@
 #include "GA_S2D_CHM_s.h"
 
 GA_S2D_CHM_s::GA_S2D_CHM_s() : mp_x_data(nullptr) {}
+
 GA_S2D_CHM_s::~GA_S2D_CHM_s()
 {
 	if (mp_x_data)

@@ -27,12 +27,14 @@ target_include_directories(
     PostProcessor PRIVATE
     ${UTILITIES_INCLUDE_DIR}
     ${SIMULATIONCORE_INCLUDE_DIR}
+    ${CONSTITUTIVEMODEL_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     )
 
 target_link_libraries(
     PostProcessor PRIVATE
     Utilities
+    ConstitutiveModel
     )
 
 if (MSVC)

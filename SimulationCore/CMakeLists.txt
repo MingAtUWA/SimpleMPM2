@@ -100,9 +100,9 @@ target_include_directories(
     )
 
 target_link_libraries(
-    SimulationCore
-    PRIVATE
-        Utilities
+    SimulationCore PRIVATE
+    Utilities
+    ConstitutiveModel
     )
 
 if (MSVC)

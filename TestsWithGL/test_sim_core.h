@@ -55,4 +55,7 @@ void test_t2d_mpm_chm_s_geostatic(void);
 
 void test_t2d_mpm_chm_s_1d_wave(void);
 
+// Modified cam clay
+void test_ModifiedCamClay(void);
+
 #endif

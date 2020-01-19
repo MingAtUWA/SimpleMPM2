@@ -57,12 +57,15 @@ add_executable(
     # Geostatic
     test_t2d_mpm_me_s_geostatic.cpp
     test_t2d_mpm_chm_s_geostatic.cpp
+    # Modified Cam Clay
+    test_ModifiedCamClay.cpp
     )
 
 target_include_directories(
     TestsWithGL
     PRIVATE
     ${SIMULATIONCORE_INCLUDE_DIR}
+    ${CONSTITUTIVEMODEL_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/PostProcessor
     ${UTILITIES_INCLUDE_DIR}
     ${EIGEN_INCLUDE_DIR}
@@ -71,12 +74,12 @@ target_include_directories(
 
 link_directories(${GLFW_LIBRARIES_DIR})
 target_link_libraries(
-    TestsWithGL
-    PRIVATE
-        SimulationCore
-        PostProcessor
-        Utilities
-        ${GLFW_LIBRARIES}
+    TestsWithGL PRIVATE
+    SimulationCore
+    ConstitutiveModel
+    PostProcessor
+    Utilities
+    ${GLFW_LIBRARIES}
     )
 
 if (WIN32)

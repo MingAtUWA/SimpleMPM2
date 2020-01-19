@@ -7,18 +7,15 @@
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
 #include "Model_T2D_ME_s.h"
-
 #include "Step_T2D_ME_s.h"
-
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_ME_s.h"
-
 #include "TimeHistoryOutput_T2D_ME_s.h"
-
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
-#include "test_post_processor.h"
+#include "LinearElasticity.h"
 
+#include "test_post_processor.h"
 #include "GA_T2D_ME_s_color.h"
 
 namespace
@@ -92,28 +89,22 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
 	mh_2_pcl.generate_pcls();
 	//mh_2_pcl.replace_with_grid_points(0.0, 0.2, 0.0, 1.0, 0.02, 0.02);
-	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
+	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";	
 
 	Model_T2D_ME_s model;
 	model.init_mesh(tri_mesh);
 	tri_mesh.clear();
-	//double area = 0.0;
-	//for (size_t i = 0; i < model.elem_num; i++)
-	//{
-	//	Model_T2D_ME_s::Element &e = model.elems[i];
-	//	area += e.area_2;
-	//}
-	//std::cout << area << "\n";
 	model.init_pcls(mh_2_pcl, 20.0, 1000.0, 0.0);
 	mh_2_pcl.clear();
-	//double pcl_area = 0.0;
-	//for (size_t i = 0; i < model.pcl_num; i++)
-	//{
-	//	Model_T2D_ME_s::Particle &pcl = model.pcls[i];
-	//	pcl_area += pcl.m_s;
-	//}
-	//pcl_area /= (1.0 - 0.2) * 20.0;
-	//std::cout << pcl_area << "\n";
+
+	// constitutive model
+	LinearElasticity *cms = new LinearElasticity[model.pcl_num];
+	for (size_t i = 0; i < model.pcl_num; ++i)
+	{
+		cms[i].set_param(1000.0, 0.0);
+		model.pcls[i].cm = &cms[i];
+	}
+
 	model.init_bg_mesh(0.05, 0.05);
 
 	//find_bc_pcl_and_node(model);
@@ -245,6 +236,8 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	step.add_time_history(out3);
 	step.solve();
 	
+	delete[] cms;
+
 	//system("pause");
 }
 

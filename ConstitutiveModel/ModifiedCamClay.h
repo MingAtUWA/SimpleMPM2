@@ -1,13 +1,17 @@
 #ifndef __Modified_Cam_Clay_H__
 #define __Modified_Cam_Clay_H__
 
-#include <iostream>
 #include <cmath>
+
+#include "ConstitutiveModel.h"
+
+int modified_cam_clay_integration_function(ConstitutiveModel *_self, double dstrain[6]);
 
 // This model uses constant stiffness instead of
 // deducing it from recompression line
-class ModifiedCamClay
+class ModifiedCamClay : public ConstitutiveModel
 {
+	friend int modified_cam_clay_integration_function(ConstitutiveModel *_self, double dstrain[6]);
 protected:
 	double niu; // possion ratio
 	double kappa; // logrithmic recompression modulus
@@ -16,39 +20,11 @@ protected:
 	double e; // void ratio
 	double pc; // pre-consolidation stress
 	double N, Gamma, M; // normal and critical state line parameters
-	union // stress
-	{
-		double stress[6];
-		struct { double s11, s22, s33, s12, s23, s31; };
-	};
-	union // stress increment
-	{
-		double dstress[6];
-		struct { double ds11, ds22, ds33, ds12, ds23, ds31; };
-	};
-	union // elastic strain increment
-	{
-		double dstrain_e[6];
-		struct { double dee11, dee22, dee33, dee12, dee23, dee31; };
-	};
-	union // plastic strain increment
-	{
-		double dstrain_p[6];
-		struct { double dep11, dep22, dep33, dep12, dep23, dep31; };
-	};
-	union // Elastic stiffness
-	{
-		double De_mat[6][6];
-		double De_mat_array[36];
-	};
-	union // Elasto-plastic stiffness
-	{
-		double Dep_mat[6][6];
-		double Dep_mat_array[36];
-	};
 
 public:
-	ModifiedCamClay() : e(0.0), pc(0.0), niu(0.0), 
+	ModifiedCamClay() :
+		ConstitutiveModel(modified_cam_clay_integration_function),
+		e(0.0), pc(0.0), niu(0.0), 
 		kappa(0.0), lambda(0.0), fric_angle(0.0), M2(0.0)
 	{
 		for (size_t i = 0; i < 6; ++i)
@@ -132,123 +108,6 @@ public:
 		Gamma = N - (lambda - kappa) * log(2.0);
 	}
 
-	// return value:
-	//     = 0 - elstic
-	//     > 0 - plastic
-	//     < 0 - convergence failure
-	int integrate(double dstrain[6])
-	{
-		for (size_t i = 0; i < 6; ++i)
-		{
-			// stress
-			dstress[i] = De_mat[i][0] * dstrain[0] + De_mat[i][1] * dstrain[1]
-					   + De_mat[i][2] * dstrain[2] + De_mat[i][3] * dstrain[3]
-					   + De_mat[i][4] * dstrain[4] + De_mat[i][5] * dstrain[5];
-			stress[i] += dstress[i];
-			// strain
-			dstrain_e[i] = dstrain[i];
-			dstrain_p[i] = 0.0;
-		}
-
-		double p, q, f;
-		p = cal_p();
-		q = cal_q();
-		f = cal_f(p, q);
-		if (f <= 0.0)
-		{
-
-			form_De_mat(p);
-			form_Dep_mat();
-			e += (e + 1.0) * (dstrain[0] + dstrain[1] + dstrain[2]);
-			return 0;
-		}
-
-		double dg_ds[6], dg_dpc;
-		double A_pc, divider;
-		double dl, dep_cor[6], ds_cor[6];
-		for (int iter_id = 0; iter_id < 10; ++iter_id)
-		{
-			cal_dg_stress(p, q, dg_ds, dg_dpc);
-			A_pc = cal_A_pc(dg_ds);
-			divider = cal_divider(dg_ds, dg_dpc, A_pc);
-
-			dl = f / divider;
-			// strain correction
-			dep_cor[0] = dl * dg_ds[0];
-			dep_cor[1] = dl * dg_ds[1];
-			dep_cor[2] = dl * dg_ds[2];
-			dep_cor[3] = dl * dg_ds[3];
-			dep_cor[4] = dl * dg_ds[4];
-			dep_cor[5] = dl * dg_ds[5];
-			// elastic strain
-			dstrain_e[0] -= dep_cor[0];
-			dstrain_e[1] -= dep_cor[1];
-			dstrain_e[2] -= dep_cor[2];
-			dstrain_e[3] -= dep_cor[3];
-			dstrain_e[4] -= dep_cor[4];
-			dstrain_e[5] -= dep_cor[5];
-			// plastic strain
-			dstrain_p[0] += dep_cor[0];
-			dstrain_p[1] += dep_cor[1];
-			dstrain_p[2] += dep_cor[2];
-			dstrain_p[3] += dep_cor[3];
-			dstrain_p[4] += dep_cor[4];
-			dstrain_p[5] += dep_cor[5];
-			// correct stress
-			for (size_t i = 0; i < 6; ++i)
-				ds_cor[i] = De_mat[i][0] * dep_cor[0] + De_mat[i][1] * dep_cor[1]
-						  + De_mat[i][2] * dep_cor[2] + De_mat[i][3] * dep_cor[3]
-						  + De_mat[i][4] * dep_cor[4] + De_mat[i][5] * dep_cor[5];
-			dstress[0] -= ds_cor[0];
-			dstress[1] -= ds_cor[1];
-			dstress[2] -= ds_cor[2];
-			dstress[3] -= ds_cor[3];
-			dstress[4] -= ds_cor[4];
-			dstress[5] -= ds_cor[5];
-			stress[0]  -= ds_cor[0];
-			stress[1]  -= ds_cor[1];
-			stress[2]  -= ds_cor[2];
-			stress[3]  -= ds_cor[3];
-			stress[4]  -= ds_cor[4];
-			stress[5]  -= ds_cor[5];
-			// update hardening parameter
-			pc += A_pc * dl;
-
-			p = cal_p();
-			q = cal_q();
-			f = cal_f(p, q);
-			if (cal_norm_f(f, p) < 1.0e-8)
-			//if (f < 1.0e-4)
-			{
-				// update e
-				e += (e + 1.0) * (dstrain[0] + dstrain[1] + dstrain[2]);
-				// new stiffness matrix
-				form_De_mat(p);
-				cal_dg_stress(p, q, dg_ds, dg_dpc);
-				A_pc = cal_A_pc(dg_ds);
-				divider = cal_divider(dg_ds, dg_dpc, A_pc);
-				form_Dep_mat(dg_ds, divider);
-				return iter_id + 1;
-			}
-		}
-
-		// update e
-		e += (e + 1.0) * (dstrain[0] + dstrain[1] + dstrain[2]);
-		// new stiffness matrix
-		form_De_mat(p);
-		cal_dg_stress(p, q, dg_ds, dg_dpc);
-		A_pc = cal_A_pc(dg_ds);
-		divider = cal_divider(dg_ds, dg_dpc, A_pc);
-		form_Dep_mat(dg_ds, divider);
-		return -1;
-	}
-
-	inline const double *get_stress(void)    noexcept { return stress; }
-	inline const double *get_dstress(void)   noexcept { return dstress; }
-	inline const double *get_dstrain_e(void) noexcept { return dstrain_e; }
-	inline const double *get_dstrain_p(void) noexcept { return dstrain_p; }
-	inline const double *get_De_mat(void)  noexcept { return De_mat_array; }
-	inline const double *get_Dep_mat(void) noexcept { return Dep_mat_array; }
 	inline double get_p(void)  noexcept { return cal_p(); }
 	inline double get_q(void)  noexcept { return cal_q(); }
 	inline double get_pc(void) noexcept { return pc; }

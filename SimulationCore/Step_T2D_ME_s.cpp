@@ -402,6 +402,18 @@ int solve_substep_T2D_ME_s(void *_self)
 			pcl.s11 += ds11;
 			pcl.s22 += ds22;
 			pcl.s12 += ds12;
+			// use constitutive model
+			//double dstrain[6] = { de11, de22, 0.0, de12, 0.0, 0.0 };
+			//pcl.cm->integrate(dstrain);
+			//const double *dstress = pcl.cm->get_dstress();
+			//pcl.s11 += dstress[0];
+			//pcl.s22 += dstress[1];
+			//pcl.s12 += dstress[3];
+
+			//if (abs(ds11 - dstress[0]) > abs(ds11 + dstress[0]) * 0.001 ||
+			//	abs(ds22 - dstress[1]) > abs(ds22 + dstress[1]) * 0.001 ||
+			//	abs(ds12 - dstress[3]) > abs(ds12 + dstress[3]) * 0.001)
+			//	throw std::exception("cm error");
 
 			// density
 			pcl.density /= 1.0 + de_vol;

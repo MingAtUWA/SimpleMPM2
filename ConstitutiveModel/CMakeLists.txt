@@ -6,9 +6,11 @@
 add_library(
     ConstitutiveModel STATIC
     ConstitutiveModel_pcp.h ConstitutiveModel_pcp.cpp
+    ConstitutiveModel.h
     # Linear Elasticity
+    LinearElasticity.h LinearElasticity.cpp
     # Modified Cam Clay
-    ModifiedCamClay.h
+    ModifiedCamClay.h ModifiedCamClay.cpp
     )
 
 if (MSVC)

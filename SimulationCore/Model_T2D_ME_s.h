@@ -3,6 +3,7 @@
 
 #include "BC.h"
 #include "Model.h"
+#include "ConstitutiveModel.h"
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
@@ -79,6 +80,8 @@ public: // Node, Element and Particle data structures
 		
 		// Used by Element
 		Particle *next;
+
+		ConstitutiveModel *cm;
 	};
 
 	struct Element

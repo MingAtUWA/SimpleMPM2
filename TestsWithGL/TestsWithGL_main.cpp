@@ -81,7 +81,7 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_square();
 	//test_t2d_mpm_chm_s_1d_consolidation();
 	//test_animation_t2d_chm_s_1d_consolidation();
-	test_color_animation_t2d_chm_s_1d_consolidation();
+	//test_color_animation_t2d_chm_s_1d_consolidation();
 
 	// 1d consolidation wave propagation
 	//test_t2d_mpm_chm_s_1d_wave();
@@ -101,6 +101,8 @@ int main(int argc, void **argv)
 	// a realistic case of t-bar penetration
 	//test_t2d_mpm_chm_s_t_bar_real();
 	//test_color_animation_t2d_chm_s_t_bar_real();
+
+	test_ModifiedCamClay();
 
 	//system("pause");
 	return 0;

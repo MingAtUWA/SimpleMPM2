@@ -3,7 +3,6 @@
 
 #include "BC.h"
 #include "Model.h"
-#include "ConstitutiveModel.h"
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
@@ -24,6 +23,8 @@
 #define dN2_deta  (1.0)
 #define dN3_deta (-1.0)
 #define N_tol (1.0e-30)
+
+class ConstitutiveModel;
 
 int solve_substep_T2D_ME_s(void *_self);
 

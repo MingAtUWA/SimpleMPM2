@@ -29,7 +29,7 @@ namespace MemoryUtilities
 	protected: // assistant data structures
 		union ItemSlot
 		{
-			Item item;
+			char item[sizeof(Item)];
 			ItemSlot *next;
 		};
 		struct MemPageHeader

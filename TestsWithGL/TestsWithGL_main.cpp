@@ -99,10 +99,10 @@ int main(int argc, void **argv)
 	//test_color_graph();
 
 	// a realistic case of t-bar penetration
-	//test_t2d_mpm_chm_s_t_bar_real();
+	test_t2d_mpm_chm_s_t_bar_real();
 	//test_color_animation_t2d_chm_s_t_bar_real();
 
-	test_ModifiedCamClay();
+	//test_ModifiedCamClay();
 
 	//system("pause");
 	return 0;

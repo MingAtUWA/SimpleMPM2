@@ -30,10 +30,10 @@ public:
 	}
 
 	// Restart from previous step
-	inline void set_prev_step(Step_T2D_CHM_s_SE &prev_step)
+	inline void set_prev_step(Step &prev_step)
 	{
 		Step::set_prev_step(prev_step);
-		model = prev_step.model;
+		model = static_cast<Model_T2D_CHM_s *>(&prev_step.get_model());
 	}
 
 	inline void set_dtime(double _dt,
@@ -49,12 +49,14 @@ public:
 
 	inline void set_damping_ratio(double ra) noexcept { damping_ratio = ra; }
 	inline void set_bv_ratio(double ra) noexcept { bv_ratio = ra; }
-
+	inline void set_mass_scale(double _ms_sr, double _mf_sr) noexcept { ms_sr = _ms_sr; mf_sr = _mf_sr; }
+	
 protected:
 	Model_T2D_CHM_s *model;
 	double min_dt, max_dt;
 	double damping_ratio; // local damping
-	double bv_ratio; // bulk viscosity damping ratio, should be ??
+	double bv_ratio; // bulk viscosity damping ratio
+	double ms_sr, mf_sr; // mass scaling ratio
 };
 
 #endif

@@ -1,10 +1,12 @@
 #include "SimulationCore_pcp.h"
 
 #include <cmath>
+#include "ConstitutiveModel.h"
 #include "Step_T2D_CHM_s_SE_Geostatic.h"
 
 Step_T2D_CHM_s_SE_Geostatic::Step_T2D_CHM_s_SE_Geostatic() :
-	Step(&solve_substep_T2D_CHM_s_SE_Geostatic), model(nullptr) {}
+	Step(&solve_substep_T2D_CHM_s_SE_Geostatic), model(nullptr),
+	ms_sr(1.0), mf_sr(1.0) {}
 
 Step_T2D_CHM_s_SE_Geostatic::~Step_T2D_CHM_s_SE_Geostatic() {}
 
@@ -259,9 +261,9 @@ int solve_substep_T2D_CHM_s_SE_Geostatic(void *_self)
 		if (n.has_mp)
 		{
 			// fx_s
-			n.ax_s = (n.fx_ext_s - n.fx_int_s) / n.m_s;
+			n.ax_s = (n.fx_ext_s - n.fx_int_s) / (n.m_s * self.ms_sr);
 			// fy_s
-			n.ay_s = (n.fy_ext_s - n.fy_int_s) / n.m_s;
+			n.ay_s = (n.fy_ext_s - n.fy_int_s) / (n.m_s * self.ms_sr);
 		}
 	}
 
@@ -468,15 +470,13 @@ int solve_substep_T2D_CHM_s_SE_Geostatic(void *_self)
 			pcl.e22 += de22;
 			pcl.e12 += de12;
 
-			// update stress
-			// need remapping back to yield surface
-			double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
-			ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
-			ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
-			ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
-			pcl.s11 += ds11;
-			pcl.s22 += ds22;
-			pcl.s12 += ds12;
+			// update stress using constitutive model
+			double dstrain[6] = { de11, de22, 0.0, de12, 0.0, 0.0 };
+			pcl.cm->integrate(dstrain);
+			const double *dstress = pcl.cm->get_dstress();
+			pcl.s11 += dstress[0];
+			pcl.s22 += dstress[1];
+			pcl.s12 += dstress[3];
 		}
 	}
 	

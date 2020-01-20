@@ -9,14 +9,18 @@
 #include "Model_T2D_CHM_s.h"
 
 #include "Step_T2D_CHM_s_SE.h"
+#include "Step_T2D_CHM_s_SE_Geostatic.h"
 
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
 #include "TimeHistoryOutput_T2D_CHM_s_SE.h"
-
+#include "TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
+#include "ModelContainer.h"
+
 #include "test_post_processor.h"
+
 #include "GA_T2D_CHM_s_color.h"
 
 namespace
@@ -51,6 +55,32 @@ void get_bottom_n_ids(Model_T2D_CHM_s &md, double bottom,
 	}
 }
 
+// find small pcls in the middle
+void get_top_small_pcls(Model_T2D_CHM_s &md,
+	MemoryUtilities::ItemArray<size_t> &p_ids)
+{
+	p_ids.reset();
+	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
+		if (pcl.y > -0.011 && pcl.x > -2.0 && pcl.x < 2.0)
+			p_ids.add(&p_id);
+	}
+}
+
+// find big pcls in the centre
+void get_top_big_pcls(Model_T2D_CHM_s &md,
+	MemoryUtilities::ItemArray<size_t> &p_ids)
+{
+	p_ids.reset();
+	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
+		if (pcl.y > -0.041 && (pcl.x < -2.0 || pcl.x > 2.0))
+			p_ids.add(&p_id);
+	}
+}
+
 };
 
 
@@ -77,10 +107,25 @@ void test_t2d_mpm_chm_s_t_bar_real(void)
 	model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
 	model.set_contact_stiffness(200.0e6, 200.0e6);
 
-	model.init_pcls(mh_2_pcl, 0.706, 27000.0, 10000.0, 20.0e6, 0.3, 50.0e7, 1.0e-9, 1.0e-3);
+	model.init_pcls(mh_2_pcl, 0.706, 2700.0, 1000.0, 20.0e6, 0.3, 50.0e7, 1.0e-9, 1.0e-3);
 	mh_2_pcl.clear();
 
 	model.init_bg_mesh(0.1, 0.1);
+
+	ModelContainer mc;
+	LinearElasticity *cms = mc.add_LinearElasticity(model.pcl_num);
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+		// init geostatic stress
+		pcl.s22 = -1000.0 + pcl.y * (2700.0 - 1000.0) * (1.0 - 0.706) * -9.81;
+		pcl.s11 = (1.0 - sin(25.0 / 180.0 * 3.14159265359)) * pcl.s22;
+		pcl.s12 = 0.0;
+		// init material model
+		LinearElasticity &cm = cms[p_id];
+		cm.set_param(20.0e6, 0.3);
+		pcl.cm = &cm;
+	}
 
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
 	bc_n_ids_mem.reserve(100);
@@ -133,13 +178,75 @@ void test_t2d_mpm_chm_s_t_bar_real(void)
 		vbc.node_id = bc_n_ids[v_id];
 		vbc.v = 0.0;
 	}
-
+	
 	//for (size_t n_id = 0; n_id < model.vsy_num; ++n_id)
 	//{
 	//	Model_T2D_CHM_s::Node &n = model.nodes[bc_n_ids[n_id]];
 	//	pt_coord = double(n.x);
 	//	pt_array.add(&pt_coord);
 	//	pt_coord = double(n.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
+
+	// body force
+	model.init_bfys(model.pcl_num);
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		BodyForce &bf = model.bfys[p_id];
+		bf.pcl_id = p_id;
+		bf.bf = -9.81;
+	}
+
+	// traction force
+	MemoryUtilities::ItemArray<size_t> tbc_sp_ids_mem;
+	get_top_small_pcls(model, tbc_sp_ids_mem);
+	size_t sp_num = tbc_sp_ids_mem.get_num();
+	//
+	MemoryUtilities::ItemArray<size_t> tbc_bp_ids_mem;
+	get_top_big_pcls(model, tbc_bp_ids_mem);
+	size_t bp_num = tbc_bp_ids_mem.get_num();
+	//
+	model.init_tys(sp_num + bp_num);
+	for (size_t t_id = 0; t_id < sp_num; ++t_id)
+	{
+		TractionBC_MPM &tbc = model.tys[t_id];
+		tbc.pcl_id = tbc_sp_ids_mem[t_id];
+		tbc.t = 0.02 * -1000.0;
+	}
+	for (size_t t_id = 0; t_id < bp_num; ++t_id)
+	{
+		TractionBC_MPM &tbc = model.tys[sp_num + t_id];
+		tbc.pcl_id = tbc_bp_ids_mem[t_id];
+		tbc.t = 0.1 * -1000.0;
+	}
+	//for (size_t t_id = 0; t_id < sp_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[tbc_sp_ids_mem[t_id]];
+	//	pt_coord = double(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = double(pcl.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
+	//for (size_t t_id = 0; t_id < bp_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[tbc_bp_ids_mem[t_id]];
+	//	pt_coord = double(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = double(pcl.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
+	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
+	//	pt_coord = double(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = double(pcl.y);
 	//	pt_array.add(&pt_coord);
 	//	pt_coord = 0.0f;
 	//	pt_array.add(&pt_coord);
@@ -162,7 +269,7 @@ void test_t2d_mpm_chm_s_t_bar_real(void)
 	//disp_model.init_win();
 	//disp_model.init_model(model);
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
-	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	//disp_model.display(-3.2, 3.2, -3.7, 0.5);
 	////disp_model.display(-1.2, 1.2, -1.2, 0.2);
 	//return;
@@ -180,24 +287,38 @@ void test_t2d_mpm_chm_s_t_bar_real(void)
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s_SE out1;
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out1;
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s_SE out2;
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out2;
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
 
-	Step_T2D_CHM_s_SE step;
-	step.set_model(model);
-	step.set_time(1.0);
-	step.set_dtime(1.0e-6);
+	// geostatic step
+	Step_T2D_CHM_s_SE_Geostatic step_gs;
+	step_gs.set_model(model);
+	step_gs.set_mass_scale(10.0, 10.0);
+	step_gs.set_time(1.0);
+	step_gs.set_dtime(1.0e-6);
 	out1.set_interval_num(100);
-	step.add_time_history(out1);
+	step_gs.add_time_history(out1);
 	out2.set_interval_num(100);
-	step.add_time_history(out2);
-	step.add_time_history(out3);
-	step.solve();
+	step_gs.add_time_history(out2);
+	step_gs.add_time_history(out3);
+	step_gs.solve();
+
+	// penetration step
+	//Step_T2D_CHM_s_SE step;
+	//step.set_prev_step(step_gs);
+	//step.set_time(1.0);
+	//step.set_dtime(1.0e-6);
+	//out1.set_interval_num(100);
+	//step.add_time_history(out1);
+	//out2.set_interval_num(100);
+	//step.add_time_history(out2);
+	//step.add_time_history(out3);
+	//step.solve();
 
 	//system("pause");
 }

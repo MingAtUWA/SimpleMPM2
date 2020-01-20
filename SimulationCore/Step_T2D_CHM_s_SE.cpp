@@ -1,11 +1,13 @@
 #include "SimulationCore_pcp.h"
 
 #include <cmath>
+#include "ConstitutiveModel.h"
 #include "Step_T2D_CHM_s_SE.h"
 
 Step_T2D_CHM_s_SE::Step_T2D_CHM_s_SE() :
 	Step(&solve_substep_T2D_CHM_s_SE), model(nullptr),
-	damping_ratio(0.0), bv_ratio(0.0) {}
+	damping_ratio(0.0), bv_ratio(0.0),
+	ms_sr(1.0), mf_sr(1.0) {}
 
 Step_T2D_CHM_s_SE::~Step_T2D_CHM_s_SE() {}
 
@@ -380,7 +382,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			else
 				v_sign = 0.0;
 			nf = n.fx_ext_s - n.fx_int_s;
-			n.ax_s = (nf + n.fx_drag - self.damping_ratio * abs(nf) * v_sign) / n.m_s;
+			n.ax_s = (nf + n.fx_drag - self.damping_ratio * abs(nf) * v_sign) / (n.m_s * self.ms_sr);
 			// fy_s
 			if (n.vy_s > 0.0)
 				v_sign = 1.0;
@@ -389,7 +391,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			else
 				v_sign = 0.0;
 			nf = n.fy_ext_s - n.fy_int_s;
-			n.ay_s = (nf + n.fy_drag - self.damping_ratio * abs(nf) * v_sign) / n.m_s;
+			n.ay_s = (nf + n.fy_drag - self.damping_ratio * abs(nf) * v_sign) / (n.m_s * self.ms_sr);
 			// fx_f
 			if (n.vx_f > 0.0)
 				v_sign = 1.0;
@@ -398,7 +400,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			else
 				v_sign = 0.0;
 			nf = n.fx_ext_f - n.fx_int_f;
-			n.ax_f = (nf - n.fx_drag - self.damping_ratio * abs(nf) * v_sign) / n.m_f;
+			n.ax_f = (nf - n.fx_drag - self.damping_ratio * abs(nf) * v_sign) / (n.m_f * self.mf_sr);
 			// fy_f
 			if (n.vy_f > 0.0)
 				v_sign = 1.0;
@@ -407,7 +409,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			else
 				v_sign = 0.0;
 			nf = n.fy_ext_f - n.fy_int_f;
-			n.ay_f = (nf - n.fy_drag - self.damping_ratio * abs(nf) * v_sign) / n.m_f;
+			n.ay_f = (nf - n.fy_drag - self.damping_ratio * abs(nf) * v_sign) / (n.m_f * self.mf_sr);
 		}
 	}
 
@@ -652,15 +654,13 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 			pcl.e22 += de22;
 			pcl.e12 += de12;
 
-			// update stress
-			// need remapping back to yield surface
-			double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
-			ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
-			ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
-			ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
-			pcl.s11 += ds11;
-			pcl.s22 += ds22;
-			pcl.s12 += ds12;
+			// update stress using constitutive model
+			double dstrain[6] = { de11, de22, 0.0, de12, 0.0, 0.0 };
+			pcl.cm->integrate(dstrain);
+			const double *dstress = pcl.cm->get_dstress();
+			pcl.s11 += dstress[0];
+			pcl.s22 += dstress[1];
+			pcl.s12 += dstress[3];
 
 			// pore pressure
 			//de_vol_f = n1.de_vol_f * pcl.N1 + n2.de_vol_f * pcl.N2 + n3.de_vol_f * pcl.N3;

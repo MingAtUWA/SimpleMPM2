@@ -61,6 +61,8 @@ public:
 	}
 };
 
+class ConstitutiveModel;
+
 int solve_substep_T2D_CHM_s(void *_self);
 
 struct Model_T2D_CHM_s : public Model
@@ -137,6 +139,7 @@ public: // Node, Element and Particle data structures
 
 		//// APIC
 		//double Cs[2][2], Cf[2][2];
+		ConstitutiveModel *cm;
 	};
 
 	struct Element

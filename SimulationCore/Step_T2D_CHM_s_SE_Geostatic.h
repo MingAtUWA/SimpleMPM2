@@ -32,10 +32,10 @@ public:
 	}
 
 	// Restart from previous step
-	inline void set_prev_step(Step_T2D_CHM_s_SE_Geostatic &prev_step)
+	inline void set_prev_step(Step &prev_step)
 	{
 		Step::set_prev_step(prev_step);
-		model = prev_step.model;
+		model = static_cast<Model_T2D_CHM_s *>(&prev_step.get_model());
 	}
 
 	inline void set_dtime(double _dt,
@@ -49,9 +49,12 @@ public:
 		dtime = max_dt;
 	}
 
+	inline void set_mass_scale(double _ms_sr, double _mf_sr) noexcept { ms_sr = _ms_sr; mf_sr = _mf_sr; }
+
 protected:
 	Model_T2D_CHM_s *model;
 	double min_dt, max_dt;
+	double ms_sr, mf_sr; // mass scaling ratio
 
 	// convergence criteria
 	// unbalanced force

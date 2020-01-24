@@ -14,7 +14,8 @@ Class TimeHistoryOutput_T2D_CHM_s_SE_Geostatic
 class TimeHistoryOutput_T2D_CHM_s_SE_Geostatic : public TimeHistoryOutput
 {
 public:
-	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic() : TimeHistoryOutput("T2D_CHM_s_SE_Geostatic") {}
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic(const char *_name) :
+		TimeHistoryOutput(_name, "T2D_CHM_s_SE_Geostatic") {}
 	~TimeHistoryOutput_T2D_CHM_s_SE_Geostatic() {}
 
 	friend int time_history_output_func_t2d_chm_s_SE_geostatic_to_plain_bin_res_file(TimeHistoryOutput &_self);

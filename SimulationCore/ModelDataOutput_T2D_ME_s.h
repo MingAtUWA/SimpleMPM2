@@ -16,7 +16,8 @@ Class ModelDataOutput_T2D_ME_s
 class ModelDataOutput_T2D_ME_s : public ModelDataOutput
 {
 public:
-	ModelDataOutput_T2D_ME_s() : ModelDataOutput("ModelDataOutput_T2D_ME_s") {}
+	ModelDataOutput_T2D_ME_s(const char *_name = "ModelDataOutput") :
+		ModelDataOutput(_name, "ModelDataOutput_T2D_ME_s") {}
 	~ModelDataOutput_T2D_ME_s() {}
 
 	friend int model_data_output_func_t2d_me_s_to_plain_bin_res_file(ModelDataOutput &_self);

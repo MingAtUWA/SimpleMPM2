@@ -70,6 +70,7 @@ target_include_directories(
     ${UTILITIES_INCLUDE_DIR}
     ${EIGEN_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIR}
     )
 
 link_directories(${GLFW_LIBRARIES_DIR})

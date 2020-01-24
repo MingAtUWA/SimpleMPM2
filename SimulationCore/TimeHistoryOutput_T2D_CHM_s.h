@@ -14,7 +14,8 @@ Class TimeHistoryOutput_T2D_CHM_s
 class TimeHistoryOutput_T2D_CHM_s : public TimeHistoryOutput
 {
 public:
-	TimeHistoryOutput_T2D_CHM_s() : TimeHistoryOutput("T2D_CHM_s") {}
+	TimeHistoryOutput_T2D_CHM_s(const char *_name = "TimeHistory") :
+		TimeHistoryOutput(_name, "T2D_CHM_s") {}
 	~TimeHistoryOutput_T2D_CHM_s() {}
 
 	friend int time_history_output_func_t2d_chm_s_to_plain_bin_res_file(TimeHistoryOutput &_self);

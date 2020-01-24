@@ -14,7 +14,8 @@ Class TimeHistoryOutput_S2D_ME_s_up
 class TimeHistoryOutput_S2D_ME_s_up : public TimeHistoryOutput
 {
 public:
-	TimeHistoryOutput_S2D_ME_s_up() : TimeHistoryOutput("S2D_ME_s_up") {}
+	TimeHistoryOutput_S2D_ME_s_up(const char *_name = "TimeHistory") :
+		TimeHistoryOutput(_name, "S2D_ME_s_up") {}
 	~TimeHistoryOutput_S2D_ME_s_up() {}
 
 	friend int time_history_output_func_s2d_me_s_up_to_plain_bin_res_file(TimeHistoryOutput &_self);

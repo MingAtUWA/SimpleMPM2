@@ -16,7 +16,8 @@ Class ModelDataOutput_S2D_CHM_s_FEM_uUp
 class ModelDataOutput_S2D_CHM_s_FEM_uUp : public ModelDataOutput
 {
 public:
-	ModelDataOutput_S2D_CHM_s_FEM_uUp() : ModelDataOutput("ModelDataOutput_S2D_CHM_s_FEM_uUp") {}
+	ModelDataOutput_S2D_CHM_s_FEM_uUp(const char *_name = "ModelDataOutput") :
+		ModelDataOutput(_name, "ModelDataOutput_S2D_CHM_s_FEM_uUp") {}
 	~ModelDataOutput_S2D_CHM_s_FEM_uUp() {}
 
 	friend int model_data_output_func_s2d_chm_s_fem_uup_to_plain_bin_res_file(ModelDataOutput &_self);

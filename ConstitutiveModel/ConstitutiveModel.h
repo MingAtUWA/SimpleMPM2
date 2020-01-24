@@ -1,6 +1,8 @@
 #ifndef __Constitutive_Model_H__
 #define __Constitutive_Model_H__
 
+#include "ConstitutiveModelType.h"
+
 class ConstitutiveModel;
 typedef int (*__Constitutive_Model_Integration_Func__)(ConstitutiveModel *_self, double dstrain[6]);
 
@@ -10,6 +12,8 @@ public:
 	typedef __Constitutive_Model_Integration_Func__ CMIntFunc;
 
 protected:
+	ConstitutiveModelType type;
+
 	union // stress
 	{
 		double stress[6];
@@ -44,8 +48,9 @@ protected:
 	CMIntFunc integration_func;
 
 public:
-	ConstitutiveModel(CMIntFunc _inte_func = nullptr):
-		integration_func(_inte_func) {}
+	ConstitutiveModel(CMIntFunc _inte_func = nullptr,
+		ConstitutiveModelType _type = ConstitutiveModelType::InvalidType):
+		integration_func(_inte_func), type(_type) {}
 	~ConstitutiveModel() {}
 
 	inline int integrate(double dstrain[6]) { return (*integration_func)(this, dstrain); }

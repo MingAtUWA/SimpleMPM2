@@ -23,7 +23,7 @@ protected:
 
 public:
 	ModifiedCamClay() :
-		ConstitutiveModel(modified_cam_clay_integration_function),
+		ConstitutiveModel(modified_cam_clay_integration_function, ConstitutiveModelType::ModifiedCamClay),
 		e(0.0), pc(0.0), niu(0.0), 
 		kappa(0.0), lambda(0.0), fric_angle(0.0), M2(0.0)
 	{

@@ -33,7 +33,8 @@ class ModelDataOutput_test : public ModelDataOutput
 	size_t id;
 public:
 	friend int model_data_output_func_test(ModelDataOutput &_self);
-	ModelDataOutput_test() : ModelDataOutput("ModelDataOutput_test", &model_data_output_func_test), id(cur_id++) {}
+	ModelDataOutput_test(const char *_name) :
+		ModelDataOutput(_name, "ModelDataOutput_test", &model_data_output_func_test), id(cur_id++) {}
 };
 size_t ModelDataOutput_test::cur_id = 0;
 int model_data_output_func_test(ModelDataOutput &_self)
@@ -53,7 +54,8 @@ class TimeHistoryOutput_test : public TimeHistoryOutput
 	size_t id;
 public:
 	friend int time_history_output_func_test(TimeHistoryOutput &_self);
-	TimeHistoryOutput_test() : TimeHistoryOutput("TimeHistoryOutput_test", &time_history_output_func_test), id(cur_id++) {}
+	TimeHistoryOutput_test(const char *_name) :
+		TimeHistoryOutput(_name, "TimeHistoryOutput_test", &time_history_output_func_test), id(cur_id++) {}
 };
 size_t TimeHistoryOutput_test::cur_id = 0;
 int time_history_output_func_test(TimeHistoryOutput &_self)
@@ -64,17 +66,17 @@ int time_history_output_func_test(TimeHistoryOutput &_self)
 
 void test_solve_functions(void)
 {
-	ModelDataOutput_test md1;
+	ModelDataOutput_test md1("md1");
 	md1.set_output_time(0.1);
 	
-	ModelDataOutput_test md2;
+	ModelDataOutput_test md2("md2");
 	md2.set_output_time(1.0);
 
-	TimeHistoryOutput_test th1;
+	TimeHistoryOutput_test th1("th1");
 	th1.set_interval_num(5);
 	th1.set_output_init_state();
 
-	TimeHistoryOutput_test th2;
+	TimeHistoryOutput_test th2("th2");
 	th2.set_interval_num(2);
 	
 	TimeHistoryOutput_ConsoleProgressBar cpb;

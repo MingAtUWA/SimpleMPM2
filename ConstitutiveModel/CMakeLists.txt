@@ -7,6 +7,7 @@ add_library(
     ConstitutiveModel STATIC
     ConstitutiveModel_pcp.h ConstitutiveModel_pcp.cpp
     ConstitutiveModel.h
+    ConstitutiveModelType.h
     # ModelContainer
     ModelContainer.h ModelContainer.cpp
     # Linear Elasticity

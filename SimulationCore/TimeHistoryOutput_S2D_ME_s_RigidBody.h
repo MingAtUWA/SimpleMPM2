@@ -14,7 +14,8 @@ Class TimeHistoryOutput_S2D_ME_s_RigidBody
 class TimeHistoryOutput_S2D_ME_s_RigidBody : public TimeHistoryOutput
 {
 public:
-	TimeHistoryOutput_S2D_ME_s_RigidBody() : TimeHistoryOutput("S2D_ME_RigidBody") {}
+	TimeHistoryOutput_S2D_ME_s_RigidBody(const char *_name = "TimeHistory") : 
+		TimeHistoryOutput(_name, "S2D_ME_RigidBody") {}
 	~TimeHistoryOutput_S2D_ME_s_RigidBody() {}
 
 	friend int time_history_output_func_s2d_me_s_rigid_body_to_plain_bin_res_file(TimeHistoryOutput &_self);

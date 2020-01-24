@@ -19,6 +19,8 @@ add_library(
     ResultFile_PlainBin.h ResultFile_PlainBin_DataStruct.h
     # XML result file
     ResultFile_XML.h
+    # hdf5 result file
+    ResultFile_hdf5.h ResultFile_hdf5.cpp
     # ProgressBar
     TimeHistoryOutput_ConsoleProgressBar.h TimeHistoryOutput_ConsoleProgressBar.cpp
     # Purely mechanics, material point and rigid-body smooth contact
@@ -90,19 +92,20 @@ add_library(
 add_subdirectory(TriangleMeshRigidBody/)
 
 target_include_directories(
-    SimulationCore
-    PRIVATE
-        ${SIMULATIONCORE_INCLUDE_DIR}
-        ${CONSTITUTIVEMODEL_INCLUDE_DIR}
-        ${UTILITIES_INCLUDE_DIR}
-        ${EIGEN_INCLUDE_DIR}
-        ${OPENGL_INCLUDE_DIR}
+    SimulationCore PRIVATE
+    ${SIMULATIONCORE_INCLUDE_DIR}
+    ${CONSTITUTIVEMODEL_INCLUDE_DIR}
+    ${UTILITIES_INCLUDE_DIR}
+    ${EIGEN_INCLUDE_DIR}
+    ${OPENGL_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIR}
     )
 
 target_link_libraries(
     SimulationCore PRIVATE
     Utilities
     ConstitutiveModel
+    ${HDF5_LIBRARIES}
     )
 
 if (MSVC)

@@ -16,7 +16,8 @@ Class ModelDataOutput_S2D_ME_s_up
 class ModelDataOutput_S2D_ME_s_up : public ModelDataOutput
 {
 public:
-	ModelDataOutput_S2D_ME_s_up() : ModelDataOutput("ModelDataOutput_S2D_ME_s_up") {}
+	ModelDataOutput_S2D_ME_s_up(const char *_name = "ModelDataOutput") :
+		ModelDataOutput(_name, "ModelDataOutput_S2D_ME_s_up") {}
 	~ModelDataOutput_S2D_ME_s_up() {}
 
 	friend int model_data_output_func_s2d_me_s_up_to_plain_bin_res_file(ModelDataOutput &_self);

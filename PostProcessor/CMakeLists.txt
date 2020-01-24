@@ -29,6 +29,7 @@ target_include_directories(
     ${SIMULATIONCORE_INCLUDE_DIR}
     ${CONSTITUTIVEMODEL_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIR}
     )
 
 target_link_libraries(

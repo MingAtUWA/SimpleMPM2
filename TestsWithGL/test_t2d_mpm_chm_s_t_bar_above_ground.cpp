@@ -149,17 +149,17 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	res_file_xml.init("t2d_mpm_chm_t_bar_above_ground.xml");
 
 	// output model
-	ModelDataOutput_T2D_CHM_s md;
+	ModelDataOutput_T2D_CHM_s md("md1");
 	md.set_model(model);
 	md.set_res_file(res_file_pb);
 	md.output();
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s_SE out1;
+	TimeHistoryOutput_T2D_CHM_s_SE out1("th1");
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s_SE out2;
+	TimeHistoryOutput_T2D_CHM_s_SE out2("th2");
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;

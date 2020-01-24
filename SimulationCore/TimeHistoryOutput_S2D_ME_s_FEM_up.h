@@ -19,8 +19,8 @@ protected:
 	bool is_plain_bin;
 
 public:
-	TimeHistoryOutput_S2D_ME_s_FEM_up() :
-		TimeHistoryOutput("S2D_ME_s_up"),
+	TimeHistoryOutput_S2D_ME_s_FEM_up(const char *_name = "TimeHistory") :
+		TimeHistoryOutput(_name, "S2D_ME_s_up"),
 		node_data(nullptr), gp_data(nullptr),
 		is_plain_bin(false) {}
 	~TimeHistoryOutput_S2D_ME_s_FEM_up() {}

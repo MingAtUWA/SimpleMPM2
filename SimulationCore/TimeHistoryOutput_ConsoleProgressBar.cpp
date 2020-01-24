@@ -10,7 +10,7 @@
 #define DEFAULT_WINDTH_DIV_100 ((float)DEFAULT_WIDTH / 100.0f)
 
 TimeHistoryOutput_ConsoleProgressBar::TimeHistoryOutput_ConsoleProgressBar() :
-	TimeHistoryOutput("ConsoleProgressBar", &time_history_output_func_console_progress_bar),
+	TimeHistoryOutput("ConsoleProgressBar", "ConsoleProgressBar", &time_history_output_func_console_progress_bar),
 	width (DEFAULT_WIDTH), width_div_100(DEFAULT_WINDTH_DIV_100),
 	prev_pos(0), cur_pos(0) { interval_num = 100; }
 

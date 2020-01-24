@@ -31,9 +31,10 @@ protected:
 	TimeHistoryOutputFunc output_func;
 
 public:
-	TimeHistoryOutput(const char *_type = "TimeHistory",
+	TimeHistoryOutput(const char *_name,
+		const char *_type = "TimeHistory",
 		TimeHistoryOutputFunc _output_func = &time_history_output_func_null) :
-		type(_type), name(20, '\0'),
+		name(_name), type(_type),
 		interval_num(1), need_output_init_state(false),
 		model(nullptr), step(nullptr), res_file(nullptr),
 		output_func(_output_func), next(nullptr) {}

@@ -14,7 +14,8 @@ Class TimeHistoryOutput_S2D_ME_s_RigidBody_Fric
 class TimeHistoryOutput_S2D_ME_s_RigidBody_Fric : public TimeHistoryOutput
 {
 public:
-	TimeHistoryOutput_S2D_ME_s_RigidBody_Fric() : TimeHistoryOutput("S2D_ME_RigidBody_Fric") {}
+	TimeHistoryOutput_S2D_ME_s_RigidBody_Fric(const char *_name = "TimeHistory") : 
+		TimeHistoryOutput(_name, "S2D_ME_RigidBody_Fric") {}
 	~TimeHistoryOutput_S2D_ME_s_RigidBody_Fric() {}
 
 	friend int time_history_output_func_s2d_me_s_rigid_body_fric_to_plain_bin_res_file(TimeHistoryOutput &_self);

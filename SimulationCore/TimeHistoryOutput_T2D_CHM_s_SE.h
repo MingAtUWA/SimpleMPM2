@@ -8,13 +8,15 @@
 
 int time_history_output_func_t2d_chm_s_SE_to_plain_bin_res_file(TimeHistoryOutput &_self);
 int time_history_output_func_t2d_chm_s_SE_to_xml_res_file(TimeHistoryOutput &_self);
+
 /* ===========================================================
 Class TimeHistoryOutput_T2D_CHM_s_SE
 =========================================================== */
 class TimeHistoryOutput_T2D_CHM_s_SE : public TimeHistoryOutput
 {
 public:
-	TimeHistoryOutput_T2D_CHM_s_SE() : TimeHistoryOutput("T2D_CHM_s_SE") {}
+	TimeHistoryOutput_T2D_CHM_s_SE(const char *_name) : 
+		TimeHistoryOutput(_name, "T2D_CHM_s_SE") {}
 	~TimeHistoryOutput_T2D_CHM_s_SE() {}
 
 	friend int time_history_output_func_t2d_chm_s_SE_to_plain_bin_res_file(TimeHistoryOutput &_self);

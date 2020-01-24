@@ -9,6 +9,7 @@ project(SimpleMPM2)
 
 set(VENDORS_DIR ${CMAKE_SOURCE_DIR}/Vendors/)
 
+#### External dependency
 # Eigen
 set(EIGEN_INCLUDE_DIR ${VENDORS_DIR}/Eigen/include/)
 # GLAD
@@ -20,21 +21,41 @@ find_library(GLFW_LIBRARIES
     NAMES glfw3
     PATHS ${GLFW_LIBRARIES_DIR}
     )
-# glm
-set(GLM_INCLUDE_DIR ${VENDORS_DIR}/glm)
-# OpenGL headers
+# OpenGL
+set(GLM_INCLUDE_DIR ${VENDORS_DIR}/glm/)
 set(OPENGL_INCLUDE_DIR
     ${GLAD_INCLUDE_DIR}
     ${GLFW_INCLUDE_DIR}
     ${GLM_INCLUDE_DIR}
     )
+# hdf5
+set(HDF5_INCLUDE_DIR ${VENDORS_DIR}/hdf5/include/)
+set(HDF5_LIBRARIES_DIR ${VENDORS_DIR}/hdf5/lib/)
+#libhdf5 libhdf5_cpp libhdf5_hl libhdf5_hl_cpp libhdf5_tools
+find_library(HDF5_LIB
+    NAMES libhdf5
+    PATHS ${HDF5_LIBRARIES_DIR}
+    )
+find_library(HDF5_CPP_LIB
+    NAMES libhdf5_cpp
+    PATHS ${HDF5_LIBRARIES_DIR}
+    )
+find_library(HDF5_SZIP
+    NAMES szip
+    PATHS ${HDF5_LIBRARIES_DIR}
+    )
+find_library(HDF5_ZLIB
+    NAMES zlib
+    PATHS ${HDF5_LIBRARIES_DIR}
+    )
+set(HDF5_LIBRARIES ${HDF5_LIB} ${HDF5_CPP_LIB} ${HDF5_SZIP} ${HDF5_ZLIB})
 
 # Utilities header
 set(UTILITIES_INCLUDE_DIR
     ${CMAKE_SOURCE_DIR}/Utilities/
     ${CMAKE_SOURCE_DIR}/Utilities/GraphicUtils
     ${CMAKE_SOURCE_DIR}/Utilities/MemoryUtils
-)
+    )
 
 # SimulationCore header
 set(SIMULATIONCORE_INCLUDE_DIR

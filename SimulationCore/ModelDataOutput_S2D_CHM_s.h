@@ -1,5 +1,5 @@
-#ifndef __MODEL_DATA_OUTPUT_S2D_CHM_S_H__
-#define __MODEL_DATA_OUTPUT_S2D_CHM_S_H__
+#ifndef __Model_Data_Output_S2D_CHM_s_H__
+#define __Model_Data_Output_S2D_CHM_s_H__
 
 #include <string>
 
@@ -16,7 +16,8 @@ Class ModelDataOutput_S2D_CHM_s
 class ModelDataOutput_S2D_CHM_s : public ModelDataOutput
 {
 public:
-	ModelDataOutput_S2D_CHM_s() : ModelDataOutput("ModelDataOutput_S2D_CHM_s") {}
+	ModelDataOutput_S2D_CHM_s(const char *_name = "ModelDataOutput") : 
+		ModelDataOutput(_name, "ModelDataOutput_S2D_CHM_s") {}
 	~ModelDataOutput_S2D_CHM_s() {}
 
 	friend int model_data_output_func_s2d_chm_s_to_plain_bin_res_file(ModelDataOutput &_self);

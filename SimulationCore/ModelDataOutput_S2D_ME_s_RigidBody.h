@@ -1,5 +1,5 @@
-#ifndef __MODEL_DATA_OUTPUT_S2D_ME_S_RIGID_BODY_H__
-#define __MODEL_DATA_OUTPUT_S2D_ME_S_RIGID_BODY_H__
+#ifndef __Model_Data_Output_S2D_ME_s_Rigid_Body_H__
+#define __Model_Data_Output_S2D_ME_s_Rigid_Body_H__
 
 #include <string>
 
@@ -16,8 +16,8 @@ Class ModelDataOutput_S2D_ME_s_RigidBody
 class ModelDataOutput_S2D_ME_s_RigidBody : public ModelDataOutput
 {
 public:
-	ModelDataOutput_S2D_ME_s_RigidBody() :
-		ModelDataOutput("ModelDataOutput_S2D_ME_s_RigidBody") {}
+	ModelDataOutput_S2D_ME_s_RigidBody(const char *_name = "ModelDataOutput") :
+		ModelDataOutput(_name, "ModelDataOutput_S2D_ME_s_RigidBody") {}
 	~ModelDataOutput_S2D_ME_s_RigidBody() {}
 
 	friend int model_data_output_func_s2d_me_s_rigid_body_to_plain_bin_res_file(ModelDataOutput &_self);

@@ -141,6 +141,12 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 	miu = _miu;
 }
 
+void Model_T2D_CHM_s::alloc_pcls(size_t num)
+{
+	pcls = new Particle[num];
+	pcl_num = num;
+}
+
 void Model_T2D_CHM_s::clear_pcls(void)
 {
 	if (pcls)

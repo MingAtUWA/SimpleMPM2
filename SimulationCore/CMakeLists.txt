@@ -14,7 +14,7 @@ add_library(
     Step.h Step.cpp
     ModelDataOutput.h ModelDataOutput.cpp
     TimeHistoryOutput.h TimeHistoryOutput.cpp
-    ResultFile.h
+    ResultFile.h ResultFileType.h
     # Plain binary result file
     ResultFile_PlainBin.h ResultFile_PlainBin_DataStruct.h
     # XML result file
@@ -87,6 +87,8 @@ add_library(
     ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.cpp
+    # output mc container to hdf5 file
+    output_model_container_to_hdf5.h output_model_container_to_hdf5.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

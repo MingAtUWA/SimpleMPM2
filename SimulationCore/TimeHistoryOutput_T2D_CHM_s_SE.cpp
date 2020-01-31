@@ -5,7 +5,55 @@
 
 #include "ResultFile_PlainBin_DataStruct.h"
 
+#include "output_model_container_to_hdf5.h"
+
 #include "TimeHistoryOutput_T2D_CHM_s_SE.h"
+
+int TimeHistoryOutput_T2D_CHM_s_SE::init(void)
+{
+	switch (res_file->get_type())
+	{
+	case ResultFileType::PlainBin:
+		break;
+	case ResultFileType::XML:
+		break;
+	case ResultFileType::Hdf5:
+		{
+			ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+			hid_t th_grp_id = rf.get_time_history_grp_id();
+			th_id = rf.create_group(th_grp_id, name.c_str());
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int TimeHistoryOutput_T2D_CHM_s_SE::close(void)
+{
+	switch (res_file->get_type())
+	{
+	case ResultFileType::PlainBin:
+		break;
+	case ResultFileType::XML:
+		break;
+	case ResultFileType::Hdf5:
+		{
+			ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+			rf.write_attribute(th_id, "output_num", output_id + 1);
+			if (th_id > 0)
+			{
+				rf.close_group(th_id);
+				th_id = -1;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
 int time_history_output_func_t2d_chm_s_SE_to_plain_bin_res_file(TimeHistoryOutput &_self)
 {
@@ -200,5 +248,31 @@ int time_history_output_func_t2d_chm_s_SE_to_xml_res_file(TimeHistoryOutput &_se
 	// ending
 	file << "</TimeHistory>\n";
 
+	return 0;
+}
+
+
+int time_history_output_func_t2d_chm_s_SE_to_hdf5_res_file(TimeHistoryOutput &_self)
+{
+	TimeHistoryOutput_T2D_CHM_s_SE &th = static_cast<TimeHistoryOutput_T2D_CHM_s_SE &>(_self);
+	Step_T2D_CHM_s_SE &step = static_cast<Step_T2D_CHM_s_SE &>(th.get_step());
+	Model_T2D_CHM_s &md = static_cast<Model_T2D_CHM_s &>(step.get_model());
+	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*th.res_file);
+	
+	char frame_name[30];
+	snprintf(frame_name, 30, "frame%zu", th.output_id);
+	hid_t frame_grp_id = rf.create_group(th.th_id, frame_name);
+
+	// output particle data
+	ouput_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
+
+	// output consititutive model
+	hid_t cm_grp_id = rf.create_group(frame_grp_id, "ConstitutiveModel");
+	output_model_container_to_hdf5_file(md.model_container, rf, cm_grp_id);
+	rf.close_group(cm_grp_id);
+
+	rf.close_group(frame_grp_id);
+
+	++th.output_id;
 	return 0;
 }

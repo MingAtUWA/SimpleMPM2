@@ -34,6 +34,7 @@ add_executable(
     test_t2d_mpm_chm_s_t_bar.cpp
     test_t2d_mpm_chm_s_t_bar_coarser.cpp
     test_t2d_mpm_chm_s_1d_wave.cpp
+    test_t2d_chm_s_hdf5_output.cpp
     # Animation output
     test_mpm_rigidbody_animation.cpp
     # Generate material points from mesh

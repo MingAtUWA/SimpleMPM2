@@ -3,6 +3,7 @@
 
 #include "BC.h"
 #include "Model.h"
+#include "ModelContainer.h"
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
@@ -139,6 +140,7 @@ public: // Node, Element and Particle data structures
 
 		//// APIC
 		//double Cs[2][2], Cf[2][2];
+
 		ConstitutiveModel *cm;
 	};
 
@@ -207,6 +209,8 @@ public:
 	double Ks_cont;
 	double Kf_cont;
 
+	ModelContainer model_container;
+
 public:
 	Model_T2D_CHM_s();
 	~Model_T2D_CHM_s();
@@ -217,6 +221,7 @@ public:
 
 	void init_pcls(size_t num, double n, double m_s, double density_s, double density_f,
 				  double _E, double _niu, double _Kf, double _k, double _miu);
+	void alloc_pcls(size_t num);
 	void clear_pcls(void);
 
 	void init_mesh(TriangleMesh &tri_mesh);

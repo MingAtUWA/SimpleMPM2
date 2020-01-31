@@ -12,7 +12,7 @@ protected:
 	std::fstream file;
 
 public:
-	ResultFile_PlainBin() {}
+	ResultFile_PlainBin() : ResultFile(ResultFileType::PlainBin) {}
 	~ResultFile_PlainBin() { finalize(); }
 	int init(const char *file_name)
 	{

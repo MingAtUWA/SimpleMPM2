@@ -146,14 +146,14 @@ int model_data_output_func_t2d_chm_s_to_hdf5_res_file(ModelDataOutput &_self)
 	Model_T2D_CHM_s &model = static_cast<Model_T2D_CHM_s &>(*md.model);
 	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*md.res_file);
 	
-	hid_t md_id = rf.open_model(model.get_name());
-	hid_t mo_id = rf.create_model_output(md_id, md.get_name());
+	hid_t md_id = rf.get_model_data_grp_id();
+	hid_t bg_mesh_id = rf.create_group(md_id, "background_mesh");
 
-	hid_t bg_mesh_id = rf.create_group(mo_id, "background_mesh");
 	// bg mesh attributes
-	rf.add_attribute(bg_mesh_id, "type", "T2D");
-	rf.add_attribute(bg_mesh_id, "node_num", model.node_num);
-	rf.add_attribute(bg_mesh_id, "element_num", model.elem_num);
+	const char *bg_mesh_type = "T2D";
+	rf.write_attribute(bg_mesh_id, "type", strlen(bg_mesh_type), bg_mesh_type);
+	rf.write_attribute(bg_mesh_id, "node_num", model.node_num);
+	rf.write_attribute(bg_mesh_id, "element_num", model.elem_num);
 	union
 	{
 		double *data_buf_d;
@@ -163,17 +163,15 @@ int model_data_output_func_t2d_chm_s_to_hdf5_res_file(ModelDataOutput &_self)
 	size_t elem_buf_len = model.elem_num * 3;
 	size_t data_buf_len = node_buf_len > elem_buf_len ? node_buf_len : elem_buf_len;
 	data_buf_d = new double[data_buf_len];
+
 	// node coordinates
-	hid_t node_coord = rf.create_dataset(bg_mesh_id, "node_coordinates", model.node_num, 2);
 	for (size_t n_id = 0; n_id < model.node_num; ++n_id)
 	{
 		data_buf_d[2 * n_id] = model.nodes[n_id].x;
 		data_buf_d[2 * n_id + 1] = model.nodes[n_id].y;
 	}
-	rf.write_dataset(bg_mesh_id, model.node_num, 2, data_buf_d);
-	rf.close_dataset(node_coord);
+	rf.write_dataset(bg_mesh_id, "NodeCoordinate", model.node_num, 2, data_buf_d);
 	// element indices
-	hid_t elem_ids = rf.create_dataset(bg_mesh_id, "element_indices", model.elem_num, 3);
 	for (size_t e_id = 0; e_id < model.elem_num; ++e_id)
 	{
 		Model_T2D_CHM_s::Element &elem = model.elems[e_id];
@@ -181,13 +179,10 @@ int model_data_output_func_t2d_chm_s_to_hdf5_res_file(ModelDataOutput &_self)
 		data_buf_ui[3 * e_id + 1] = elem.n2;
 		data_buf_ui[3 * e_id + 2] = elem.n3;
 	}
-	rf.write_dataset(bg_mesh_id, model.elem_num, 3, data_buf_ui);
-	rf.close_dataset(elem_ids);
+	rf.write_dataset(bg_mesh_id, "ElementTopology", model.elem_num, 3, data_buf_ui);
+
 	delete[] data_buf_d;
 	rf.close_group(bg_mesh_id);
-
-	rf.close_model_output(mo_id);
-	rf.close_model(md_id);
 
 	return 0;
 }

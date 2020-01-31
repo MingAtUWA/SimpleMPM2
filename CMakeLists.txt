@@ -33,19 +33,19 @@ set(HDF5_INCLUDE_DIR ${VENDORS_DIR}/hdf5/include/)
 set(HDF5_LIBRARIES_DIR ${VENDORS_DIR}/hdf5/lib/)
 #libhdf5 libhdf5_cpp libhdf5_hl libhdf5_hl_cpp libhdf5_tools
 find_library(HDF5_LIB
-    NAMES libhdf5
+    NAMES libhdf5_D
     PATHS ${HDF5_LIBRARIES_DIR}
     )
 find_library(HDF5_CPP_LIB
-    NAMES libhdf5_cpp
+    NAMES libhdf5_cpp_D
     PATHS ${HDF5_LIBRARIES_DIR}
     )
 find_library(HDF5_SZIP
-    NAMES szip
+    NAMES libszip_D
     PATHS ${HDF5_LIBRARIES_DIR}
     )
 find_library(HDF5_ZLIB
-    NAMES zlib
+    NAMES libzlib_D
     PATHS ${HDF5_LIBRARIES_DIR}
     )
 set(HDF5_LIBRARIES ${HDF5_LIB} ${HDF5_CPP_LIB} ${HDF5_SZIP} ${HDF5_ZLIB})

@@ -12,7 +12,7 @@ protected:
 	std::fstream file;
 
 public:
-	ResultFile_XML() {}
+	ResultFile_XML() : ResultFile(ResultFileType::XML) {}
 	~ResultFile_XML() { finalize(); }
 	int init(const char *file_name)
 	{

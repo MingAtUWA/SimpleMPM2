@@ -12,7 +12,7 @@ int modified_cam_clay_integration_function(ConstitutiveModel *_self, double dstr
 class ModifiedCamClay : public ConstitutiveModel
 {
 	friend int modified_cam_clay_integration_function(ConstitutiveModel *_self, double dstrain[6]);
-protected:
+public:
 	double niu; // possion ratio
 	double kappa; // logrithmic recompression modulus
 	double lambda; // logrithmic compression modulus
@@ -20,8 +20,7 @@ protected:
 	double e; // void ratio
 	double pc; // pre-consolidation stress
 	double N, Gamma, M; // normal and critical state line parameters
-
-public:
+	
 	ModifiedCamClay() :
 		ConstitutiveModel(modified_cam_clay_integration_function, ConstitutiveModelType::ModifiedCamClay),
 		e(0.0), pc(0.0), niu(0.0), 

@@ -6,12 +6,13 @@
 class ConstitutiveModel;
 typedef int (*__Constitutive_Model_Integration_Func__)(ConstitutiveModel *_self, double dstrain[6]);
 
+class ConstitutiveModelList;
+
 class ConstitutiveModel
 {
 public:
 	typedef __Constitutive_Model_Integration_Func__ CMIntFunc;
 
-protected:
 	ConstitutiveModelType type;
 
 	union // stress
@@ -46,8 +47,7 @@ protected:
 	};
 
 	CMIntFunc integration_func;
-
-public:
+	
 	ConstitutiveModel(CMIntFunc _inte_func = nullptr,
 		ConstitutiveModelType _type = ConstitutiveModelType::InvalidType):
 		integration_func(_inte_func), type(_type) {}
@@ -61,6 +61,38 @@ public:
 	inline const double *get_dstrain_p(void) noexcept { return dstrain_p; }
 	inline const double *get_De_mat(void)  noexcept { return De_mat_array; }
 	inline const double *get_Dep_mat(void) noexcept { return Dep_mat_array; }
+
+// pointer to external data
+protected:
+	void *ext_data;
+public:
+	inline void set_ext_data(void *_data) noexcept { ext_data = _data; }
+	inline void *get_ext_data(void) noexcept { return ext_data; }
+
+protected:
+	friend ConstitutiveModelList;
+	ConstitutiveModel *next;
+};
+
+class ConstitutiveModelList
+{
+protected:
+	ConstitutiveModel *head;
+	size_t num;
+
+public:
+	ConstitutiveModelList() : head(nullptr), num(0) {}
+	~ConstitutiveModelList() { reset(); }
+	inline void reset(void) { head = nullptr; num = 0; }
+	inline void add_cm(ConstitutiveModel &cm)
+	{
+		cm.next = head;
+		head = &cm;
+		++num;
+	}
+	inline size_t get_num(void) { return num; }
+	inline ConstitutiveModel *first(void) { return head; }
+	inline ConstitutiveModel *next(ConstitutiveModel *cm) { return cm->next; }
 };
 
 #endif

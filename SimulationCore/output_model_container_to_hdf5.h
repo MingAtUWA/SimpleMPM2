@@ -1,0 +1,17 @@
+#ifndef __Output_Model_Container_To_Hdf5_H__
+#define __Output_Model_Container_To_Hdf5_H__
+
+#include "hdf5.h"
+#include "ResultFile_hdf5.h"
+#include "ModelContainer.h"
+#include "Model_T2D_CHM_s.h"
+
+int output_model_container_to_hdf5_file(ModelContainer &mc, ResultFile_hdf5 &rf, hid_t th_id);
+int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t th_id);
+
+int ouput_pcl_data_to_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t th_id);
+int load_pcl_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t th_id);
+
+int load_chm_s_model_from_hdf5_file(Model_T2D_CHM_s &md, const char *hdf5_name, const char *th_name, size_t frame_id);
+
+#endif

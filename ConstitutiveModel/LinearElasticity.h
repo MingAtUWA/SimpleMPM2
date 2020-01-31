@@ -8,10 +8,9 @@ int linear_elasticity_integration_function(ConstitutiveModel *_self, double dstr
 class LinearElasticity : public ConstitutiveModel
 {
 friend int linear_elasticity_integration_function(ConstitutiveModel *_self, double dstrain[6]);
-protected:
-	double E, niu;
-
 public:
+	double E, niu;
+	
 	LinearElasticity() :
 		ConstitutiveModel(linear_elasticity_integration_function, ConstitutiveModelType::LinearElasticity) {}
 	~LinearElasticity() {}

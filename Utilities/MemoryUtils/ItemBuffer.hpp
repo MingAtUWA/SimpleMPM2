@@ -95,7 +95,7 @@ namespace MemoryUtilities
 			cur += num;
 			if (cur > end)
 			{
-				// add unused slot back
+				// add unused slot back to unused list
 				ItemSlot *last = end - 1;
 				last->next = empty_slot;
 				for (cur = (ItemSlot *)res; cur < last; ++cur)

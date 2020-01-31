@@ -9,45 +9,60 @@ class ResultFile_hdf5 : public ResultFile
 {
 protected:
 	hid_t file_id;
-	
+	hid_t md_grp_id; // model data id
+	hid_t th_grp_id; // time history id
+
 public:
 	ResultFile_hdf5();
 	~ResultFile_hdf5();
 
 	// open hdf5 file
-	int init(const char *file_name, bool over_write = false);
-	inline hid_t get_file_id(void) noexcept { return file_id; }
+	int create(const char *file_name, bool over_write = true);
+	int open(const char *file_name, bool read_only = true);
 	void close(void);
+	inline hid_t get_file_id(void) noexcept { return file_id; }
 
 	// group
 	hid_t create_group(hid_t parent_id, const char *name);
 	hid_t open_group(hid_t parent_id, const char *name);
 	void close_group(hid_t id);
+	bool has_group(hid_t parent_id, const char *name);
+
 	// dataset
-	// one dimension
-	hid_t create_dataset(hid_t grp_id, const char *name, size_t num);
-	// two dimension
-	hid_t create_dataset(hid_t grp_id, const char *name, size_t row_num, size_t col_num);
+	hid_t open_dataset(hid_t parent_id, const char *name);
 	void close_dataset(hid_t id);
-	int write_dataset(hid_t set_id, size_t num, double *data);
-	int write_dataset(hid_t set_id, size_t row_num, size_t col_num, double *data);
-	int write_dataset(hid_t set_id, size_t row_num, size_t col_num, unsigned long long *data);
+	bool has_dataset(hid_t parent_id, const char *name);
 
-	// create model
-	hid_t create_model(const char *name);
-	hid_t open_model(const char *name);
-	void close_model(hid_t id);
-	// create model output
-	hid_t create_model_output(hid_t md_id, const char *name);
-	void close_model_output(hid_t id);
-	// create time history
-	hid_t create_time_history(hid_t md_id, const char *name);
-	void close_time_history(hid_t id);
+	// model data group
+	hid_t get_model_data_grp_id(void);
+	// time history group
+	hid_t get_time_history_grp_id(void);
+	
+	// dataset
+	// write
+	int write_dataset(hid_t grp_id, const char *dset_name,
+		size_t num, double *data);
+	int write_dataset(hid_t grp_id, const char *dset_name,
+		size_t row_num, size_t col_num, double *data);
+	int write_dataset(hid_t grp_id, const char *dset_name,
+		size_t row_num,	size_t col_num, unsigned long long *data);
+	// read
+	int read_dataset(hid_t grp_id, const char *dset_name,
+					 size_t num, double *data);
+	int read_dataset(hid_t grp_id, const char *dset_name,
+					 size_t row_num, size_t col_num, double *data);
+	int read_dataset(hid_t grp_id, const char *dset_name,
+					 size_t row_num, size_t col_num, unsigned long long *data);
 
-	// add attribute
-	int add_attribute(hid_t grp_id, const char *name, double value);
-	int add_attribute(hid_t grp_id, const char *name, size_t value);
-	int add_attribute(hid_t grp_id, const char *name, const char *str);
+	// attributes
+	// write
+	int write_attribute(hid_t grp_id, const char *name, double value);
+	int write_attribute(hid_t grp_id, const char *name, size_t value);
+	int write_attribute(hid_t grp_id, const char *name, size_t num, const char *str);
+	// read
+	int read_attribute(hid_t grp_id, const char *name, double &value);
+	int read_attribute(hid_t grp_id, const char *name, size_t &value);
+	int read_attribute(hid_t grp_id, const char *name, size_t num, const char *str);
 };
 
 #endif

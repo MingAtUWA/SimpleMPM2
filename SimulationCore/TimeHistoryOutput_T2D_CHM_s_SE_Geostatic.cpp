@@ -1,17 +1,67 @@
 #include "SimulationCore_pcp.h"
 
 #include "Model_T2D_CHM_s.h"
-#include "Step_T2D_CHM_s_SE.h"
+#include "Step_T2D_CHM_s_SE_Geostatic.h"
 
 #include "ResultFile_PlainBin_DataStruct.h"
 
+#include "output_model_container_to_hdf5.h"
+
 #include "TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h"
+
+int TimeHistoryOutput_T2D_CHM_s_SE_Geostatic::init(void)
+{
+	switch (res_file->get_type())
+	{
+	case ResultFileType::PlainBin:
+		break;
+	case ResultFileType::XML:
+		break;
+	case ResultFileType::Hdf5:
+	{
+		ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+		hid_t th_grp_id = rf.get_time_history_grp_id();
+		th_id = rf.create_group(th_grp_id, name.c_str());
+	}
+	break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int TimeHistoryOutput_T2D_CHM_s_SE_Geostatic::close(void)
+{
+	switch (res_file->get_type())
+	{
+	case ResultFileType::PlainBin:
+		break;
+	case ResultFileType::XML:
+		break;
+	case ResultFileType::Hdf5:
+	{
+		ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+		rf.write_attribute(th_id, "output_num", output_id + 1);
+		if (th_id > 0)
+		{
+			rf.close_group(th_id);
+			th_id = -1;
+		}
+	}
+	break;
+	default:
+		break;
+	}
+	return 0;
+}
 
 int time_history_output_func_t2d_chm_s_SE_geostatic_to_plain_bin_res_file(TimeHistoryOutput &_self)
 {
-	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &th = static_cast<TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &>(_self);
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &th
+		= static_cast<TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &>(_self);
 	Model_T2D_CHM_s &model = static_cast<Model_T2D_CHM_s &>(th.get_model());
-	Step_T2D_CHM_s_SE &step = static_cast<Step_T2D_CHM_s_SE &>(th.get_step());
+	Step_T2D_CHM_s_SE_Geostatic &step
+		= static_cast<Step_T2D_CHM_s_SE_Geostatic &>(th.get_step());
 	ResultFile_PlainBin &rf = static_cast<ResultFile_PlainBin &>(*th.res_file);
 	std::fstream &file = rf.get_file();
 	double *pcl_data;
@@ -63,7 +113,10 @@ int time_history_output_func_t2d_chm_s_SE_geostatic_to_plain_bin_res_file(TimeHi
 
 int time_history_output_func_t2d_chm_s_SE_geostatic_to_xml_res_file(TimeHistoryOutput &_self)
 {
-	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &th = static_cast<TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &>(_self);
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &th
+		= static_cast<TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &>(_self);
+	Step_T2D_CHM_s_SE_Geostatic &step
+		= static_cast<Step_T2D_CHM_s_SE_Geostatic &>(th.get_step());
 	ResultFile_XML &rf = static_cast<ResultFile_XML &>(*th.res_file);
 	std::fstream &file = rf.get_file();
 	
@@ -71,7 +124,6 @@ int time_history_output_func_t2d_chm_s_SE_geostatic_to_xml_res_file(TimeHistoryO
 #define str_buffer_len (sizeof(str_buffer) / sizeof(str_buffer[0]))
 
 	// time history
-	Step_T2D_CHM_s_SE &step = static_cast<Step_T2D_CHM_s_SE &>(th.get_step());
 	const char *time_history_info = ""
 		"<TimeHistory>\n"
 		"    <substep_num> %zu </substep_num>\n"
@@ -120,5 +172,29 @@ int time_history_output_func_t2d_chm_s_SE_geostatic_to_xml_res_file(TimeHistoryO
 	// ending
 	file << "</TimeHistory>\n";
 
+	return 0;
+}
+
+
+int time_history_output_func_t2d_chm_s_SE_geostatic_to_hdf5_res_file(TimeHistoryOutput &_self)
+{
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &th
+		= static_cast<TimeHistoryOutput_T2D_CHM_s_SE_Geostatic &>(_self);
+	Step_T2D_CHM_s_SE_Geostatic &step = static_cast<Step_T2D_CHM_s_SE_Geostatic &>(th.get_step());
+	Model_T2D_CHM_s &md = static_cast<Model_T2D_CHM_s &>(step.get_model());
+	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*th.res_file);
+
+	char frame_name[30];
+	snprintf(frame_name, 30, "frame_%zu", th.output_id);
+	hid_t frame_grp_id = rf.create_group(th.th_id, frame_name);
+	// output particle data
+	ouput_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
+	// output consititutive model
+	output_model_container_to_hdf5_file(md.model_container, rf, frame_grp_id);
+	// output rigid body
+	output_rigid_ciricle_to_hdf5_file(md.get_rigid_circle(), rf, frame_grp_id);
+	rf.close_group(frame_grp_id);
+
+	++th.output_id;
 	return 0;
 }

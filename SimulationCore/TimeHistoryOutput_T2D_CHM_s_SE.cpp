@@ -262,15 +262,12 @@ int time_history_output_func_t2d_chm_s_SE_to_hdf5_res_file(TimeHistoryOutput &_s
 	char frame_name[30];
 	snprintf(frame_name, 30, "frame%zu", th.output_id);
 	hid_t frame_grp_id = rf.create_group(th.th_id, frame_name);
-
 	// output particle data
 	ouput_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
-
 	// output consititutive model
-	hid_t cm_grp_id = rf.create_group(frame_grp_id, "ConstitutiveModel");
-	output_model_container_to_hdf5_file(md.model_container, rf, cm_grp_id);
-	rf.close_group(cm_grp_id);
-
+	output_model_container_to_hdf5_file(md.model_container, rf, frame_grp_id);
+	// output rigid body
+	output_rigid_ciricle_to_hdf5_file(md.get_rigid_circle(), rf, frame_grp_id);
 	rf.close_group(frame_grp_id);
 
 	++th.output_id;

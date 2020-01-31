@@ -63,11 +63,14 @@ public:
 	inline const double *get_Dep_mat(void) noexcept { return Dep_mat_array; }
 
 // pointer to external data
-protected:
-	void *ext_data;
 public:
-	inline void set_ext_data(void *_data) noexcept { ext_data = _data; }
-	inline void *get_ext_data(void) noexcept { return ext_data; }
+	union
+	{
+		void *ext_data;
+		unsigned long long ext_data_ull;
+		long long ext_data_ll;
+		double ext_data_d;
+	};
 
 protected:
 	friend ConstitutiveModelList;

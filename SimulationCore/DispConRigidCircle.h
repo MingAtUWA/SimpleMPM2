@@ -40,6 +40,8 @@ public:
 	}
 
 	int init(double _r, double _x, double _y, double max_pcl_size);
+	Particle *alloc_pcls(size_t num);
+	
 	void del_pcls_in_circle(TriangleMeshToParticles &tri2pcl, double exp_r = 0.0);
 	void set_velocity(double _vx, double _vy, double _w);
 	

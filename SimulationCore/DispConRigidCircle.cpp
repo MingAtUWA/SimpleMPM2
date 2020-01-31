@@ -39,6 +39,13 @@ int DispConRigidCircle::init(double _r, double _x, double _y, double max_pcl_siz
 	return 0;
 }
 
+DispConRigidCircle::Particle *DispConRigidCircle::alloc_pcls(size_t num)
+{
+	pcl_num = num;
+	pcls = new Particle[pcl_num];
+	return pcls;
+}
+
 void DispConRigidCircle::set_velocity(double _vx, double _vy, double _w)
 {
 	vx = _vx; vy = _vy; w = _w;

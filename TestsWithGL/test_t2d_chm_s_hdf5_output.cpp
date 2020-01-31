@@ -1,11 +1,15 @@
 #include "TestsWithGL_pcp.h"
 
 #include "ResultFile_hdf5.h"
+
 #include "Model_T2D_CHM_s.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
 
-#include "Step_T2D_CHM_s.h"
-#include "TimeHistoryOutput_T2D_CHM_s.h"
+//#include "Step_T2D_CHM_s_SE.h"
+#include "Step_T2D_CHM_s_SE_Geostatic.h"
+
+//#include "TimeHistoryOutput_T2D_CHM_s_SE.h"
+#include "TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h"
 
 void test_t2d_chm_s_hdf5_output(void)
 {
@@ -55,17 +59,18 @@ void test_t2d_chm_s_hdf5_output(void)
 	md_out.set_res_file(res_file);
 	md_out.output();
 
-	Step_T2D_CHM_s step;
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic th1("th_out");
+	th1.set_interval_num(10);
+	th1.set_res_file(res_file);
+
+	Step_T2D_CHM_s_SE_Geostatic step;
 	step.set_name("step_test");
 	step.set_model(model);
-	step.set_time(1.2);
-
-	//TimeHistoryOutput_T2D_CHM_s_SE th("th_out");
-	//th.set_interval_num(0);
-	//th.set_res_file(res_file);
-	//step.add_time_history(th);
+	step.set_time(3.0e-5);
+	step.set_dtime(1.0e-5);
+	step.add_time_history(th1);
 	
-	//th.output();
+	step.solve();
 
 	system("pause");
 }

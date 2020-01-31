@@ -291,12 +291,13 @@ int ResultFile_hdf5::read_attribute(
 	size_t &value
 	)
 {
-	unsigned long long _value = (unsigned long long)value;
+	unsigned long long _value;
 	hid_t dataspace_id = H5Screate(H5S_SCALAR);
 	hid_t attr_id = H5Aopen(grp_id, name, H5P_DEFAULT);
 	H5Aread(attr_id, H5T_NATIVE_ULLONG, &_value);
 	H5Aclose(attr_id);
 	H5Sclose(dataspace_id);
+	value = (size_t)_value;
 	return 0;
 }
 

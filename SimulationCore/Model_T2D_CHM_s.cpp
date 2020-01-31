@@ -133,12 +133,22 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 		pcl.s22 = 0.0;
 		pcl.p = 0.0;
 	}
+	
 	// constitutive model
 	E = _E;
 	niu = _niu;
 	Kf = _Kf;
 	k = _k;
 	miu = _miu;
+
+	LinearElasticity *cms = model_container.add_LinearElasticity(pcl_num);
+	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
+	{
+		LinearElasticity &cm = cms[p_id];
+		cm.set_param(_E, _niu);
+		cm.ext_data = &pcls[p_id];
+		pcls[p_id].cm = &cm;
+	}
 }
 
 void Model_T2D_CHM_s::alloc_pcls(size_t num)

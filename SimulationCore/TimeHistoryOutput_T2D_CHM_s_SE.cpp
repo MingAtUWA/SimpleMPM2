@@ -4,8 +4,7 @@
 #include "Step_T2D_CHM_s_SE.h"
 
 #include "ResultFile_PlainBin_DataStruct.h"
-
-#include "output_model_container_to_hdf5.h"
+#include "Model_T2D_CHM_s_hdf5_io_utilities.h"
 
 #include "TimeHistoryOutput_T2D_CHM_s_SE.h"
 
@@ -40,13 +39,13 @@ int TimeHistoryOutput_T2D_CHM_s_SE::close(void)
 		break;
 	case ResultFileType::Hdf5:
 		{
-			ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
-			rf.write_attribute(th_id, "output_num", output_id + 1);
-			if (th_id > 0)
-			{
-				rf.close_group(th_id);
-				th_id = -1;
-			}
+		ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+		rf.write_attribute(th_id, "output_num", output_id);
+		if (th_id > 0)
+		{
+			rf.close_group(th_id);
+			th_id = -1;
+		}
 		}
 		break;
 	default:
@@ -254,14 +253,20 @@ int time_history_output_func_t2d_chm_s_SE_to_xml_res_file(TimeHistoryOutput &_se
 
 int time_history_output_func_t2d_chm_s_SE_to_hdf5_res_file(TimeHistoryOutput &_self)
 {
-	TimeHistoryOutput_T2D_CHM_s_SE &th = static_cast<TimeHistoryOutput_T2D_CHM_s_SE &>(_self);
-	Step_T2D_CHM_s_SE &step = static_cast<Step_T2D_CHM_s_SE &>(th.get_step());
+	TimeHistoryOutput_T2D_CHM_s_SE &th
+		= static_cast<TimeHistoryOutput_T2D_CHM_s_SE &>(_self);
+	Step_T2D_CHM_s_SE &step
+		= static_cast<Step_T2D_CHM_s_SE &>(th.get_step());
 	Model_T2D_CHM_s &md = static_cast<Model_T2D_CHM_s &>(step.get_model());
 	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*th.res_file);
 	
 	char frame_name[30];
-	snprintf(frame_name, 30, "frame%zu", th.output_id);
+	snprintf(frame_name, 30, "frame_%zu", th.output_id);
 	hid_t frame_grp_id = rf.create_group(th.th_id, frame_name);
+	rf.write_attribute(frame_grp_id, "current_time", step.get_current_time());
+	rf.write_attribute(frame_grp_id, "total_time", step.get_total_time());
+	rf.write_attribute(frame_grp_id, "substep_num", step.get_substep_num());
+	rf.write_attribute(frame_grp_id, "total_substep_num", step.get_total_substep_num());
 	// output particle data
 	ouput_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
 	// output consititutive model

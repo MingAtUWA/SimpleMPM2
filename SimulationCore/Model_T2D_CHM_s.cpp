@@ -1,6 +1,7 @@
 #include "SimulationCore_pcp.h"
 
 #include "Geometry.h"
+#include "ModelContainer.h"
 
 #include "Model_T2D_CHM_s.h"
 
@@ -115,12 +116,12 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 		pcl.id = pcl_id;
 		pcl.ux_s = 0.0;
 		pcl.uy_s = 0.0;
+		pcl.ux_f = 0.0;
+		pcl.uy_f = 0.0;
 		pcl.vx_s = 0.0;
 		pcl.vy_s = 0.0;
 		pcl.vx_f = 0.0;
 		pcl.vy_f = 0.0;
-		pcl.ux_f = 0.0;
-		pcl.uy_f = 0.0;
 		pcl.n = n;
 		pcl.m_s = m_s;
 		pcl.density_s = density_s;
@@ -140,7 +141,6 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 	Kf = _Kf;
 	k = _k;
 	miu = _miu;
-
 	LinearElasticity *cms = model_container.add_LinearElasticity(pcl_num);
 	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
 	{
@@ -150,6 +150,56 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 		pcls[p_id].cm = &cm;
 	}
 }
+
+
+void Model_T2D_CHM_s::init_pcls(size_t num,
+	double n, double m_s, double density_s, double density_f,
+	double _Kf, double _k, double _miu,
+	double _niu, double _kappa, double _lambda, double _fric_ang,
+	double _e, double _stress[6])
+{
+	clear_pcls();
+	pcl_num = num;
+	pcls = new Particle[pcl_num];
+	for (size_t pcl_id = 0; pcl_id < num; ++pcl_id)
+	{
+		Particle &pcl = pcls[pcl_id];
+		pcl.id = pcl_id;
+		pcl.ux_s = 0.0;
+		pcl.uy_s = 0.0;
+		pcl.vx_s = 0.0;
+		pcl.vy_s = 0.0;
+		pcl.vx_f = 0.0;
+		pcl.vy_f = 0.0;
+		pcl.ux_f = 0.0;
+		pcl.uy_f = 0.0;
+		pcl.n = n;
+		pcl.m_s = m_s;
+		pcl.density_s = density_s;
+		pcl.density_f = density_f;
+		pcl.e11 = 0.0;
+		pcl.e22 = 0.0;
+		pcl.e12 = 0.0;
+		pcl.s11 = 0.0;
+		pcl.s12 = 0.0;
+		pcl.s22 = 0.0;
+		pcl.p = 0.0;
+	}
+
+	// constitutive model
+	Kf = _Kf;
+	k = _k;
+	miu = _miu;
+	ModifiedCamClay *cms = model_container.add_ModifiedCamClay(pcl_num);
+	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
+	{
+		ModifiedCamClay &cm = cms[p_id];
+		cm.set_param_NC(_niu, _kappa, _lambda, _fric_ang, _e, _stress);
+		cm.ext_data = &pcls[p_id];
+		pcls[p_id].cm = &cm;
+	}
+}
+
 
 void Model_T2D_CHM_s::alloc_pcls(size_t num)
 {
@@ -218,6 +268,27 @@ void Model_T2D_CHM_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
 	if (pcl_num == 0)
 		return;
 	init_pcls(pcl_num, n, (1.0-n)*density_s, density_s, density_f, E, niu, Kf, k, miu);
+	TriangleMeshToParticles::Particle *ext_ppcl = mh_2_pcl.first();
+	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
+	{
+		Particle &pcl = pcls[pcl_id];
+		pcl.x = ext_ppcl->x;
+		pcl.y = ext_ppcl->y;
+		pcl.m_s *= ext_ppcl->vol;
+		ext_ppcl = mh_2_pcl.next(ext_ppcl);
+	}
+}
+
+void Model_T2D_CHM_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
+	double n, double m_s, double density_s, double density_f,
+	double _Kf, double _k, double _miu,
+	double _niu, double _kappa, double _lambda, double _fric_ang, double _e, double _stress[6])
+{
+	pcl_num = mh_2_pcl.get_pcl_num();
+	if (pcl_num == 0)
+		return;
+	init_pcls(pcl_num, n, (1.0 - n)*density_s, density_s, density_f, _Kf, _k, _miu,
+			  _niu, _kappa, _lambda, _fric_ang, _e, _stress);
 	TriangleMeshToParticles::Particle *ext_ppcl = mh_2_pcl.first();
 	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
 	{

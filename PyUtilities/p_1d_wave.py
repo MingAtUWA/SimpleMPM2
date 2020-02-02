@@ -10,7 +10,7 @@ plot1.set_xlabel("Time")
 plot1.set_ylabel("Pore pressure")
 
 # Read result file
-res_tree = xml_etree.parse("..\\Build\\TestsWithGL\\t2d_mpm_1d_wave.xml")
+res_tree = xml_etree.parse("..\\Build\\TestsWithGL\\t2d_chm_s_geostatic_hdf5.xml")
 # node.tag, node.attrib, node.text
 root = res_tree.getroot()
 time = []

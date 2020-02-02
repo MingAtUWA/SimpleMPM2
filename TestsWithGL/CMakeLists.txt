@@ -60,6 +60,9 @@ add_executable(
     test_t2d_mpm_chm_s_geostatic.cpp
     # Modified Cam Clay
     test_ModifiedCamClay.cpp
+    # hdf5
+    test_t2d_chm_s_geostatic_hdf5.cpp
+    test_t2d_chm_s_restart_from_geostatic_hdf5.cpp
     )
 
 target_include_directories(

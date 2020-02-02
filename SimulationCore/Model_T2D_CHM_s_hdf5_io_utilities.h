@@ -1,11 +1,14 @@
-#ifndef __Output_Model_Container_To_Hdf5_H__
-#define __Output_Model_Container_To_Hdf5_H__
+#ifndef __Model_T2D_CHM_s_hdf5_io_utilities_H__
+#define __Model_T2D_CHM_s_hdf5_io_utilities_H__
 
 #include "hdf5.h"
 #include "ResultFile_hdf5.h"
 #include "ModelContainer.h"
 #include "DispConRigidCircle.h"
 #include "Model_T2D_CHM_s.h"
+
+int output_model_data_to_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf);
+int load_model_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf);
 
 int output_model_container_to_hdf5_file(ModelContainer &mc, ResultFile_hdf5 &rf, hid_t frame_id /* frame id */);
 int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t frame_id /* frame id */);

@@ -50,6 +50,12 @@ int Step_T2D_CHM_s_SE_Geostatic::finalize_calculation(void)
 		Particle &pcl = md.pcls[pcl_id];
 		pcl.vx_s = 0.0;
 		pcl.vy_s = 0.0;
+		pcl.vx_f = 0.0;
+		pcl.vy_f = 0.0;
+		pcl.p = 0.0;
+		pcl.e11 = 0.0;
+		pcl.e22 = 0.0;
+		pcl.e12 = 0.0;
 	}
 	
 	out_file.close();

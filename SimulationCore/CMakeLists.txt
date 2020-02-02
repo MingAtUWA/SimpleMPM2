@@ -88,7 +88,7 @@ add_library(
     TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.cpp
     # output mc container to hdf5 file
-    output_model_container_to_hdf5.h output_model_container_to_hdf5.cpp
+    Model_T2D_CHM_s_hdf5_io_utilities.h Model_T2D_CHM_s_hdf5_io_utilities.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

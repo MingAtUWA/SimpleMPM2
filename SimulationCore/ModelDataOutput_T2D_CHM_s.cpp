@@ -4,6 +4,7 @@
 #include "Step_T2D_CHM_s.h"
 
 #include "ResultFile_PlainBin_DataStruct.h"
+#include "Model_T2D_CHM_s_hdf5_io_utilities.h"
 
 #include "ModelDataOutput_T2D_CHM_s.h"
 
@@ -146,43 +147,7 @@ int model_data_output_func_t2d_chm_s_to_hdf5_res_file(ModelDataOutput &_self)
 	Model_T2D_CHM_s &model = static_cast<Model_T2D_CHM_s &>(*md.model);
 	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*md.res_file);
 	
-	hid_t md_id = rf.get_model_data_grp_id();
-	hid_t bg_mesh_id = rf.create_group(md_id, "background_mesh");
-
-	// bg mesh attributes
-	const char *bg_mesh_type = "T2D";
-	rf.write_attribute(bg_mesh_id, "type", strlen(bg_mesh_type), bg_mesh_type);
-	rf.write_attribute(bg_mesh_id, "node_num", model.node_num);
-	rf.write_attribute(bg_mesh_id, "element_num", model.elem_num);
-	union
-	{
-		double *data_buf_d;
-		unsigned long long *data_buf_ui;
-	};
-	size_t node_buf_len = model.node_num * 2;
-	size_t elem_buf_len = model.elem_num * 3;
-	size_t data_buf_len = node_buf_len > elem_buf_len ? node_buf_len : elem_buf_len;
-	data_buf_d = new double[data_buf_len];
-
-	// node coordinates
-	for (size_t n_id = 0; n_id < model.node_num; ++n_id)
-	{
-		data_buf_d[2 * n_id] = model.nodes[n_id].x;
-		data_buf_d[2 * n_id + 1] = model.nodes[n_id].y;
-	}
-	rf.write_dataset(bg_mesh_id, "NodeCoordinate", model.node_num, 2, data_buf_d);
-	// element indices
-	for (size_t e_id = 0; e_id < model.elem_num; ++e_id)
-	{
-		Model_T2D_CHM_s::Element &elem = model.elems[e_id];
-		data_buf_ui[3 * e_id] = elem.n1;
-		data_buf_ui[3 * e_id + 1] = elem.n2;
-		data_buf_ui[3 * e_id + 2] = elem.n3;
-	}
-	rf.write_dataset(bg_mesh_id, "ElementTopology", model.elem_num, 3, data_buf_ui);
-
-	delete[] data_buf_d;
-	rf.close_group(bg_mesh_id);
+	output_model_data_to_hdf5_file(model, rf);
 
 	return 0;
 }

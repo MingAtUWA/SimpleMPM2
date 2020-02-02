@@ -220,7 +220,10 @@ public:
 	void clear_mesh(void);
 
 	void init_pcls(size_t num, double n, double m_s, double density_s, double density_f,
-				  double _E, double _niu, double _Kf, double _k, double _miu);
+				   double _E, double _niu, double _Kf, double _k, double _miu);
+	void init_pcls(size_t num, double n, double m_s, double density_s, double density_f,
+				   double _Kf, double _k, double _miu,
+				   double _niu, double _kappa, double _lambda, double _fric_ang, double _e, double _stress[6]);
 	void alloc_pcls(size_t num);
 	void clear_pcls(void);
 
@@ -228,6 +231,10 @@ public:
 	void init_pcls(TriangleMeshToParticles &mh_2_pcl,
 		double n, double density_s, double density_f,
 		double E, double niu, double Kf, double k, double miu);
+	void init_pcls(TriangleMeshToParticles &mh_2_pcl,
+		double n, double m_s, double density_s, double density_f,
+		double _Kf, double _k, double _miu,
+		double _niu, double _kappa, double _lambda, double _fric_ang, double _e, double _stress[6]);
 
 #define INIT_BC_TEMPLATE(name, type)    \
 	void init_ ## name ## s(size_t num) \

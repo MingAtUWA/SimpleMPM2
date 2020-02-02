@@ -60,4 +60,7 @@ void test_ModifiedCamClay(void);
 
 void test_t2d_chm_s_hdf5_output(void);
 
+void test_t2d_chm_s_geostatic_hdf5(void);
+void test_t2d_chm_s_restart_from_geostatic_hdf5(void);
+
 #endif

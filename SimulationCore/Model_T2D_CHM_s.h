@@ -100,6 +100,12 @@ public: // Node, Element and Particle data structures
 
 		// for strain enhancement approach
 		double vol, de_vol_s, de_vol_f;
+	
+		// has velocity boundary
+		bool has_vsx_bc;
+		bool has_vsy_bc;
+		bool has_vfx_bc;
+		bool has_vfy_bc;
 	};
 	
 	struct Element;
@@ -222,8 +228,7 @@ public:
 	void init_pcls(size_t num, double n, double m_s, double density_s, double density_f,
 				   double _E, double _niu, double _Kf, double _k, double _miu);
 	void init_pcls(size_t num, double n, double m_s, double density_s, double density_f,
-				   double _Kf, double _k, double _miu,
-				   double _niu, double _kappa, double _lambda, double _fric_ang, double _e, double _stress[6]);
+				   double _Kf, double _k, double _miu);
 	void alloc_pcls(size_t num);
 	void clear_pcls(void);
 
@@ -232,9 +237,8 @@ public:
 		double n, double density_s, double density_f,
 		double E, double niu, double Kf, double k, double miu);
 	void init_pcls(TriangleMeshToParticles &mh_2_pcl,
-		double n, double m_s, double density_s, double density_f,
-		double _Kf, double _k, double _miu,
-		double _niu, double _kappa, double _lambda, double _fric_ang, double _e, double _stress[6]);
+		double n, double density_s, double density_f,
+		double _Kf, double _k, double _miu);
 
 #define INIT_BC_TEMPLATE(name, type)    \
 	void init_ ## name ## s(size_t num) \

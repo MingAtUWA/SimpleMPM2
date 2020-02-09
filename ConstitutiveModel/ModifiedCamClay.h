@@ -37,9 +37,14 @@ public:
 	~ModifiedCamClay() {}
 
 	// angle unit is degree
-	void set_param_NC(double _niu,
-		double _kappa, double _lambda, double _fric_ang,
-		double _e, double _s[6])
+	void set_param_NC(
+		double _niu,
+		double _kappa,
+		double _lambda,
+		double _fric_ang,
+		double _e,
+		double _s[6]
+		)
 	{
 		niu = _niu;
 		kappa = _kappa;
@@ -85,7 +90,7 @@ public:
 		{
 			pc = _pc;
 			// NCL
-			N = e + kappa * log(p) + (lambda - kappa) * log(pc);
+			N = e + kappa * log(-p) + (lambda - kappa) * log(pc);
 			// stiffness mat
 			double dg_ds[6], dg_dpc;
 			double A_pc, divider;

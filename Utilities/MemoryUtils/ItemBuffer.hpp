@@ -66,7 +66,8 @@ namespace MemoryUtilities
 			in_stack_page_size(pre_alloc_size),
 			base_page_size(init_page_size ? init_page_size : 1),
 			page_size(base_page_size),
-			cur_page(&in_stack_page), cur(in_stack_page_start),
+			cur_page(&in_stack_page),
+			cur(in_stack_page_start),
 			end(in_stack_page_start + in_stack_page_size) {}
 		~ItemBuffer() { clear(); }
 		inline void set_page_size(size_t init_page_size) noexcept
@@ -96,11 +97,14 @@ namespace MemoryUtilities
 			if (cur > end)
 			{
 				// add unused slot back to unused list
-				ItemSlot *last = end - 1;
-				last->next = empty_slot;
-				for (cur = (ItemSlot *)res; cur < last; ++cur)
-					cur->next = cur + 1;
-				empty_slot = (ItemSlot *)res;
+				if ((ItemSlot *)res < end)
+				{
+					ItemSlot *last = end - 1;
+					last->next = empty_slot;
+					for (cur = (ItemSlot *)res; cur < last; ++cur)
+						cur->next = cur + 1;
+					empty_slot = (ItemSlot *)res;
+				}
 				// get next page for allocation
 				move_to_next_page(num);
 				res = (Item *)cur;

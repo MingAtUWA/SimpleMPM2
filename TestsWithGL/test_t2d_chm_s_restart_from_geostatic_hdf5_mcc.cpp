@@ -9,8 +9,6 @@
 #include "Model_T2D_CHM_s.h"
 #include "Step_T2D_CHM_s_SE.h"
 
-//#include "ResultFile_PlainBin.h"
-//#include "ResultFile_XML.h"
 #include "ResultFile_hdf5.h"
 #include "Model_T2D_CHM_s_hdf5_io_utilities.h"
 
@@ -21,15 +19,21 @@
 
 #include "DisplayModel_T2D.h"
 
-void test_t2d_chm_s_restart_from_geostatic_hdf5(void)
+#include "test_post_processor.h"
+#include "GA_T2D_CHM_s_hdf5.h"
+
+
+void test_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void)
 {
 	Model_T2D_CHM_s model;
 	load_chm_s_model_from_hdf5_file(model,
-		"t2d_chm_s_geostatic_hdf5.hdf5", "th3", 100);
+		"t2d_chm_s_geostatic_hdf5_mcc.hdf5", "th3", 100);
 
-	std::cout << "pcl num: " << model.pcl_num
-		<< " elem num: " << model.elem_num
-		<< " node num: " << model.node_num << "\n";
+	std::cout << "pcl num: "   << model.pcl_num
+			  << " elem num: " << model.elem_num
+			  << " node num: " << model.node_num << "\n";
+
+	model.init_bg_mesh(0.05, 0.05);
 
 	size_t vx_bc_n_id[] = { 0, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23,
 							1, 2, 5,  6,  7,  8,  9,  10, 11, 12, 13 };
@@ -89,7 +93,13 @@ void test_t2d_chm_s_restart_from_geostatic_hdf5(void)
 	//return;
 
 	ResultFile_hdf5 res_file_hdf5;
-	res_file_hdf5.open("t2d_chm_s_geostatic_hdf5.hdf5", false);
+	//res_file_hdf5.open("t2d_chm_s_geostatic_hdf5_mcc.hdf5", false);
+	res_file_hdf5.create("t2d_chm_s_geostatic_hdf5_mcc2.hdf5");
+
+	ModelDataOutput_T2D_CHM_s md("md1");
+	md.set_model(model);
+	md.set_res_file(res_file_hdf5);
+	md.output();
 
 	TimeHistoryOutput_ConsoleProgressBar out3;
 	TimeHistoryOutput_T2D_CHM_s_SE out4("th4");
@@ -101,11 +111,56 @@ void test_t2d_chm_s_restart_from_geostatic_hdf5(void)
 	step.set_model(model);
 	//step.set_damping_ratio(0.0); // local damping
 	//step.set_bv_ratio(1.0); // bulk viscosity
-	step.set_time(15.0);
+	step.set_time(10.0);
 	step.set_dtime(1.0e-5);
 	step.add_time_history(out3);
 	step.add_time_history(out4);
 	step.solve();
 
+	//system("pause");
+}
+
+
+void test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void)
+{
+	double soil_height = 1.25;
+	double soil_width = 0.2;
+	double padding_height = soil_height * 0.05;
+	double padding_width = soil_width * 0.05;
+	// Abaqus "rainbow" spectrum scheme
+	ColorGraph::Colori colors[] = {
+		{ 0,   0,   255 },
+		{ 0,   93,  255 },
+		{ 0,   185, 255 },
+		{ 0,   255, 232 },
+		{ 0,   255, 139 },
+		{ 0,   255, 46 },
+		{ 46,  255, 0 },
+		{ 139, 255, 0 },
+		{ 232, 255, 0 },
+		{ 255, 185, 0 },
+		{ 255, 93,  0 },
+		{ 255, 0,   0 }
+	};
+	GA_T2D_CHM_s_hdf5 gen;
+	gen.init_color_graph(
+		500.0,
+		60.0,
+		40.0,
+		480.0,
+		-400,
+		0.0,
+		colors,
+		sizeof(colors) / sizeof(ColorGraph::Colori)
+	);
+	gen.generate(5.0,
+		-padding_width,
+		soil_width + padding_width,
+		-padding_height,
+		soil_height + padding_height,
+		"t2d_chm_s_geostatic_hdf5_mcc2.hdf5",
+		"th4",
+		"t2d_chm_s_geostatic_hdf5_mcc2.gif"
+	);
 	//system("pause");
 }

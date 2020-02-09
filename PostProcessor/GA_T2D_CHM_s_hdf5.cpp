@@ -113,7 +113,7 @@ int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
 
 	// frame number
 	time_history_id = rf_hdf5.get_time_history_grp_id();
-	th_id = rf_hdf5.open_group(time_history_id, "th3");
+	th_id = rf_hdf5.open_group(time_history_id, th_name);
 	rf_hdf5.read_attribute(th_id, "output_num", time_rcd_num);
 	time_rcds = new TimeHistoryHeader[time_rcd_num];
 	hid_t frame_id;
@@ -232,9 +232,9 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	hid_t frame_id = rf_hdf5.open_group(th_id, frame_name);
 
 	// draw rigid circle
-	if (rf_hdf5.has_dataset(frame_id, "RigidBody"))
+	if (rf_hdf5.has_group(frame_id, "RigidBody"))
 	{
-		hid_t rb_id = rf_hdf5.open_dataset(frame_id, "RigidBody");
+		hid_t rb_id = rf_hdf5.open_group(frame_id, "RigidBody");
 
 		// model/view matrix
 		glm::mat4 identity_mat = glm::mat4(1.0f);
@@ -250,9 +250,12 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 		rf_hdf5.read_attribute(rb_id, "theta", theta);
 		rf_hdf5.read_attribute(rb_id, "pcl_num", rb_pcl_num);
 		
-		double pcl_x, pcl_y;
+		// read rigid body particle data
 		rb_pcls_data.resize(rb_pcl_num);
 		RigidBodyParticleData *rbpds = rb_pcls_data.get_mem();
+		rf_hdf5.read_dataset(rb_id, "ParticleData", rb_pcl_num, 3, (double *)rbpds);
+
+		double pcl_x, pcl_y;
 		for (size_t pcl_id = 0; pcl_id < rb_pcl_num; ++pcl_id)
 		{
 			RigidBodyParticleData &rbpd = rbpds[pcl_id];
@@ -294,9 +297,14 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 		ParticleData &pd = pds[pcl_id];
 		//pcl_color = color_graph.get_color(pd.p);
 		pcl_color = color_graph.get_color(pd.s22);
-		pcls_mem.add_pcl(pd.x, pd.y,
-						 pd.m_s/((1.0-pd.n)*pd.density_s) * 0.25, // vol
-						 pcl_color.r, pcl_color.g, pcl_color.b); // color
+		pcls_mem.add_pcl(
+			pd.x,
+			pd.y,
+			pd.m_s/((1.0-pd.n)*pd.density_s) * 0.25, // vol
+			pcl_color.r, // color
+			pcl_color.g,
+			pcl_color.b
+			); 
 	}
 	mp_data.clear();
 	mp_data.init_array_buffer(pcls_mem.get_coord_and_color(), pcls_mem.get_coord_and_color_size());

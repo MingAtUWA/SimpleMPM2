@@ -20,9 +20,13 @@ int ResultFile_hdf5::create(const char *file_name, bool over_write)
 int ResultFile_hdf5::open(const char *file_name, bool read_only)
 {
 	if (read_only)
+	{
 		file_id = H5Fopen(file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+	}
 	else
+	{
 		file_id = H5Fopen(file_name, H5F_ACC_RDWR, H5P_DEFAULT);
+	}
 	return file_id < 0 ? -1 : 0;
 }
 
@@ -40,7 +44,7 @@ void ResultFile_hdf5::close(void)
 	}
 	if (file_id >= 0)
 	{
-		H5Fclose(file_id);
+		herr_t status = H5Fclose(file_id);
 		file_id = -1;
 	}
 }
@@ -164,6 +168,7 @@ int ResultFile_hdf5::write_dataset(
 	return res < 0 ? -2 : 0;
 }
 
+
 int ResultFile_hdf5::read_dataset(
 	hid_t grp_id,
 	const char *dset_name,
@@ -222,6 +227,41 @@ int ResultFile_hdf5::read_dataset(
 	return res < 0 ? -2 : 0;
 }
 
+
+// self-defined datatype
+int ResultFile_hdf5::write_dataset(
+	hid_t grp_id,
+	const char *dset_name,
+	size_t num,
+	void *data,
+	hid_t datatype_id
+	)
+{
+	hid_t dataspace_id, dset_id;
+	dataspace_id = H5Screate_simple(1, &num, nullptr);
+	dset_id = H5Dcreate(grp_id, dset_name, datatype_id, dataspace_id,
+		H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (dset_id < 0) return -1;
+	herr_t res = H5Dwrite(dset_id, datatype_id, dataspace_id,
+		dataspace_id, H5P_DEFAULT, data);
+	H5Dclose(dset_id);
+	H5Sclose(dataspace_id);
+	return res < 0 ? -2 : 0;
+}
+
+int ResultFile_hdf5::read_dataset(hid_t grp_id, const char *dset_name,
+	size_t num, void *data, hid_t datatype_id)
+{
+	hid_t dataspace_id, dset_id;
+	dataspace_id = H5Screate_simple(1, &num, nullptr);
+	dset_id = H5Dopen(grp_id, dset_name, H5P_DEFAULT);
+	if (dset_id < 0) return -1;
+	herr_t res = H5Dread(dset_id, datatype_id, dataspace_id,
+						 dataspace_id, H5P_DEFAULT, data);
+	H5Dclose(dset_id);
+	H5Sclose(dataspace_id);
+	return res < 0 ? -2 : 0;
+}
 
 // ============================ routines for attributes ========================
 int ResultFile_hdf5::write_attribute(

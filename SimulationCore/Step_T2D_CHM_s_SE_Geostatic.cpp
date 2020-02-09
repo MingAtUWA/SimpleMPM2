@@ -58,6 +58,15 @@ int Step_T2D_CHM_s_SE_Geostatic::finalize_calculation(void)
 		pcl.e12 = 0.0;
 	}
 	
+	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	{
+		Node &n = md.nodes[n_id];
+		n.has_vsx_bc = false;
+		n.has_vsy_bc = false;
+		n.has_vfx_bc = false;
+		n.has_vfy_bc = false;
+	}
+
 	out_file.close();
 
 	return 0;
@@ -304,12 +313,14 @@ int solve_substep_T2D_CHM_s_SE_Geostatic(void *_self)
 		Node_mpm &n = md.nodes[md.vsxs[v_id].node_id];
 		n.vx_s = md.vsxs[v_id].v;
 		n.ax_s = 0.0;
+		n.has_vsx_bc = true;
 	}
 	for (size_t v_id = 0; v_id < md.vsy_num; ++v_id)
 	{
 		Node_mpm &n = md.nodes[md.vsys[v_id].node_id];
 		n.vy_s = md.vsys[v_id].v;
 		n.ay_s = 0.0;
+		n.has_vsy_bc = true;
 	}
 
 	double f_ub = 0.0;

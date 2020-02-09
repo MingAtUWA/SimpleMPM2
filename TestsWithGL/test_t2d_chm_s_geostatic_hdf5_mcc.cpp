@@ -1,5 +1,6 @@
 #include "TestsWithGL_pcp.h"
 
+#include <cmath>
 #include "ItemArray.hpp"
 
 #include "test_sim_core.h"
@@ -24,7 +25,7 @@
 #include "test_post_processor.h"
 #include "GA_T2D_CHM_s_hdf5.h"
 
-void test_t2d_chm_s_geostatic_hdf5(void)
+void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 {
 	TriangleMesh tri_mesh;
 	tri_mesh.load_mesh("..\\..\\Asset\\rect.mesh_data");
@@ -40,8 +41,36 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 
 	// elasticity
 	model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
+	double K = 0.0;
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+		pcl.s22 = -(1.0 - pcl.y) * 100.0;
+		pcl.s11 = K * pcl.s22;
+		pcl.s12 = 0.0;
+	}
 	// mcc
-	//model.init_pcls(mh_2_pcl, );
+	//model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1.0e4, 1.0e-4, 1.0);
+	//ModifiedCamClay *cms = model.model_container.add_ModifiedCamClay(model.pcl_num);
+	//double K = 1.0 - sin(25.0 / 180.0 * 3.14159265359);
+	//double ini_stress[6];
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+	//	pcl.s22 = -(1.0 - pcl.y) * 100.0;
+	//	pcl.s11 = K * pcl.s22;
+	//	pcl.s12 = 0.0;
+	//	ini_stress[0] = pcl.s11;
+	//	ini_stress[1] = pcl.s22;
+	//	ini_stress[2] = pcl.s11;
+	//	ini_stress[3] = 0.0;
+	//	ini_stress[4] = 0.0;
+	//	ini_stress[5] = 0.0;
+	//	ModifiedCamClay &cm = cms[p_id];
+	//	cm.set_param_NC(0.25, 0.04, 0.15, 25, 1.5, ini_stress);
+	//	pcl.cm = &cm;
+	//	cm.ext_data = &pcl;
+	//}
 	mh_2_pcl.clear();
 
 	model.init_bg_mesh(0.05, 0.05);
@@ -86,26 +115,19 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 		bf.bf = -20.0;
 	}
 	
-	ResultFile_PlainBin res_file_pb;
-	res_file_pb.init("t2d_chm_s_geostatic_hdf5.bin");
 	ResultFile_XML res_file_xml;
-	res_file_xml.init("t2d_chm_s_geostatic_hdf5.xml");
+	res_file_xml.init("t2d_chm_s_geostatic_hdf5_mcc.xml");
 	ResultFile_hdf5 res_file_hdf5;
-	res_file_hdf5.create("t2d_chm_s_geostatic_hdf5.hdf5");
+	res_file_hdf5.create("t2d_chm_s_geostatic_hdf5_mcc.hdf5");
 
 	// output model
 	ModelDataOutput_T2D_CHM_s md("md1");
 	md.set_model(model);
-	md.set_res_file(res_file_pb);
-	md.output();
 	md.set_res_file(res_file_xml);
 	md.output();
 	md.set_res_file(res_file_hdf5);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out1("th1");
-	out1.set_res_file(res_file_pb);
-	out1.set_output_init_state();
 	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out2("th2");
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
@@ -120,9 +142,7 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	Step_T2D_CHM_s_SE_Geostatic step;
 	step.set_model(model);
 	step.set_time(1.0);
-	step.set_dtime(1.0e-4);
-	out1.set_interval_num(100);
-	step.add_time_history(out1);
+	step.set_dtime(1.e-5);
 	out2.set_interval_num(100);
 	step.add_time_history(out2);
 	out3.set_interval_num(100);
@@ -135,9 +155,10 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	//system("pause");
 }
 
-void test_color_animation_t2d_chm_s_geostatic_hdf5(void)
+
+void test_color_animation_t2d_chm_s_geostatic_hdf5_mcc(void)
 {
-	double soil_height = 1.0;
+	double soil_height = 1.25;
 	double soil_width = 0.2;
 	double padding_height = soil_height * 0.05;
 	double padding_width = soil_width * 0.05;
@@ -148,18 +169,33 @@ void test_color_animation_t2d_chm_s_geostatic_hdf5(void)
 		{ 0,   185, 255 },
 		{ 0,   255, 232 },
 		{ 0,   255, 139 },
-		{ 0,   255, 46 },
-		{ 46,  255, 0 },
-		{ 139, 255, 0 },
-		{ 232, 255, 0 },
-		{ 255, 185, 0 },
-		{ 255, 93,  0 },
-		{ 255, 0,   0 }
+		{ 0,   255, 46  },
+		{ 46,  255, 0   },
+		{ 139, 255, 0   },
+		{ 232, 255, 0   },
+		{ 255, 185, 0   },
+		{ 255, 93,  0   },
+		{ 255, 0,   0   }
 	};
 	GA_T2D_CHM_s_hdf5 gen;
-	gen.init_color_graph(500.0, 60.0, 40.0, 480.0, -100, 0.0,
-		colors, sizeof(colors) / sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -padding_width, soil_width + padding_width,
-		-padding_height, soil_height + padding_height,
-		"t2d_chm_s_geostatic_hdf5.hdf5", "th3", "t2d_chm_s_geostatic_hdf5.gif");
+	gen.init_color_graph(
+		500.0,
+		60.0,
+		40.0,
+		480.0,
+		-100,
+		0.0,
+		colors, 
+		sizeof(colors) / sizeof(ColorGraph::Colori)
+		);
+	gen.generate(5.0, 
+		-padding_width, 
+		soil_width + padding_width,
+		-padding_height,
+		soil_height + padding_height,
+		"t2d_chm_s_geostatic_hdf5_mcc.hdf5",
+		"th3",
+		"t2d_chm_s_geostatic_hdf5_mcc.gif"
+		);
 }
+

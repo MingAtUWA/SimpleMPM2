@@ -86,8 +86,8 @@ int load_model_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf)
 	// nodes
 	NodeData *node_data = new NodeData[node_num];
 	rf.read_dataset(bg_mesh_id, "NodeCoordinate", node_num,
-		size_t(sizeof(NodeData) / sizeof(double)),
-		(double *)node_data);
+					size_t(sizeof(NodeData) / sizeof(double)),
+					(double *)node_data);
 	tri_mesh.alloc_nodes(node_num);
 	for (size_t n_id = 0; n_id < node_num; ++n_id)
 	{
@@ -136,10 +136,18 @@ struct LinearElasticityStateData
 	}
 	void to_cm(LinearElasticity &cm)
 	{
-		cm.E = E;
-		cm.niu = niu;
+		cm.set_param(E, niu);
 	}
 };
+
+hid_t get_le_hdf5_dt_id(void)
+{
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(LinearElasticityStateData));
+	H5Tinsert(res, "pcl_id", HOFFSET(LinearElasticityStateData, pcl_id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "E", HOFFSET(LinearElasticityStateData, E), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "niu", HOFFSET(LinearElasticityStateData, niu), H5T_NATIVE_DOUBLE);
+	return res;
+}
 
 // ModifiedCamClay
 struct ModifiedCamClayStateData
@@ -194,11 +202,30 @@ struct ModifiedCamClayStateData
 	}
 };
 
-template <typename Particle>
-inline size_t get_pcl_id(void *ext_data)
+hid_t get_mcc_hdf5_dt_id(void)
 {
-	return static_cast<Particle *>(ext_data)->id;
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(ModifiedCamClayStateData));
+	H5Tinsert(res, "pcl_id", HOFFSET(ModifiedCamClayStateData, pcl_id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "niu", HOFFSET(ModifiedCamClayStateData, niu), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "kappa", HOFFSET(ModifiedCamClayStateData, kappa), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "lambda", HOFFSET(ModifiedCamClayStateData, lambda), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "fric_angle", HOFFSET(ModifiedCamClayStateData, fric_angle), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "e", HOFFSET(ModifiedCamClayStateData, e), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "pc", HOFFSET(ModifiedCamClayStateData, pc), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "N", HOFFSET(ModifiedCamClayStateData, N), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "Gamma", HOFFSET(ModifiedCamClayStateData, Gamma), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "M", HOFFSET(ModifiedCamClayStateData, M), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "s11", HOFFSET(ModifiedCamClayStateData, s11), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "s22", HOFFSET(ModifiedCamClayStateData, s22), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "s33", HOFFSET(ModifiedCamClayStateData, s33), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "s12", HOFFSET(ModifiedCamClayStateData, s12), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "s23", HOFFSET(ModifiedCamClayStateData, s23), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "s31", HOFFSET(ModifiedCamClayStateData, s31), H5T_NATIVE_DOUBLE);
+	return res;
 }
+
+template <typename Particle>
+inline size_t get_pcl_id(void *ext_data) { return static_cast<Particle *>(ext_data)->id; }
 
 };
 
@@ -220,9 +247,10 @@ int output_model_container_to_hdf5_file(ModelContainer &mc, ResultFile_hdf5 &rf,
 			cm_data[cm_id].from_cm(*iter);
 			++cm_id;
 		}
+		hid_t le_dt_id = get_le_hdf5_dt_id();
 		rf.write_dataset(cm_grp_id, "LinearElasticity", cm_num,
-						 size_t(sizeof(LinearElasticityStateData) / sizeof(double)),
-						 (double *)cm_data);
+						 cm_data, le_dt_id);
+		H5Tclose(le_dt_id);
 		delete[] cm_data;
 		hid_t cm_dset_id = rf.open_dataset(cm_grp_id, "LinearElasticity");
 		rf.write_attribute(cm_dset_id, "cm_num", cm_num);
@@ -237,13 +265,15 @@ int output_model_container_to_hdf5_file(ModelContainer &mc, ResultFile_hdf5 &rf,
 		for (ModifiedCamClay *iter = mc.first_ModifiedCamClay();
 			 iter; iter = mc.next_ModifiedCamClay(iter))
 		{
-			cm_data[cm_id].pcl_id = get_pcl_id<Model_T2D_CHM_s::Particle>(iter->ext_data);
+			cm_data[cm_id].pcl_id
+				= get_pcl_id<Model_T2D_CHM_s::Particle>(iter->ext_data);
 			cm_data[cm_id].from_cm(*iter);
 			++cm_id;
 		}
+		hid_t mcc_dt_id = get_mcc_hdf5_dt_id();
 		rf.write_dataset(cm_grp_id, "ModifiedCamClay", cm_num,
-						 size_t(sizeof(ModifiedCamClayStateData) / sizeof(double)),
-						 (double *)cm_data);
+						 cm_data, mcc_dt_id);
+		H5Tclose(mcc_dt_id);
 		delete[] cm_data;
 		hid_t cm_dset_id = rf.open_dataset(cm_grp_id, "ModifiedCamClay");
 		rf.write_attribute(cm_dset_id, "cm_num", cm_num);
@@ -258,10 +288,9 @@ int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf
 {
 	hid_t cm_dset_id;
 	size_t cm_num;
+	hid_t cm_grp_id = rf.open_group(frame_id, "ConstitutiveModel");
 	ModelContainer &mc = md.model_container;
 
-	hid_t cm_grp_id = rf.open_group(frame_id, "ConstitutiveModel");
-	
 	// linear elasticity
 	if (rf.has_dataset(cm_grp_id, "LinearElasticity"))
 	{
@@ -271,16 +300,19 @@ int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf
 		rf.close_dataset(cm_dset_id);
 		// get data
 		LinearElasticityStateData *cm_data = new LinearElasticityStateData[cm_num];
+		hid_t le_dt_id = get_le_hdf5_dt_id();
 		rf.read_dataset(cm_grp_id, "LinearElasticity", cm_num,
-						size_t(sizeof(LinearElasticityStateData)/sizeof(double)),
-						(double *)cm_data);
+						cm_data, le_dt_id);
+		H5Tclose(le_dt_id);
 		LinearElasticity *cms = mc.add_LinearElasticity(cm_num);
 		for (size_t cm_id = 0; cm_id < cm_num; ++cm_id)
 		{
 			LinearElasticityStateData &cmd = cm_data[cm_id];
-			cmd.to_cm(cms[cm_id]);
-			cms[cm_id].ext_data = &md.pcls[cmd.pcl_id];
-			md.pcls[cmd.pcl_id].cm = &cms[cm_id];
+			LinearElasticity &cm = cms[cm_id];
+			//std::cout << cmd.pcl_id << " " << md.pcls[cmd.pcl_id].id << "\n";
+			cmd.to_cm(cm);
+			cm.ext_data = &md.pcls[cmd.pcl_id];
+			md.pcls[cmd.pcl_id].cm = &cm;
 		}
 		delete[] cm_data;
 	}
@@ -294,16 +326,18 @@ int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf
 		rf.close_dataset(cm_dset_id);
 		// get data
 		ModifiedCamClayStateData *cm_data = new ModifiedCamClayStateData[cm_num];
+		hid_t mcc_dt_id = get_mcc_hdf5_dt_id();
 		rf.read_dataset(cm_grp_id, "ModifiedCamClay", cm_num,
-						size_t(sizeof(LinearElasticityStateData) / sizeof(double)),
-						(double *)cm_data);
+						cm_data, mcc_dt_id);
+		H5Tclose(mcc_dt_id);
 		ModifiedCamClay *cms = mc.add_ModifiedCamClay(cm_num);
 		for (size_t cm_id = 0; cm_id < cm_num; ++cm_id)
 		{
 			ModifiedCamClayStateData &cmd = cm_data[cm_id];
-			cmd.to_cm(cms[cm_id]);
-			cms[cm_id].ext_data = &md.pcls[cmd.pcl_id];
-			md.pcls[cmd.pcl_id].cm = &cms[cm_id];
+			ModifiedCamClay &cm = cms[cm_id];
+			cmd.to_cm(cm);
+			cm.ext_data = &md.pcls[cmd.pcl_id];
+			md.pcls[cmd.pcl_id].cm = &cm;
 		}
 		delete[] cm_data;
 	}
@@ -333,6 +367,7 @@ int output_rigid_ciricle_to_hdf5_file(DispConRigidCircle &rc, ResultFile_hdf5 &r
 	hid_t rb_id = rf.create_group(frame_id, "RigidBody");
 
 	// rigid body data
+	rf.write_attribute(rb_id, "radius", state.r);
 	rf.write_attribute(rb_id, "cen_x", state.cen_x);
 	rf.write_attribute(rb_id, "cen_y", state.cen_y);
 	rf.write_attribute(rb_id, "theta", state.theta);
@@ -357,7 +392,6 @@ int output_rigid_ciricle_to_hdf5_file(DispConRigidCircle &rc, ResultFile_hdf5 &r
 	rf.write_dataset(rb_id, "ParticleData", pcl_num, 
 					 size_t(sizeof(RigidBodyParticleData) / sizeof(double)),
 					 (double *)rb_pcls_data);
-	delete[] rb_pcls;
 
 	rf.close_group(rb_id);
 	return 0;
@@ -372,6 +406,8 @@ int load_rigid_ciricle_to_hdf5_file(DispConRigidCircle &rc, ResultFile_hdf5 &rf,
 	// rigid body data
 	DispConRigidCircle::State &rc_state 
 		= const_cast<DispConRigidCircle::State &>(rc.get_state());
+	rf.read_attribute(rb_id, "radius", rc_state.r);
+	rc_state.r2 = rc_state.r * rc_state.r;
 	double cen_x, cen_y, theta;
 	size_t pcl_num;
 	rf.read_attribute(rb_id, "cen_x", cen_x);
@@ -392,8 +428,8 @@ int load_rigid_ciricle_to_hdf5_file(DispConRigidCircle &rc, ResultFile_hdf5 &rf,
 	struct RigidBodyParticleData *rb_pcls_data
 		= new RigidBodyParticleData[pcl_num];
 	rf.read_dataset(rb_id, "ParticleData", pcl_num,
-					size_t(sizeof(RigidBodyParticleData) / sizeof(double)),
-					(double *)rb_pcls_data);
+		size_t(sizeof(RigidBodyParticleData) / sizeof(double)),
+		(double *)rb_pcls_data);
 	DispConRigidCircle::Particle *rb_pcls = rc.alloc_pcls(pcl_num);
 	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
 	{
@@ -405,7 +441,7 @@ int load_rigid_ciricle_to_hdf5_file(DispConRigidCircle &rc, ResultFile_hdf5 &rf,
 		rb_pcl.x = cen_x + rb_pcl.xr * cos(theta) + rb_pcl.yr * -sin(theta);
 		rb_pcl.y = cen_y + rb_pcl.xr * sin(theta) + rb_pcl.yr *  cos(theta);
 	}
-	delete[] rb_pcls;
+	delete[] rb_pcls_data;
 
 	rf.close_group(rb_id);
 	return 0;
@@ -547,6 +583,7 @@ int load_chm_s_model_from_hdf5_file(Model_T2D_CHM_s &md,
 	// rigid body
 	load_rigid_ciricle_to_hdf5_file(md.get_rigid_circle(), rf, th_frame_id);
 	rf.close_group(th_frame_id);
+	rf.close_group(th_id);
 
 	return 0;
 }

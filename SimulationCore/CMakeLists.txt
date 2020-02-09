@@ -87,6 +87,8 @@ add_library(
     ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.cpp
+    TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.h
+    TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.cpp
     # output mc container to hdf5 file
     Model_T2D_CHM_s_hdf5_io_utilities.h Model_T2D_CHM_s_hdf5_io_utilities.cpp
     )

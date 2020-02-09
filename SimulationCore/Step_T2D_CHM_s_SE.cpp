@@ -287,8 +287,11 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 		{
 			Element_mpm &e = *pcl.pe;
 			// body force on particle
-			bf_s = pcl.m_s * bf.bf;
-			bf_f = pcl.m_f * bf.bf;
+			//bf_s = pcl.m_s * bf.bf;
+			//bf_f = pcl.m_f * bf.bf;
+			// problematic
+			bf_s = (pcl.density_s - pcl.density_f) * (1.0 - pcl.n) * pcl.vol * bf.bf;
+			bf_f = 0.0;
 			// node 1
 			Node_mpm &n1 = md.nodes[e.n1];
 			n1.fx_ext_s += pcl.N1 * bf_s;
@@ -311,8 +314,10 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 		{
 			Element_mpm &e = *pcl.pe;
 			// body force on particle
-			bf_s = pcl.m_s * bf.bf;
-			bf_f = pcl.m_f * bf.bf;
+			//bf_s = pcl.m_s * bf.bf;
+			//bf_f = pcl.m_f * bf.bf;
+			bf_s = (pcl.density_s - pcl.density_f) * (1.0 - pcl.n) * pcl.vol * bf.bf;
+			bf_f = 0.0;
 			// node 1
 			Node_mpm &n1 = md.nodes[e.n1];
 			n1.fy_ext_s += pcl.N1 * bf_s;

@@ -106,8 +106,13 @@ int main(int argc, void **argv)
 	//test_t2d_chm_s_hdf5_output();
 
 	//test_t2d_chm_s_geostatic_hdf5();
-	test_color_animation_t2d_chm_s_geostatic_hdf5();
+	//test_color_animation_t2d_chm_s_geostatic_hdf5();
 	//test_t2d_chm_s_restart_from_geostatic_hdf5();
+
+	//test_t2d_chm_s_geostatic_hdf5_mcc();
+	//test_color_animation_t2d_chm_s_geostatic_hdf5_mcc();
+	test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
+	test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
 	//test_ModifiedCamClay();
 

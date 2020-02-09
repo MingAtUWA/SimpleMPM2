@@ -31,5 +31,7 @@ void test_color_animation_t2d_mpm_chm_s_geostatic(void);
 void test_color_animation_t2d_chm_s_1d_wave(void);
 
 void test_color_animation_t2d_chm_s_geostatic_hdf5(void);
+void test_color_animation_t2d_chm_s_geostatic_hdf5_mcc(void);
+void test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void);
 
 #endif

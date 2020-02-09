@@ -154,9 +154,7 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 
 void Model_T2D_CHM_s::init_pcls(size_t num,
 	double n, double m_s, double density_s, double density_f,
-	double _Kf, double _k, double _miu,
-	double _niu, double _kappa, double _lambda, double _fric_ang,
-	double _e, double _stress[6])
+	double _Kf, double _k, double _miu)
 {
 	clear_pcls();
 	pcl_num = num;
@@ -167,12 +165,12 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 		pcl.id = pcl_id;
 		pcl.ux_s = 0.0;
 		pcl.uy_s = 0.0;
+		pcl.ux_f = 0.0;
+		pcl.uy_f = 0.0;
 		pcl.vx_s = 0.0;
 		pcl.vy_s = 0.0;
 		pcl.vx_f = 0.0;
 		pcl.vy_f = 0.0;
-		pcl.ux_f = 0.0;
-		pcl.uy_f = 0.0;
 		pcl.n = n;
 		pcl.m_s = m_s;
 		pcl.density_s = density_s;
@@ -186,18 +184,9 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 		pcl.p = 0.0;
 	}
 
-	// constitutive model
 	Kf = _Kf;
 	k = _k;
 	miu = _miu;
-	ModifiedCamClay *cms = model_container.add_ModifiedCamClay(pcl_num);
-	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
-	{
-		ModifiedCamClay &cm = cms[p_id];
-		cm.set_param_NC(_niu, _kappa, _lambda, _fric_ang, _e, _stress);
-		cm.ext_data = &pcls[p_id];
-		pcls[p_id].cm = &cm;
-	}
 }
 
 
@@ -246,17 +235,27 @@ void Model_T2D_CHM_s::init_mesh(TriangleMesh &tri_mesh)
 		e.n1 = ext_e.n1;
 		e.n2 = ext_e.n2;
 		e.n3 = ext_e.n3;
-		e.area_2 = ext_e.area;
-		e.area = e.area_2 * 0.5;
 		Node &n1 = nodes[e.n1];
 		Node &n2 = nodes[e.n2];
 		Node &n3 = nodes[e.n3];
-		e.dN1_dx = (n2.y - n3.y) / e.area_2;
-		e.dN1_dy = (n3.x - n2.x) / e.area_2;
-		e.dN2_dx = (n3.y - n1.y) / e.area_2;
-		e.dN2_dy = (n1.x - n3.x) / e.area_2;
-		e.dN3_dx = (n1.y - n2.y) / e.area_2;
-		e.dN3_dy = (n2.x - n1.x) / e.area_2;
+		e.area_2 = (n2.x - n1.x) * (n3.y - n1.y) - (n3.x - n1.x) * (n2.y - n1.y);
+		// Ensure that nodes index of element is in counter-clockwise sequence.
+		if (e.area_2 < 0.0)
+		{
+			e.area_2 = -e.area_2;
+			size_t n_tmp = e.n2;
+			e.n2 = e.n3;
+			e.n3 = n_tmp;
+		}
+		e.area = e.area_2 * 0.5;
+		Node &_n2 = nodes[e.n2];
+		Node &_n3 = nodes[e.n3];
+		e.dN1_dx = (_n2.y - _n3.y) / e.area_2;
+		e.dN1_dy = (_n3.x - _n2.x) / e.area_2;
+		e.dN2_dx = (_n3.y - n1.y) / e.area_2;
+		e.dN2_dy = (n1.x - _n3.x) / e.area_2;
+		e.dN3_dx = (n1.y - _n2.y) / e.area_2;
+		e.dN3_dy = (_n2.x - n1.x) / e.area_2;
 	}
 }
 
@@ -280,15 +279,13 @@ void Model_T2D_CHM_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
 }
 
 void Model_T2D_CHM_s::init_pcls(TriangleMeshToParticles &mh_2_pcl,
-	double n, double m_s, double density_s, double density_f,
-	double _Kf, double _k, double _miu,
-	double _niu, double _kappa, double _lambda, double _fric_ang, double _e, double _stress[6])
+	double n, double density_s, double density_f,
+	double _Kf, double _k, double _miu)
 {
 	pcl_num = mh_2_pcl.get_pcl_num();
 	if (pcl_num == 0)
 		return;
-	init_pcls(pcl_num, n, (1.0 - n)*density_s, density_s, density_f, _Kf, _k, _miu,
-			  _niu, _kappa, _lambda, _fric_ang, _e, _stress);
+	init_pcls(pcl_num, n, (1.0 - n)*density_s, density_s, density_f, _Kf, _k, _miu);
 	TriangleMeshToParticles::Particle *ext_ppcl = mh_2_pcl.first();
 	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
 	{
@@ -487,6 +484,16 @@ int Model_T2D_CHM_s::init_bg_mesh(double hx, double hy)
 	// add element to grids
 	for (size_t e_id = 0; e_id < elem_num; ++e_id)
 		add_elem_to_bg_grid(elems[e_id]);
+
+	// for debugging purpose
+	//for (size_t g_id = 0; g_id < grid_num; ++g_id)
+	//{
+	//	Grid &g = bg_grids[g_id];
+	//	std::cout << " grid " << g_id << ": ";
+	//	for (PElement *pe = g.pelems; pe; pe = pe->next)
+	//		std::cout << (pe->e)->id << " ";
+	//	std::cout << "\n";
+	//}
 
 	return 0;
 }

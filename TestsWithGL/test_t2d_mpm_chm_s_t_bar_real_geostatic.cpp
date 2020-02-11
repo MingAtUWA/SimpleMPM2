@@ -8,18 +8,13 @@
 #include "TriangleMeshToParticles.h"
 #include "Model_T2D_CHM_s.h"
 
-#include "Step_T2D_CHM_s_SE.h"
 #include "Step_T2D_CHM_s_SE_Geostatic.h"
 
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
-#include "TimeHistoryOutput_T2D_CHM_s_SE.h"
 #include "TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h"
+#include "TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
-
-#include "ResultFile_hdf5.h"
-
-#include "Model_T2D_CHM_s_hdf5_io_utilities.h"
 
 #include "test_post_processor.h"
 
@@ -294,6 +289,9 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out("geostatic");
 	out.set_res_file(res_file_hdf5);
 	out.set_output_init_state();
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub out_nf("nodal_force");
+	out_nf.set_res_file(res_file_hdf5);
+	out_nf.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out_pb;
 
 	// geostatic step
@@ -305,6 +303,9 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	// out
 	out.set_interval_num(100);
 	step_gs.add_time_history(out);
+	// out_nf
+	out_nf.set_interval_num(100);
+	step_gs.add_time_history(out_nf);
 	// out_pb
 	step_gs.add_time_history(out_pb);
 	step_gs.solve();

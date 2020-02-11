@@ -8,7 +8,9 @@
 #include "TriangleMeshToParticles.h"
 #include "Model_T2D_ME_s.h"
 #include "Step_T2D_ME_s.h"
+
 #include "DisplayModel_T2D.h"
+
 #include "ModelDataOutput_T2D_ME_s.h"
 #include "TimeHistoryOutput_T2D_ME_s.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
@@ -17,6 +19,7 @@
 
 #include "test_post_processor.h"
 #include "GA_T2D_ME_s_color.h"
+
 
 namespace
 {
@@ -92,20 +95,21 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";	
 
 	Model_T2D_ME_s model;
-	model.init_mesh(tri_mesh);
+	model.init_mesh(tri_mesh); // calculation mesh
 	tri_mesh.clear();
+	model.init_bg_mesh(0.05, 0.05); // background mesh
+
 	model.init_pcls(mh_2_pcl, 20.0, 1000.0, 0.0);
 	mh_2_pcl.clear();
 
 	// constitutive model
-	LinearElasticity *cms = new LinearElasticity[model.pcl_num];
-	for (size_t i = 0; i < model.pcl_num; ++i)
+	// elasticity
+	LinearElasticity *cms = model.model_container.add_LinearElasticity(model.pcl_num);
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
-		cms[i].set_param(1000.0, 0.0);
-		model.pcls[i].cm = &cms[i];
+		cms[p_id].set_param(1000.0, 0.0);
+		model.pcls[p_id].set_cm(cms[p_id]);
 	}
-
-	model.init_bg_mesh(0.05, 0.05);
 
 	//find_bc_pcl_and_node(model);
 	//system("pause");
@@ -120,6 +124,7 @@ void test_t2d_mpm_me_s_1d_compression(void)
 		vbc.node_id = vx_bc_n_id[v_id];
 		vbc.v = 0.0;
 	}
+
 	size_t vy_bc_n_id[] = { 0, 1, 4 };
 	model.init_vys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
 	for (size_t v_id = 0; v_id < model.vy_num; ++v_id)
@@ -136,7 +141,7 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	{
 		TractionBC_MPM &tbc = model.tys[t_id];
 		tbc.pcl_id = tbc_pcl_id[t_id];
-		tbc.t = 0.05 * -100.0;
+		tbc.t = 0.05 * -1.0;
 		//tbc.t = 0.02 * -10.0;
 	}
 
@@ -235,11 +240,10 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	step.add_time_history(out2);
 	step.add_time_history(out3);
 	step.solve();
-	
-	delete[] cms;
 
 	//system("pause");
 }
+
 
 void test_color_animation_t2d_me_s_1d_compression(void)
 {
@@ -268,3 +272,4 @@ void test_color_animation_t2d_me_s_1d_compression(void)
 				 -padding_height, soil_height + padding_height,
 				 "t2d_mpm_me_1d_compression.bin", "t2d_mpm_me_1d_compression.gif");
 }
+

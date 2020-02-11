@@ -76,8 +76,8 @@ public:
 		kappa = _kappa;
 		lambda = _lambda;
 		fric_angle = _fric_ang / 180.0 * 3.14159265359;
-		M2 = 6.0 * sin(fric_angle) / (3.0 - sin(fric_angle));
-		M2 = M2 * M2;
+		M = 6.0 * sin(fric_angle) / (3.0 - sin(fric_angle));
+		M2 = M * M;
 		e = _e;
 		// stress
 		for (size_t i = 0; i < 6; ++i)

@@ -54,7 +54,6 @@ add_executable(
     # Panelty method contact
     test_t2d_mpm_me_s_t_bar_above_ground.cpp
     test_t2d_mpm_chm_s_t_bar_above_ground.cpp
-    test_t2d_mpm_chm_s_t_bar_real.cpp
     # Geostatic
     test_t2d_mpm_me_s_geostatic.cpp
     test_t2d_mpm_chm_s_geostatic.cpp
@@ -65,6 +64,9 @@ add_executable(
     test_t2d_chm_s_restart_from_geostatic_hdf5.cpp
     test_t2d_chm_s_geostatic_hdf5_mcc.cpp
     test_t2d_chm_s_restart_from_geostatic_hdf5_mcc.cpp
+    # more realistic cases
+    test_t2d_mpm_chm_s_t_bar_real_geostatic.cpp
+    test_t2d_mpm_chm_s_t_bar_real_restart.cpp
     )
 
 target_include_directories(

@@ -123,6 +123,12 @@ void Model_T2D_ME_s::init_pcls(size_t num, double m, double density, double _E, 
 	niu = _niu;
 }
 
+void Model_T2D_ME_s::alloc_pcls(size_t num)
+{
+	pcls = new Particle[num];
+	pcl_num = num;
+}
+
 void Model_T2D_ME_s::clear_pcls(void)
 {
 	if (pcls)

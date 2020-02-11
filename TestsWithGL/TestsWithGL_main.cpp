@@ -98,10 +98,6 @@ int main(int argc, void **argv)
 
 	//test_color_graph();
 
-	// a realistic case of t-bar penetration
-	//test_t2d_mpm_chm_s_t_bar_real();
-	//test_color_animation_t2d_chm_s_t_bar_real();
-
 	// output to hdf5 file
 	//test_t2d_chm_s_hdf5_output();
 
@@ -111,10 +107,17 @@ int main(int argc, void **argv)
 
 	//test_t2d_chm_s_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_geostatic_hdf5_mcc();
-	test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
-	test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
+	//test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
+	//test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
+	// ModifiedCamClay
 	//test_ModifiedCamClay();
+
+	// a realistic case of t-bar penetration
+	test_t2d_mpm_chm_s_t_bar_real_geostatic();
+	test_color_animation_t2d_chm_s_t_bar_real_geostatic();
+	//test_t2d_mpm_chm_s_t_bar_real_restart();
+	//test_color_animation_t2d_chm_s_t_bar_real_restart();
 
 	//system("pause");
 	return 0;

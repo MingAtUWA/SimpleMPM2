@@ -1,44 +1,16 @@
 #ifndef __GA_T2D_CHM_s_hdf5_H__
 #define __GA_T2D_CHM_s_hdf5_H__
 
+#include "ItemArrayFast.hpp"
+
 #include "ColorGraph.h"
 #include "ColorfulSquareParticleSystem.h"
 
-#include "ItemArrayFast.hpp"
+#include "ResultFile_hdf5_DataStruct.h"
+#include "Model_T2D_CHM_s_hdf5_io_utilities.h"
 #include "ResultFile_hdf5.h"
 
 #include "GenerateAnimation.h"
-
-namespace GA_T2D_CHM_s_hdf5_internal
-{
-	struct ParticleData
-	{
-		unsigned long long id;
-		double m_s;
-		double density_s;
-		double density_f;
-		double n;
-		double x;
-		double y;
-		double vx_s;
-		double vy_s;
-		double vx_f;
-		double vy_f;
-		double s11;
-		double s22;
-		double s12;
-		double p;
-		double e11;
-		double e22;
-		double e12;
-	};
-	struct RigidBodyParticleData
-	{
-		double xr;
-		double yr;
-		double vol;
-	};
-};
 
 class GA_T2D_CHM_s_hdf5 : public GenerateAnimation
 {
@@ -55,12 +27,12 @@ protected:
 
 	// time history data
 	// rigid circle data
-	MemoryUtilities::ItemArrayFast<GA_T2D_CHM_s_hdf5_internal::RigidBodyParticleData> rb_pcls_data;
+	MemoryUtilities::ItemArrayFast<ResultFile_hdf5_DataStruct::RigidBodyParticleData> rb_pcls_data;
 	SquareParticleSystem rc_pcls_mem;
 	BufferObject rc_data;
 
 	// particle data
-	MemoryUtilities::ItemArrayFast<GA_T2D_CHM_s_hdf5_internal::ParticleData> pcls_data;
+	MemoryUtilities::ItemArrayFast<Model_T2D_CHM_s_hdf5_io_utilities::ParticleData> pcls_data;
 	ColorfulSquareParticleSystem pcls_mem;
 
 	// shader for colorful point

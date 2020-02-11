@@ -5,6 +5,8 @@
 
 #include "ResultFile_PlainBin_DataStruct.h"
 
+#include "Model_T2D_ME_s_hdf5_io_utilities.h"
+
 #include "ModelDataOutput_T2D_ME_s.h"
 
 int model_data_output_func_t2d_me_s_to_plain_bin_res_file(ModelDataOutput &_self)
@@ -136,5 +138,16 @@ int model_data_output_func_t2d_me_s_to_xml_res_file(ModelDataOutput &_self)
 	// ending
 	file << "</ModelData>\n";
 	
+	return 0;
+}
+
+int model_data_output_func_t2d_me_s_to_hdf5_res_file(ModelDataOutput &_self)
+{
+	ModelDataOutput_T2D_ME_s &md = static_cast<ModelDataOutput_T2D_ME_s &>(_self);
+	Model_T2D_ME_s &model = static_cast<Model_T2D_ME_s &>(*md.model);
+	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*md.res_file);
+
+	using Model_T2D_ME_s_hdf5_io_utilities::output_model_data_to_hdf5_file;
+	output_model_data_to_hdf5_file(model, rf);
 	return 0;
 }

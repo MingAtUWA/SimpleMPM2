@@ -1,6 +1,7 @@
 #include "SimulationCore_pcp.h"
 
 #include <cmath>
+#include "ConstitutiveModel.h"
 #include "Step_T2D_ME_s_Geostatic.h"
 
 Step_T2D_ME_s_Geostatic::Step_T2D_ME_s_Geostatic() :
@@ -392,15 +393,23 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 				  + n1.duy * e.dN1_dx + n2.duy * e.dN2_dx + n3.duy * e.dN3_dx) * 0.5;
 
 			// stress
-			double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
-			ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
-			ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
-			ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
-			pcl.s11 += ds11;
-			pcl.s22 += ds22;
-			pcl.s12 += ds12;
+			// update stress using constitutive model
+			double dstrain[6] = { de11, de22, 0.0, de12, 0.0, 0.0 };
+			pcl.cm->integrate(dstrain);
+			const double *dstress = pcl.cm->get_dstress();
+			pcl.s11 += dstress[0];
+			pcl.s22 += dstress[1];
+			pcl.s12 += dstress[3];
 		}
 	}
 	
 	return 0;
 }
+
+//double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
+//ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
+//ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
+//ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
+//pcl.s11 += ds11;
+//pcl.s22 += ds22;
+//pcl.s12 += ds12;

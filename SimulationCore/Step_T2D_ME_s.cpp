@@ -1,6 +1,7 @@
 #include "SimulationCore_pcp.h"
 
 #include <cmath>
+#include "ConstitutiveModel.h"
 #include "Step_T2D_ME_s.h"
 
 Step_T2D_ME_s::Step_T2D_ME_s() :
@@ -394,26 +395,13 @@ int solve_substep_T2D_ME_s(void *_self)
 			pcl.e12 += de12;
 
 			// stress
-			// update stress
-			double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
-			ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
-			ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
-			ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
-			pcl.s11 += ds11;
-			pcl.s22 += ds22;
-			pcl.s12 += ds12;
-			// use constitutive model
-			//double dstrain[6] = { de11, de22, 0.0, de12, 0.0, 0.0 };
-			//pcl.cm->integrate(dstrain);
-			//const double *dstress = pcl.cm->get_dstress();
-			//pcl.s11 += dstress[0];
-			//pcl.s22 += dstress[1];
-			//pcl.s12 += dstress[3];
-
-			//if (abs(ds11 - dstress[0]) > abs(ds11 + dstress[0]) * 0.001 ||
-			//	abs(ds22 - dstress[1]) > abs(ds22 + dstress[1]) * 0.001 ||
-			//	abs(ds12 - dstress[3]) > abs(ds12 + dstress[3]) * 0.001)
-			//	throw std::exception("cm error");
+			// update stress using constitutive model
+			double dstrain[6] = { de11, de22, 0.0, de12, 0.0, 0.0 };
+			pcl.cm->integrate(dstrain);
+			const double *dstress = pcl.cm->get_dstress();
+			pcl.s11 += dstress[0];
+			pcl.s22 += dstress[1];
+			pcl.s12 += dstress[3];
 
 			// density
 			pcl.density /= 1.0 + de_vol;
@@ -422,3 +410,11 @@ int solve_substep_T2D_ME_s(void *_self)
 	
 	return 0;
 }
+
+//double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
+//ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
+//ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
+//ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
+//pcl.s11 += ds11;
+//pcl.s22 += ds22;
+//pcl.s12 += ds12;

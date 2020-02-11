@@ -26,6 +26,7 @@
 void test_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void)
 {
 	Model_T2D_CHM_s model;
+	using Model_T2D_CHM_s_hdf5_io_utilities::load_chm_s_model_from_hdf5_file;
 	load_chm_s_model_from_hdf5_file(model,
 		"t2d_chm_s_geostatic_hdf5_mcc.hdf5", "th3", 100);
 
@@ -44,11 +45,26 @@ void test_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void)
 		vbc.node_id = vx_bc_n_id[v_id];
 		vbc.v = 0.0;
 	}
+	model.init_vfxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
+	for (size_t v_id = 0; v_id < model.vfx_num; ++v_id)
+	{
+		VelocityBC &vbc = model.vfxs[v_id];
+		vbc.node_id = vx_bc_n_id[v_id];
+		vbc.v = 0.0;
+	}
+
 	size_t vy_bc_n_id[] = { 0, 1, 4 };
 	model.init_vsys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
 	for (size_t v_id = 0; v_id < model.vsy_num; ++v_id)
 	{
 		VelocityBC &vbc = model.vsys[v_id];
+		vbc.node_id = vy_bc_n_id[v_id];
+		vbc.v = 0.0;
+	}
+	model.init_vfys(sizeof(vy_bc_n_id) / sizeof(vy_bc_n_id[0]));
+	for (size_t v_id = 0; v_id < model.vfy_num; ++v_id)
+	{
+		VelocityBC &vbc = model.vfys[v_id];
 		vbc.node_id = vy_bc_n_id[v_id];
 		vbc.v = 0.0;
 	}
@@ -148,7 +164,7 @@ void test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void)
 		60.0,
 		40.0,
 		480.0,
-		-400,
+		-100.0,
 		0.0,
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori)

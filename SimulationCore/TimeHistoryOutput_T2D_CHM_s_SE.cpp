@@ -4,6 +4,7 @@
 #include "Step_T2D_CHM_s_SE.h"
 
 #include "ResultFile_PlainBin_DataStruct.h"
+
 #include "Model_T2D_CHM_s_hdf5_io_utilities.h"
 
 #include "TimeHistoryOutput_T2D_CHM_s_SE.h"
@@ -268,10 +269,13 @@ int time_history_output_func_t2d_chm_s_SE_to_hdf5_res_file(TimeHistoryOutput &_s
 	rf.write_attribute(frame_grp_id, "substep_num", step.get_substep_num());
 	rf.write_attribute(frame_grp_id, "total_substep_num", step.get_total_substep_num());
 	// output particle data
-	ouput_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
+	using Model_T2D_CHM_s_hdf5_io_utilities::output_pcl_data_to_hdf5_file;
+	output_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
 	// output consititutive model
+	using Model_T2D_CHM_s_hdf5_io_utilities::output_model_container_to_hdf5_file;
 	output_model_container_to_hdf5_file(md.model_container, rf, frame_grp_id);
 	// output rigid body
+	using Model_T2D_CHM_s_hdf5_io_utilities::output_rigid_ciricle_to_hdf5_file;
 	output_rigid_ciricle_to_hdf5_file(md.get_rigid_circle(), rf, frame_grp_id);
 	rf.close_group(frame_grp_id);
 

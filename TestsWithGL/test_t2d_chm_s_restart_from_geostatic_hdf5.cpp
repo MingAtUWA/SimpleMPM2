@@ -24,6 +24,7 @@
 void test_t2d_chm_s_restart_from_geostatic_hdf5(void)
 {
 	Model_T2D_CHM_s model;
+	using Model_T2D_CHM_s_hdf5_io_utilities::load_chm_s_model_from_hdf5_file;
 	load_chm_s_model_from_hdf5_file(model,
 		"t2d_chm_s_geostatic_hdf5.hdf5", "th3", 100);
 

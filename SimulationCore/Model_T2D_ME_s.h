@@ -3,6 +3,7 @@
 
 #include "BC.h"
 #include "Model.h"
+#include "ModelContainer.h"
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
@@ -83,6 +84,8 @@ public: // Node, Element and Particle data structures
 		Particle *next;
 
 		ConstitutiveModel *cm;
+		inline void set_cm(ConstitutiveModel &_cm)
+		{ cm = &_cm; cm->ext_data = this; }
 	};
 
 	struct Element
@@ -140,6 +143,8 @@ public:
 	
 	double K_cont; // contact stiffness
 
+	ModelContainer model_container;
+
 public:
 	Model_T2D_ME_s();
 	~Model_T2D_ME_s();
@@ -149,6 +154,7 @@ public:
 	void clear_mesh(void);
 
 	void init_pcls(size_t num, double m, double density, double _E, double _niu);
+	void alloc_pcls(size_t num);
 	void clear_pcls(void);
 
 	void init_mesh(TriangleMesh &tri_mesh);

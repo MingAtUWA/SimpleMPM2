@@ -1,8 +1,11 @@
 #include "PostProcessor_pcp.h"
 
+#include "ResultFile_hdf5_DataStruct.h"
+
 #include "GA_T2D_CHM_s_hdf5.h"
 
-using namespace GA_T2D_CHM_s_hdf5_internal;
+using namespace ResultFile_hdf5_DataStruct;
+using namespace Model_T2D_CHM_s_hdf5_io_utilities;
 
 GA_T2D_CHM_s_hdf5::GA_T2D_CHM_s_hdf5(GLsizei win_w, GLsizei win_h) :
 	GenerateAnimation(win_w, win_h), th_id(-1),
@@ -20,7 +23,8 @@ GA_T2D_CHM_s_hdf5::~GA_T2D_CHM_s_hdf5()
 		delete[] cbar_id_data;
 		cbar_id_data = nullptr;
 	}
-	if (th_id >= 0) rf_hdf5.close_group(th_id);
+	if (th_id >= 0)
+		rf_hdf5.close_group(th_id);
 }
 
 int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
@@ -61,23 +65,24 @@ int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
 	size_t node_num, elem_num;
 	rf_hdf5.read_attribute(bg_mesh_id, "node_num", node_num);
 	rf_hdf5.read_attribute(bg_mesh_id, "element_num", elem_num);
+
 	// nodes
-	struct NodeData
-	{
-		unsigned long long id;
-		double x;
-		double y;
-	} *nodes_data;
-	nodes_data = new NodeData[node_num];
-	rf_hdf5.read_dataset(bg_mesh_id, "NodeCoordinate", node_num,
-						 size_t(sizeof(NodeData)/sizeof(double)),
-						 (double *)nodes_data);
+	NodeData *nodes_data = new NodeData[node_num];
+	hid_t nd_dt_id = get_nd_dt_id();
+	rf_hdf5.read_dataset(
+		bg_mesh_id,
+		"NodeCoordinate",
+		node_num,
+		nodes_data,
+		nd_dt_id
+		);
+	H5Tclose(nd_dt_id);
 	GLfloat *coords = new GLfloat[node_num * 3];
 	for (size_t n_id = 0; n_id < node_num; ++n_id)
 	{
-		NodeData &nd = nodes_data[n_id];
-		coords[n_id * 3 + 0] = GLfloat(nd.x);
-		coords[n_id * 3 + 1] = GLfloat(nd.y);
+		NodeData &node_data = nodes_data[n_id];
+		coords[n_id * 3 + 0] = GLfloat(node_data.x);
+		coords[n_id * 3 + 1] = GLfloat(node_data.y);
 		coords[n_id * 3 + 2] = 0.0f;
 	}
 	bg_grid_data.init_array_buffer(coords, node_num * 3);
@@ -85,19 +90,19 @@ int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
 	glEnableVertexAttribArray(0);
 	delete[] coords;
 	delete[] nodes_data;
+
 	// elements
-	struct ElemData
-	{
-		unsigned long long id;
-		unsigned long long n1;
-		unsigned long long n2;
-		unsigned long long n3;
-	} *elems_data;
-	elems_data = new ElemData[elem_num];
+	ElemData *elems_data = new ElemData[elem_num];
 	elem_n_id_num = elem_num * 3;
-	rf_hdf5.read_dataset(bg_mesh_id, "ElementTopology", elem_num,
-						 size_t(sizeof(ElemData)/sizeof(unsigned long long)),
-						 (unsigned long long *)elems_data);
+	hid_t ed_dt_id = get_ed_dt_id();
+	rf_hdf5.read_dataset(
+		bg_mesh_id,
+		"ElementTopology",
+		elem_num,
+		elems_data,
+		ed_dt_id
+		);
+	H5Tclose(ed_dt_id);
 	GLuint *indices = new GLuint[elem_num * 3];
 	for (size_t e_id = 0; e_id < elem_num; ++e_id)
 	{
@@ -109,6 +114,7 @@ int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
 	bg_grid_data.init_elem_array_buffer(indices, elem_num * 3);
 	delete[] indices;
 	delete[] elems_data;
+
 	rf_hdf5.close_group(bg_mesh_id);
 
 	// frame number
@@ -253,8 +259,15 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 		// read rigid body particle data
 		rb_pcls_data.resize(rb_pcl_num);
 		RigidBodyParticleData *rbpds = rb_pcls_data.get_mem();
-		rf_hdf5.read_dataset(rb_id, "ParticleData", rb_pcl_num, 3, (double *)rbpds);
-
+		hid_t rc_dt_id = get_rc_dt_id();
+		rf_hdf5.read_dataset(
+			rb_id,
+			"ParticleData",
+			rb_pcl_num,
+			rbpds,
+			rc_dt_id
+			);
+		H5Tclose(rc_dt_id);
 		double pcl_x, pcl_y;
 		for (size_t pcl_id = 0; pcl_id < rb_pcl_num; ++pcl_id)
 		{
@@ -287,9 +300,15 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	rf_hdf5.close_dataset(pcl_data_id);
 	pcls_data.resize(pcl_num);
 	ParticleData *pds = pcls_data.get_mem();
-	rf_hdf5.read_dataset(frame_id, "ParticleData", pcl_num,
-						 size_t(sizeof(ParticleData)/sizeof(double)),
-						 (double *)pds);
+	hid_t pcl_dt_id = get_pcl_dt_id();
+	rf_hdf5.read_dataset(
+		frame_id,
+		"ParticleData",
+		pcl_num,
+		pds,
+		pcl_dt_id
+		);
+	H5Tclose(pcl_dt_id);
 	ColorGraph::Colorf pcl_color;
 	pcls_mem.reset();
 	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
@@ -300,7 +319,7 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 		pcls_mem.add_pcl(
 			pd.x,
 			pd.y,
-			pd.m_s/((1.0-pd.n)*pd.density_s) * 0.25, // vol
+			pd.m_s / ((1.0-pd.n)*pd.density_s) * 0.25, // vol
 			pcl_color.r, // color
 			pcl_color.g,
 			pcl_color.b

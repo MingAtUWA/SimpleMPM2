@@ -4,8 +4,55 @@
 #include "Step_T2D_ME_s.h"
 
 #include "ResultFile_PlainBin_DataStruct.h"
+#include "Model_T2D_ME_s_hdf5_io_utilities.h"
 
 #include "TimeHistoryOutput_T2D_ME_s.h"
+
+int TimeHistoryOutput_T2D_ME_s::init(void)
+{
+	switch (res_file->get_type())
+	{
+	case ResultFileType::PlainBin:
+		break;
+	case ResultFileType::XML:
+		break;
+	case ResultFileType::Hdf5:
+	{
+		ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+		hid_t th_grp_id = rf.get_time_history_grp_id();
+		th_id = rf.create_group(th_grp_id, name.c_str());
+	}
+	break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int TimeHistoryOutput_T2D_ME_s::close(void)
+{
+	switch (res_file->get_type())
+	{
+	case ResultFileType::PlainBin:
+		break;
+	case ResultFileType::XML:
+		break;
+	case ResultFileType::Hdf5:
+	{
+		ResultFile_hdf5 &rf = *static_cast<ResultFile_hdf5 *>(res_file);
+		rf.write_attribute(th_id, "output_num", output_id);
+		if (th_id > 0)
+		{
+			rf.close_group(th_id);
+			th_id = -1;
+		}
+	}
+	break;
+	default:
+		break;
+	}
+	return 0;
+}
 
 int time_history_output_func_t2d_me_s_to_plain_bin_res_file(TimeHistoryOutput &_self)
 {
@@ -205,4 +252,36 @@ int time_history_output_func_t2d_me_s_to_xml_res_file(TimeHistoryOutput &_self)
 	file << "</TimeHistory>\n";
 
 	return 0;
+}
+
+int time_history_output_func_t2d_me_s_to_hdf5_res_file(TimeHistoryOutput &_self)
+{
+	TimeHistoryOutput_T2D_ME_s &th
+		= static_cast<TimeHistoryOutput_T2D_ME_s &>(_self);
+	Step_T2D_ME_s &step
+		= static_cast<Step_T2D_ME_s &>(th.get_step());
+	Model_T2D_ME_s &md = static_cast<Model_T2D_ME_s &>(step.get_model());
+	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*th.res_file);
+
+	char frame_name[30];
+	snprintf(frame_name, 30, "frame_%zu", th.output_id);
+	hid_t frame_grp_id = rf.create_group(th.th_id, frame_name);
+	rf.write_attribute(frame_grp_id, "current_time", step.get_current_time());
+	rf.write_attribute(frame_grp_id, "total_time", step.get_total_time());
+	rf.write_attribute(frame_grp_id, "substep_num", step.get_substep_num());
+	rf.write_attribute(frame_grp_id, "total_substep_num", step.get_total_substep_num());
+	// output particle data
+	using Model_T2D_ME_s_hdf5_io_utilities::output_pcl_data_to_hdf5_file;
+	output_pcl_data_to_hdf5_file(md, rf, frame_grp_id);
+	// output consititutive model
+	using Model_T2D_ME_s_hdf5_io_utilities::output_model_container_to_hdf5_file;
+	output_model_container_to_hdf5_file(md.model_container, rf, frame_grp_id);
+	// output rigid body
+	using Model_T2D_ME_s_hdf5_io_utilities::output_rigid_ciricle_to_hdf5_file;
+	output_rigid_ciricle_to_hdf5_file(md.get_rigid_circle(), rf, frame_grp_id);
+	rf.close_group(frame_grp_id);
+
+	++th.output_id;
+	return 0;
+
 }

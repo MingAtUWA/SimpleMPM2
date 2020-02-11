@@ -18,7 +18,7 @@ add_library(
     # Plain binary result file
     ResultFile_PlainBin.h ResultFile_PlainBin_DataStruct.h
     # XML result file
-    ResultFile_XML.h
+    ResultFile_XML.h ResultFile_hdf5_DataStruct.h
     # hdf5 result file
     ResultFile_hdf5.h ResultFile_hdf5.cpp
     # ProgressBar
@@ -89,7 +89,8 @@ add_library(
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.cpp
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.h
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.cpp
-    # output mc container to hdf5 file
+    # output model to hdf5 file
+    Model_T2D_ME_s_hdf5_io_utilities.h  Model_T2D_ME_s_hdf5_io_utilities.cpp
     Model_T2D_CHM_s_hdf5_io_utilities.h Model_T2D_CHM_s_hdf5_io_utilities.cpp
     )
 

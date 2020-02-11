@@ -40,37 +40,37 @@ void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 	tri_mesh.clear();
 
 	// elasticity
-	model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
-	double K = 0.0;
-	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
-	{
-		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		pcl.s22 = -(1.0 - pcl.y) * 100.0;
-		pcl.s11 = K * pcl.s22;
-		pcl.s12 = 0.0;
-	}
-	// mcc
-	//model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1.0e4, 1.0e-4, 1.0);
-	//ModifiedCamClay *cms = model.model_container.add_ModifiedCamClay(model.pcl_num);
-	//double K = 1.0 - sin(25.0 / 180.0 * 3.14159265359);
-	//double ini_stress[6];
+	//model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
+	//double K = 0.0;
 	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	//{
 	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
 	//	pcl.s22 = -(1.0 - pcl.y) * 100.0;
 	//	pcl.s11 = K * pcl.s22;
 	//	pcl.s12 = 0.0;
-	//	ini_stress[0] = pcl.s11;
-	//	ini_stress[1] = pcl.s22;
-	//	ini_stress[2] = pcl.s11;
-	//	ini_stress[3] = 0.0;
-	//	ini_stress[4] = 0.0;
-	//	ini_stress[5] = 0.0;
-	//	ModifiedCamClay &cm = cms[p_id];
-	//	cm.set_param_NC(0.25, 0.04, 0.15, 25, 1.5, ini_stress);
-	//	pcl.cm = &cm;
-	//	cm.ext_data = &pcl;
 	//}
+	// mcc
+	model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1.0e4, 1.0e-4, 1.0);
+	ModifiedCamClay *cms = model.model_container.add_ModifiedCamClay(model.pcl_num);
+	double K = 1.0 - sin(25.0 / 180.0 * 3.14159265359);
+	double ini_stress[6];
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+		pcl.s22 = -(1.0 - pcl.y) * 100.0;
+		pcl.s11 = K * pcl.s22;
+		pcl.s12 = 0.0;
+		ini_stress[0] = pcl.s11;
+		ini_stress[1] = pcl.s22;
+		ini_stress[2] = pcl.s11;
+		ini_stress[3] = 0.0;
+		ini_stress[4] = 0.0;
+		ini_stress[5] = 0.0;
+		ModifiedCamClay &cm = cms[p_id];
+		cm.set_param_NC(0.25, 0.04, 0.15, 25, 1.5, ini_stress);
+		pcl.cm = &cm;
+		cm.ext_data = &pcl;
+	}
 	mh_2_pcl.clear();
 
 	model.init_bg_mesh(0.05, 0.05);

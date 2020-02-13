@@ -269,6 +269,7 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 			);
 		H5Tclose(rc_dt_id);
 		double pcl_x, pcl_y;
+		rc_pcls_mem.reset();
 		for (size_t pcl_id = 0; pcl_id < rb_pcl_num; ++pcl_id)
 		{
 			RigidBodyParticleData &rbpd = rbpds[pcl_id];

@@ -133,6 +133,23 @@ struct NodalForce
 	double fx_ub;
 	double fy_ub;
 };
+hid_t get_nf_dt_id(void)
+{
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(NodalForce));
+	H5Tinsert(res, "id", HOFFSET(NodalForce, id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "need_cal", HOFFSET(NodalForce, need_cal), H5T_NATIVE_HBOOL);
+	H5Tinsert(res, "has_vsx_bc", HOFFSET(NodalForce, has_vsx_bc), H5T_NATIVE_HBOOL);
+	H5Tinsert(res, "has_vsy_bc", HOFFSET(NodalForce, has_vsy_bc), H5T_NATIVE_HBOOL);
+	H5Tinsert(res, "has_vfx_bc", HOFFSET(NodalForce, has_vfx_bc), H5T_NATIVE_HBOOL);
+	H5Tinsert(res, "has_vfy_bc", HOFFSET(NodalForce, has_vfy_bc), H5T_NATIVE_HBOOL);
+	H5Tinsert(res, "fx_ext", HOFFSET(NodalForce, fx_ext), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "fy_ext", HOFFSET(NodalForce, fy_ext), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "fx_int", HOFFSET(NodalForce, fx_int), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "fy_int", HOFFSET(NodalForce, fy_int), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "fx_ub", HOFFSET(NodalForce, fx_ub), H5T_NATIVE_DOUBLE);
+	H5Tinsert(res, "fy_ub", HOFFSET(NodalForce, fy_ub), H5T_NATIVE_DOUBLE);
+	return res;
+}
 }
 
 int time_history_output_func_t2d_chm_s_SE_geostatic_fub_to_hdf5_res_file(TimeHistoryOutput &_self)
@@ -172,22 +189,10 @@ int time_history_output_func_t2d_chm_s_SE_geostatic_fub_to_hdf5_res_file(TimeHis
 		nf.fx_ub = n.fx_ext_s - n.fx_int_s;
 		nf.fy_ub = n.fy_ext_s - n.fy_int_s;
 	}
-	hid_t nf_type_id = H5Tcreate(H5T_COMPOUND, sizeof(NodalForce));
-	H5Tinsert(nf_type_id, "id", HOFFSET(NodalForce, id), H5T_NATIVE_ULLONG);
-	H5Tinsert(nf_type_id, "need_cal", HOFFSET(NodalForce, need_cal), H5T_NATIVE_HBOOL);
-	H5Tinsert(nf_type_id, "has_vsx_bc", HOFFSET(NodalForce, has_vsx_bc), H5T_NATIVE_HBOOL);
-	H5Tinsert(nf_type_id, "has_vsy_bc", HOFFSET(NodalForce, has_vsy_bc), H5T_NATIVE_HBOOL);
-	H5Tinsert(nf_type_id, "has_vfx_bc", HOFFSET(NodalForce, has_vfx_bc), H5T_NATIVE_HBOOL);
-	H5Tinsert(nf_type_id, "has_vfy_bc", HOFFSET(NodalForce, has_vfy_bc), H5T_NATIVE_HBOOL);
-	H5Tinsert(nf_type_id, "fx_ext", HOFFSET(NodalForce, fx_ext), H5T_NATIVE_DOUBLE);
-	H5Tinsert(nf_type_id, "fy_ext", HOFFSET(NodalForce, fy_ext), H5T_NATIVE_DOUBLE);
-	H5Tinsert(nf_type_id, "fx_int", HOFFSET(NodalForce, fx_int), H5T_NATIVE_DOUBLE);
-	H5Tinsert(nf_type_id, "fy_int", HOFFSET(NodalForce, fy_int), H5T_NATIVE_DOUBLE);
-	H5Tinsert(nf_type_id, "fx_ub", HOFFSET(NodalForce, fx_ub), H5T_NATIVE_DOUBLE);
-	H5Tinsert(nf_type_id, "fy_ub", HOFFSET(NodalForce, fy_ub), H5T_NATIVE_DOUBLE);
+	hid_t nf_type_id = get_nf_dt_id();
 	hid_t dataspace_id = H5Screate_simple(1, &md.node_num, nullptr);
 	hid_t nf_id = H5Dcreate(frame_grp_id, "NodalForce", nf_type_id,
-						  dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+						    dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(nf_id, nf_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, nfs);
 	H5Dclose(nf_id);
 	H5Sclose(dataspace_id);

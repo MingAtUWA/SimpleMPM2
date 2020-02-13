@@ -92,9 +92,10 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	//		  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 	
 	Model_T2D_CHM_s model;
+	// calculation mesh
 	model.init_mesh(tri_mesh);
-	tri_mesh.clear();
-
+	//tri_mesh.clear();
+	// acceleration mesh
 	model.init_bg_mesh(0.1, 0.1);
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
@@ -103,9 +104,8 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	mh_2_pcl.generate_pcls();
 	mh_2_pcl.clear_points_in_rect(-3.0, 3.0, 0.0, 0.3);
 	mh_2_pcl.replace_with_grid_points(-2.0, 2.0, -2.0, 0.0, 0.02, 0.02);
-	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
 
-	model.init_pcls(mh_2_pcl, 0.706, 2700.0, 1000.0, 20.0e6, 0.3, 50.0e7, 1.0e-9, 1.0e-3);
+	model.init_pcls(mh_2_pcl, 0.706, 2700.0, 1000.0, 2.0e6, 0.3, 5.0e7, 1.0e-12, 1.0e-3);
 	mh_2_pcl.clear();
 
 	ModelContainer &mc = model.model_container;
@@ -115,18 +115,18 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
 		// init geostatic stress
-		pcl.s22 = (1.0 - pcl.y) * (2700.0 - 1000.0) * (1.0 - 0.706) * -9.81;
+		pcl.s22 = -pcl.y * (2700.0 - 1000.0) * (1.0 - 0.706) * -9.81;
 		pcl.s11 = K * pcl.s22;
 		pcl.s12 = 0.0;
 		// init material model
 		LinearElasticity &cm = cms[p_id];
-		cm.set_param(20.0e6, 0.3);
+		cm.set_param(2.0e6, 0.3);
 		pcl.set_cm(cm);
 	}
 
 	model.init_rigid_circle(0.25, 0.0, 0.25, 0.025);
 	//model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
-	model.set_contact_stiffness(200.0e6, 200.0e6);
+	model.set_contact_stiffness(10.0e6, 10.0e6);
 	
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
 	bc_n_ids_mem.reserve(100);
@@ -298,7 +298,7 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	Step_T2D_CHM_s_SE_Geostatic step_gs;
 	step_gs.set_model(model);
 	step_gs.set_mass_scale(10.0, 10.0);
-	step_gs.set_time(1.0);
+	step_gs.set_time(1.0e-1);
 	step_gs.set_dtime(1.0e-6);
 	// out
 	out.set_interval_num(100);
@@ -332,8 +332,8 @@ void test_color_animation_t2d_chm_s_t_bar_real_geostatic(void)
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		-5.0e3,
-		5.0e3,
+		-18.0e3,
+		0.0e3,
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori));
 	gen.generate(5.0, -3.2, 3.2, -3.7, 0.5,

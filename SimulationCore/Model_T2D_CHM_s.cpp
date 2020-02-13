@@ -146,8 +146,7 @@ void Model_T2D_CHM_s::init_pcls(size_t num,
 	{
 		LinearElasticity &cm = cms[p_id];
 		cm.set_param(_E, _niu);
-		cm.ext_data = &pcls[p_id];
-		pcls[p_id].cm = &cm;
+		pcls[p_id].set_cm(cm);
 	}
 }
 

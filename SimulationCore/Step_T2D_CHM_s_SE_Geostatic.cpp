@@ -25,6 +25,15 @@ int Step_T2D_CHM_s_SE_Geostatic::init_calculation(void)
 		pcl.m_f = pcl.vol * pcl.n * pcl.density_f;
 	}
 
+	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	{
+		Node &n = md.nodes[n_id];
+		n.has_vsx_bc = false;
+		n.has_vsy_bc = false;
+		n.has_vfx_bc = false;
+		n.has_vfy_bc = false;
+	}
+
 	// convergence criteria
 	// unbalanced force
 	init_f_ub = 0.0;
@@ -56,15 +65,6 @@ int Step_T2D_CHM_s_SE_Geostatic::finalize_calculation(void)
 		pcl.e11 = 0.0;
 		pcl.e22 = 0.0;
 		pcl.e12 = 0.0;
-	}
-	
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
-	{
-		Node &n = md.nodes[n_id];
-		n.has_vsx_bc = false;
-		n.has_vsy_bc = false;
-		n.has_vfx_bc = false;
-		n.has_vfy_bc = false;
 	}
 
 	out_file.close();

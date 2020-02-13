@@ -80,8 +80,7 @@ public:
 		M2 = M * M;
 		e = _e;
 		// stress
-		for (size_t i = 0; i < 6; ++i)
-			stress[i] = _s[i];
+		memcpy(stress, _s, sizeof(double) * 6);
 		// pre-consolidation stress
 		double p = cal_p();
 		double q = cal_q();

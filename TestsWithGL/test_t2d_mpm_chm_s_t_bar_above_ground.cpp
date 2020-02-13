@@ -17,7 +17,7 @@
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
 #include "test_post_processor.h"
-#include "GA_T2D_CHM_s_color.h"
+#include "GA_T2D_CHM_s_hdf5.h"
 
 namespace
 {
@@ -53,25 +53,40 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 {
 	TriangleMesh tri_mesh;
 	tri_mesh.load_mesh("..\\..\\Asset\\rect_half.mesh_data");
-	std::cout << "node num: " << tri_mesh.get_node_num() << "\n"
-			  << "elem num: " << tri_mesh.get_elem_num() << "\n";
+	//std::cout << "node num: " << tri_mesh.get_node_num() << "\n"
+	//		  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
 	mh_2_pcl.replace_with_grid_points(0.0, 20.0, 0.0, 15.0, 0.2, 0.2);
-	std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
+	//std::cout << "pcl num: " << mh_2_pcl.get_pcl_num() << "\n";
 
 	Model_T2D_CHM_s model;
 	model.init_mesh(tri_mesh);
 	tri_mesh.clear();
 
+	model.init_bg_mesh(0.5, 0.5);
+
 	model.init_rigid_circle(2.5, 10.0, 17.6, 0.25);
 	model.set_rigid_circle_velocity(0.0, -1.0, 0.0);
-	model.set_contact_stiffness(150.0, 150.0);
+	//model.set_contact_stiffness(150.0, 150.0);
+	model.set_contact_stiffness(10.0e6, 10.0e6);
 
-	model.init_pcls(mh_2_pcl, 0.4, 20.0, 10.0, 100.0, 0.0, 1000.0, 1.0e-5, 1.0);
+	// elasticity
+	//model.init_pcls(mh_2_pcl, 0.4, 20.0, 10.0, 100.0, 0.0, 1000.0, 1.0e-5, 1.0);
+	//model.init_pcls(mh_2_pcl, 0.5, 2700.0, 1000.0, 2.0e6, 0.3, 2.0e7, 1.0e-12, 1.0e-3);
+	// mcc
+	model.init_pcls(mh_2_pcl, 0.5, 2700.0, 1000.0, 2.0e7, 1.0e-12, 1.0e-3);
+	ModelContainer &mc = model.model_container;
+	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
+	double ini_stress[6] = { -500.0, -500.0, -500.0, 0.0, 0.0, 0.0 };
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+		ModifiedCamClay &mcc = cms[p_id];
+		mcc.set_param_OC(0.25, 0.04, 0.15, 25.0, 1.5, ini_stress, 500.0);
+		pcl.set_cm(mcc);
+	}
 	mh_2_pcl.clear();
-
-	model.init_bg_mesh(0.5, 0.5);
 
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
 	bc_n_ids_mem.reserve(100);
@@ -90,7 +105,7 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	//MemoryUtilities::ItemArray<GLfloat> pt_array;
 	//pt_array.reserve(25 * 3);
 	//GLfloat pt_coord;
-	//for (size_t n_id = 0; n_id < model.vx_num; ++n_id)
+	//for (size_t n_id = 0; n_id < model.vsx_num; ++n_id)
 	//{
 	//	Model_T2D_CHM_s::Node &n = model.nodes[bc_n_ids[n_id]];
 	//	pt_coord = double(n.x);
@@ -111,7 +126,7 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 		vbc.v = 0.0;
 	}
 
-	//for (size_t n_id = 0; n_id < model.vy_num; ++n_id)
+	//for (size_t n_id = 0; n_id < model.vsy_num; ++n_id)
 	//{
 	//	Model_T2D_CHM_s::Node &n = model.nodes[bc_n_ids[n_id]];
 	//	pt_coord = double(n.x);
@@ -143,38 +158,48 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	//disp_model.display(-0.5, 20.5, -0.5, 20.5);
 	//return;
 
-	ResultFile_PlainBin res_file_pb;
-	res_file_pb.init("t2d_mpm_chm_t_bar_above_ground.bin");
-	ResultFile_XML res_file_xml;
-	res_file_xml.init("t2d_mpm_chm_t_bar_above_ground.xml");
+	//ResultFile_PlainBin res_file_pb;
+	//res_file_pb.init("t2d_mpm_chm_t_bar_above_ground.bin");
+	//ResultFile_XML res_file_xml;
+	//res_file_xml.init("t2d_mpm_chm_t_bar_above_ground.xml");
+	ResultFile_hdf5 res_file_hdf5;
+	res_file_hdf5.create("t2d_mpm_chm_t_bar_above_ground.hdf5");
 
 	// output model
 	ModelDataOutput_T2D_CHM_s md("md1");
 	md.set_model(model);
-	md.set_res_file(res_file_pb);
-	md.output();
-	md.set_res_file(res_file_xml);
+	//md.set_res_file(res_file_pb);
+	//md.output();
+	//md.set_res_file(res_file_xml);
+	//md.output();
+	md.set_res_file(res_file_hdf5);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s_SE out1("th1");
-	out1.set_res_file(res_file_pb);
-	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s_SE out2("th2");
-	out2.set_res_file(res_file_xml);
-	out2.set_output_init_state();
+	//TimeHistoryOutput_T2D_CHM_s_SE out1("th1");
+	//out1.set_res_file(res_file_pb);
+	//out1.set_output_init_state();
+	//TimeHistoryOutput_T2D_CHM_s_SE out2("th2");
+	//out2.set_res_file(res_file_xml);
+	//out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
-
+	TimeHistoryOutput_T2D_CHM_s_SE out4("penetration");
+	out4.set_res_file(res_file_hdf5);
+	out4.set_output_init_state();
+	out4.set_interval_num(100);
+	
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
+	step.set_mass_scale(10.0, 10.0);
 	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity
-	step.set_time(1.0);
-	step.set_dtime(1.0e-6);
-	out1.set_interval_num(100);
-	step.add_time_history(out1);
-	out2.set_interval_num(100);
-	step.add_time_history(out2);
+	step.set_time(2.5);
+	step.set_dtime(2.5e-6);
+	//out1.set_interval_num(100);
+	//step.add_time_history(out1);
+	//out2.set_interval_num(100);
+	//step.add_time_history(out2);
 	step.add_time_history(out3);
+	step.add_time_history(out4);
 	step.solve();
 
 	//system("pause");
@@ -201,10 +226,15 @@ void test_color_animation_t2d_chm_s_t_bar_above_ground(void)
 		{ 255, 93,  0 },
 		{ 255, 0,   0 }
 	};
-	GA_T2D_CHM_s_color gen(1000, 1000);
-	gen.init_color_graph(-200.0, 200.0, colors, sizeof(colors) / sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -padding_width, soil_width + padding_width,
-		-padding_height, soil_height + padding_height,
-		"t2d_mpm_chm_t_bar_above_ground.bin",
+	GA_T2D_CHM_s_hdf5 gen(1000, 1000);
+	gen.init_color_graph(-2500.0, 100.0, colors, sizeof(colors) / sizeof(ColorGraph::Colori));
+	gen.generate(
+		5.0,
+		-padding_width,
+		soil_width + padding_width,
+		-padding_height,
+		soil_height + padding_height,
+		"t2d_mpm_chm_t_bar_above_ground.hdf5",
+		"penetration",
 		"t2d_mpm_chm_t_bar_above_ground.gif");
 }

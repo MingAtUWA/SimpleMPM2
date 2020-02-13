@@ -90,11 +90,12 @@ void test_t2d_mpm_chm_s_t_bar_real_restart(void)
 		"t2d_mpm_chm_t_bar_real_geostatic.hdf5",
 		"geostatic",
 		100
-	);
+		);
 
 	model.init_bg_mesh(0.1, 0.1);
 
 	model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
+	model.k = 1.0e-12;
 
 	// boundary conditions
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
@@ -186,8 +187,8 @@ void test_t2d_mpm_chm_s_t_bar_real_restart(void)
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
 	step.set_mass_scale(10.0, 10.0);
-	step.set_time(1.0);
-	step.set_dtime(1.0e-6);
+	step.set_time(10.0);
+	step.set_dtime(1.0e-5);
 	out.set_interval_num(100);
 	step.add_time_history(out);
 	step.add_time_history(out_pb);
@@ -203,21 +204,21 @@ void test_color_animation_t2d_chm_s_t_bar_real_restart(void)
 		{ 0,   185, 255 },
 		{ 0,   255, 232 },
 		{ 0,   255, 139 },
-		{ 0,   255, 46 },
-		{ 46,  255, 0 },
-		{ 139, 255, 0 },
-		{ 232, 255, 0 },
-		{ 255, 185, 0 },
-		{ 255, 93,  0 },
-		{ 255, 0,   0 }
+		{ 0,   255, 46  },
+		{ 46,  255, 0   },
+		{ 139, 255, 0   },
+		{ 232, 255, 0   },
+		{ 255, 185, 0   },
+		{ 255, 93,  0   },
+		{ 255, 0,   0   }
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		-5.0e3,
-		5.0e3,
+		-20.0e3,
+		0.0e3,
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -3.2, 3.2, -3.7, 0.5,
+	gen.generate(15.0, -3.2, 3.2, -3.7, 0.5,
 		"t2d_mpm_chm_t_bar_real_restart.hdf5",
 		"penetration",
 		"t2d_mpm_chm_t_bar_real_restart.gif");

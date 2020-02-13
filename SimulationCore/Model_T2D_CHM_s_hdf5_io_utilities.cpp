@@ -85,8 +85,8 @@ int load_model_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf)
 	rf.read_attribute(md_out_id, "k", md.k);
 	rf.read_attribute(md_out_id, "miu", md.miu);
 	// contact properteis
-	rf.write_attribute(md_out_id, "Ks_cont", md.Ks_cont);
-	rf.write_attribute(md_out_id, "Kf_cont", md.Kf_cont);
+	rf.read_attribute(md_out_id, "Ks_cont", md.Ks_cont);
+	rf.read_attribute(md_out_id, "Kf_cont", md.Kf_cont);
 
 	TriangleMesh tri_mesh;
 	hid_t bg_mesh_id = rf.open_group(md_out_id, "BackgroundMesh");

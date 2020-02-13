@@ -23,7 +23,7 @@ protected:
 	int close(void);
 
 public:
-	TimeHistoryOutput_T2D_ME_s(const char *_name = "TimeHistory") :
+	TimeHistoryOutput_T2D_ME_s(const char *_name) :
 		TimeHistoryOutput(_name, "T2D_ME_s"),
 		output_id(0), is_init(false),
 		th_id(-1) {}

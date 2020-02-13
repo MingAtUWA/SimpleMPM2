@@ -118,9 +118,17 @@ void Model_T2D_ME_s::init_pcls(size_t num, double m, double density, double _E, 
 		pcl.s12 = 0.0;
 		pcl.s22 = 0.0;
 	}
+
 	// constitutive model
 	E = _E;
 	niu = _niu;
+	LinearElasticity *cms = model_container.add_LinearElasticity(pcl_num);
+	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
+	{
+		LinearElasticity &cm = cms[p_id];
+		cm.set_param(_E, _niu);
+		pcls[p_id].set_cm(cm);
+	}
 }
 
 void Model_T2D_ME_s::alloc_pcls(size_t num)

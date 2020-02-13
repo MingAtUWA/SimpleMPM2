@@ -81,14 +81,16 @@ add_library(
     # Rigid ciricle controlled by displacement
     DispConRigidCircle.h DispConRigidCircle.cpp
     # Strain enhancement
+    # ME
+    ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
+    TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
+    TimeHistoryOutput_T2D_ME_s_Geostatic.h TimeHistoryOutput_T2D_ME_s_Geostatic.cpp
+    # CHM
     Step_T2D_CHM_s_SE.h Step_T2D_CHM_s_SE.cpp
     Step_T2D_CHM_s_SE_Geostatic.h Step_T2D_CHM_s_SE_Geostatic.cpp
     TimeHistoryOutput_T2D_CHM_s_SE.h TimeHistoryOutput_T2D_CHM_s_SE.cpp
-    ModelDataOutput_T2D_ME_s.h ModelDataOutput_T2D_ME_s.cpp
-    TimeHistoryOutput_T2D_ME_s.h TimeHistoryOutput_T2D_ME_s.cpp
     TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic.cpp
-    TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.h
-    TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.cpp
+    TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.h TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub.cpp
     # output model to hdf5 file
     Model_T2D_ME_s_hdf5_io_utilities.h  Model_T2D_ME_s_hdf5_io_utilities.cpp
     Model_T2D_CHM_s_hdf5_io_utilities.h Model_T2D_CHM_s_hdf5_io_utilities.cpp

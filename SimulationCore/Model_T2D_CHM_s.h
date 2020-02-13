@@ -403,7 +403,7 @@ protected:
 	// velocity control
 	int apply_rigid_body_to_bg_mesh(double dtime);
 	// force control (panelty function)
-	int apply_contact_force_to_bg_mesh(double dtime);
+	int apply_contact_force_to_bg_mesh(double dtime, double ms_scale, double mf_scale);
 
 public:
 	inline void init_rigid_circle(double _r, double _x, double _y, double max_pcl_size)

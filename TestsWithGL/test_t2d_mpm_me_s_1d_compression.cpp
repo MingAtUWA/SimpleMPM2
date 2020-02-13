@@ -18,8 +18,7 @@
 #include "LinearElasticity.h"
 
 #include "test_post_processor.h"
-#include "GA_T2D_ME_s_color.h"
-
+#include "GA_T2D_ME_s_hdf5.h"
 
 namespace
 {
@@ -99,17 +98,9 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	tri_mesh.clear();
 	model.init_bg_mesh(0.05, 0.05); // background mesh
 
+	// elasticity
 	model.init_pcls(mh_2_pcl, 20.0, 1000.0, 0.0);
 	mh_2_pcl.clear();
-
-	// constitutive model
-	// elasticity
-	LinearElasticity *cms = model.model_container.add_LinearElasticity(model.pcl_num);
-	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
-	{
-		cms[p_id].set_param(1000.0, 0.0);
-		model.pcls[p_id].set_cm(cms[p_id]);
-	}
 
 	//find_bc_pcl_and_node(model);
 	//system("pause");
@@ -203,30 +194,38 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	//DisplayModel_T2D disp_model;
 	//disp_model.init_win();
 	//disp_model.init_model(model);
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num()/3);
+	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num()/3);
 	//disp_model.display(-0.05, 0.25, -0.05, 1.05);
 	//return;
 
-	ResultFile_PlainBin res_file_pb;
-	res_file_pb.init("t2d_mpm_me_1d_compression.bin");
-	ResultFile_XML res_file_xml;
-	res_file_xml.init("t2d_mpm_me_1d_compression.xml");
-	
+	//ResultFile_PlainBin res_file_pb;
+	//res_file_pb.init("t2d_mpm_me_1d_compression.bin");
+	//ResultFile_XML res_file_xml;
+	//res_file_xml.init("t2d_mpm_me_1d_compression.xml");
+	ResultFile_hdf5 res_file_hdf5;
+	res_file_hdf5.create("t2d_mpm_me_1d_compression.hdf5");
+
 	// output model
 	ModelDataOutput_T2D_ME_s md;
 	md.set_model(model);
-	md.set_res_file(res_file_pb);
-	md.output();
-	md.set_res_file(res_file_xml);
+	//md.set_res_file(res_file_pb);
+	//md.output();
+	//md.set_res_file(res_file_xml);
+	//md.output();
+	md.set_res_file(res_file_hdf5);
 	md.output();
 
-	TimeHistoryOutput_T2D_ME_s out1;
-	out1.set_res_file(res_file_pb);
-	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_ME_s out2;
-	out2.set_res_file(res_file_xml);
-	out2.set_output_init_state();
+	//TimeHistoryOutput_T2D_ME_s out1;
+	//out1.set_res_file(res_file_pb);
+	//out1.set_output_init_state();
+	//TimeHistoryOutput_T2D_ME_s out2;
+	//out2.set_res_file(res_file_xml);
+	//out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
+	TimeHistoryOutput_T2D_ME_s out4("compression");
+	out4.set_res_file(res_file_hdf5);
+	out4.set_output_init_state();
+	out4.set_interval_num(100);
 
 	Step_T2D_ME_s step;
 	step.set_model(model);
@@ -234,11 +233,12 @@ void test_t2d_mpm_me_s_1d_compression(void)
 	//step.set_bv_ratio(0.0); // bulk viscosity
 	step.set_time(1.0);
 	step.set_dtime(1.0e-5);
-	out1.set_interval_num(100);
-	step.add_time_history(out1);
-	out2.set_interval_num(100);
-	step.add_time_history(out2);
+	//out1.set_interval_num(100);
+	//step.add_time_history(out1);
+	//out2.set_interval_num(100);
+	//step.add_time_history(out2);
 	step.add_time_history(out3);
+	step.add_time_history(out4);
 	step.solve();
 
 	//system("pause");
@@ -266,10 +266,16 @@ void test_color_animation_t2d_me_s_1d_compression(void)
 		{ 255, 93,  0   },
 		{ 255, 0,   0   }
 	};
-	GA_T2D_ME_s_color gen;
-	gen.init_color_graph(-100.0, 0.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -padding_width, soil_width + padding_width,
-				 -padding_height, soil_height + padding_height,
-				 "t2d_mpm_me_1d_compression.bin", "t2d_mpm_me_1d_compression.gif");
+	GA_T2D_ME_s_hdf5 gen;
+	gen.init_color_graph(-1.0, 1.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
+	gen.generate(
+		5.0,
+		-padding_width,
+		soil_width + padding_width,
+		-padding_height,
+		soil_height + padding_height,
+		"t2d_mpm_me_1d_compression.hdf5",
+		"compression",
+		"t2d_mpm_me_1d_compression.gif");
 }
 

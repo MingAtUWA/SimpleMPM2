@@ -225,10 +225,10 @@ void test_t2d_mpm_me_s_t_bar_coarser(void)
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_ME_s out1;
+	TimeHistoryOutput_T2D_ME_s out1("tbar_penetration");
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_ME_s out2;
+	TimeHistoryOutput_T2D_ME_s out2("tbar_penetration");
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;

@@ -334,7 +334,11 @@ int Model_T2D_CHM_s::apply_rigid_body_to_bg_mesh(double dtime)
 	return 0;
 }
 
-int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(double dtime)
+int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(
+	double dtime,
+	double ms_scale,
+	double mf_scale
+	)
 {
 	// reset reaction force
 	rigid_circle.rfx = 0.0;
@@ -369,16 +373,16 @@ int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(double dtime)
 			Node &n1 = nodes[e.n1];
 			nfsx_cont = pcl.N1 * fsx_cont;
 			nfsy_cont = pcl.N1 * fsy_cont;
-			ndasx = nfsx_cont / n1.m_s;
-			ndasy = nfsy_cont / n1.m_s;
+			ndasx = nfsx_cont / (n1.m_s * ms_scale);
+			ndasy = nfsy_cont / (n1.m_s * ms_scale);
 			n1.ax_s += ndasx;
 			n1.ay_s += ndasy;
 			n1.vx_s += ndasx * dtime;
 			n1.vy_s += ndasy * dtime;
 			nffx_cont = pcl.N1 * ffx_cont;
 			nffy_cont = pcl.N1 * ffy_cont;
-			ndafx = nffx_cont / n1.m_f;
-			ndafy = nffy_cont / n1.m_f;
+			ndafx = nffx_cont / (n1.m_f * mf_scale);
+			ndafy = nffy_cont / (n1.m_f * mf_scale);
 			n1.ax_f += ndafx;
 			n1.ay_f += ndafy;
 			n1.vx_f += ndafx * dtime;
@@ -387,16 +391,16 @@ int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(double dtime)
 			Node &n2 = nodes[e.n2];
 			nfsx_cont = pcl.N2 * fsx_cont;
 			nfsy_cont = pcl.N2 * fsy_cont;
-			ndasx = nfsx_cont / n2.m_s;
-			ndasy = nfsy_cont / n2.m_s;
+			ndasx = nfsx_cont / (n2.m_s * ms_scale);
+			ndasy = nfsy_cont / (n2.m_s * ms_scale);
 			n2.ax_s += ndasx;
 			n2.ay_s += ndasy;
 			n2.vx_s += ndasx * dtime;
 			n2.vy_s += ndasy * dtime;
 			nffx_cont = pcl.N2 * ffx_cont;
 			nffy_cont = pcl.N2 * ffy_cont;
-			ndafx = nffx_cont / n2.m_f;
-			ndafy = nffy_cont / n2.m_f;
+			ndafx = nffx_cont / (n2.m_f * mf_scale);
+			ndafy = nffy_cont / (n2.m_f * mf_scale);
 			n2.ax_f += ndafx;
 			n2.ay_f += ndafy;
 			n2.vx_f += ndafx * dtime;
@@ -405,16 +409,16 @@ int Model_T2D_CHM_s::apply_contact_force_to_bg_mesh(double dtime)
 			Node &n3 = nodes[e.n3];
 			nfsx_cont = pcl.N3 * fsx_cont;
 			nfsy_cont = pcl.N3 * fsy_cont;
-			ndasx = nfsx_cont / n3.m_s;
-			ndasy = nfsy_cont / n3.m_s;
+			ndasx = nfsx_cont / (n3.m_s * ms_scale);
+			ndasy = nfsy_cont / (n3.m_s * ms_scale);
 			n3.ax_s += ndasx;
 			n3.ay_s += ndasy;
 			n3.vx_s += ndasx * dtime;
 			n3.vy_s += ndasy * dtime;
 			nffx_cont = pcl.N3 * ffx_cont;
 			nffy_cont = pcl.N3 * ffy_cont;
-			ndafx = nffx_cont / n3.m_f;
-			ndafy = nffy_cont / n3.m_f;
+			ndafx = nffx_cont / (n3.m_f * mf_scale);
+			ndafy = nffy_cont / (n3.m_f * mf_scale);
 			n3.ax_f += ndafx;
 			n3.ay_f += ndafy;
 			n3.vx_f += ndafx * dtime;

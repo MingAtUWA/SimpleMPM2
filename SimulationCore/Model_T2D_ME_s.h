@@ -85,7 +85,10 @@ public: // Node, Element and Particle data structures
 
 		ConstitutiveModel *cm;
 		inline void set_cm(ConstitutiveModel &_cm)
-		{ cm = &_cm; cm->ext_data = this; }
+		{ 
+			cm = &_cm;
+			_cm.ext_data = this;
+		}
 	};
 
 	struct Element

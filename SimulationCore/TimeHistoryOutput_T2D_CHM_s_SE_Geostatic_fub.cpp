@@ -7,6 +7,9 @@
 
 int TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub::init(void)
 {
+	if (is_init) return 0;
+	is_init = true;
+	
 	switch (res_file->get_type())
 	{
 	case ResultFileType::PlainBin:
@@ -23,6 +26,7 @@ int TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub::init(void)
 	default:
 		break;
 	}
+
 	return 0;
 }
 
@@ -48,6 +52,8 @@ int TimeHistoryOutput_T2D_CHM_s_SE_Geostatic_fub::close(void)
 	default:
 		break;
 	}
+
+	is_init = false;
 	return 0;
 }
 

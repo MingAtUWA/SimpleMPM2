@@ -459,7 +459,7 @@ int solve_substep_T2D_CHM_s_SE(void *_self)
 
 	// contact detection and velocity modification
 	if (md.get_rigid_circle().is_init())
-		md.apply_contact_force_to_bg_mesh(self.dtime);
+		md.apply_contact_force_to_bg_mesh(self.dtime, self.ms_sr, self.mf_sr);
 		//md.apply_rigid_body_to_bg_mesh(self.dtime);
 
 	// apply velocity bc

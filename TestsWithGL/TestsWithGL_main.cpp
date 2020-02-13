@@ -61,19 +61,30 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_me_s_1d_compression();
 	//test_color_animation_t2d_me_s_1d_compression();
 	
+	//test_triangle_searching();
+	
+	//test_color_graph();
+
+	// ModifiedCamClay
+	//test_ModifiedCamClay();
+
 	//test_t2d_mpm_me_s_t_bar_coarser();
 	//test_color_animation_t2d_me_s_t_bar_coarser();
+	//test_t2d_mpm_chm_s_t_bar_coarser();
+	//test_color_animation_t2d_chm_s_t_bar_coarser();
 
 	// t-bar penetrate from above ground
+	// me ver.
 	//test_t2d_mpm_me_s_t_bar_above_ground();
 	//test_color_animation_t2d_me_s_t_bar_above_ground();
-
-	//test_t2d_mpm_chm_s_t_bar_above_ground();
+	// chm ver.
+	test_t2d_mpm_chm_s_t_bar_above_ground();
 	test_color_animation_t2d_chm_s_t_bar_above_ground();
 
 	// geostatic
+	// me ver.
 	//test_t2d_mpm_me_s_geostatic();
-	
+	// chm ver.
 	//test_t2d_mpm_chm_s_geostatic();
 	//test_color_animation_t2d_mpm_chm_s_geostatic();
 
@@ -84,19 +95,13 @@ int main(int argc, void **argv)
 	//test_color_animation_t2d_chm_s_1d_consolidation();
 
 	// 1d consolidation wave propagation
+	// wave are damped out by the "enhanced strain method"
 	//test_t2d_mpm_chm_s_1d_wave();
 	//test_color_animation_t2d_chm_s_1d_wave();
 
 	//test_t2d_mpm_chm_s_t_bar();
 	//test_animation_t2d_chm_s_t_bar();
 	//test_color_animation_t2d_chm_s_t_bar();
-
-	//test_t2d_mpm_chm_s_t_bar_coarser();
-	//test_color_animation_t2d_chm_s_t_bar_coarser();
-
-	//test_triangle_searching();
-
-	//test_color_graph();
 
 	// output to hdf5 file
 	//test_t2d_chm_s_hdf5_output();
@@ -110,10 +115,7 @@ int main(int argc, void **argv)
 	//test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
-	// ModifiedCamClay
-	//test_ModifiedCamClay();
-
-	// a realistic case of t-bar penetration
+	/// a realistic case of t-bar penetration
 	//test_t2d_mpm_chm_s_t_bar_real_geostatic();
 	//test_color_animation_t2d_chm_s_t_bar_real_geostatic();
 	//test_t2d_mpm_chm_s_t_bar_real_restart();

@@ -10,6 +10,9 @@
 
 int TimeHistoryOutput_T2D_ME_s::init(void)
 {
+	if (is_init) return 0;
+	is_init = true;
+	
 	switch (res_file->get_type())
 	{
 	case ResultFileType::PlainBin:
@@ -51,6 +54,8 @@ int TimeHistoryOutput_T2D_ME_s::close(void)
 	default:
 		break;
 	}
+
+	is_init = false;
 	return 0;
 }
 
@@ -258,8 +263,7 @@ int time_history_output_func_t2d_me_s_to_hdf5_res_file(TimeHistoryOutput &_self)
 {
 	TimeHistoryOutput_T2D_ME_s &th
 		= static_cast<TimeHistoryOutput_T2D_ME_s &>(_self);
-	Step_T2D_ME_s &step
-		= static_cast<Step_T2D_ME_s &>(th.get_step());
+	Step_T2D_ME_s &step = static_cast<Step_T2D_ME_s &>(th.get_step());
 	Model_T2D_ME_s &md = static_cast<Model_T2D_ME_s &>(step.get_model());
 	ResultFile_hdf5 &rf = static_cast<ResultFile_hdf5 &>(*th.res_file);
 

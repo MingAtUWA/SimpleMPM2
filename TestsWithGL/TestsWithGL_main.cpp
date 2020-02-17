@@ -67,6 +67,7 @@ int main(int argc, void **argv)
 
 	// ModifiedCamClay
 	//test_ModifiedCamClay();
+	test_mcc_get_Su();
 
 	//test_t2d_mpm_me_s_t_bar_coarser();
 	//test_color_animation_t2d_me_s_t_bar_coarser();
@@ -78,8 +79,8 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_me_s_t_bar_above_ground();
 	//test_color_animation_t2d_me_s_t_bar_above_ground();
 	// chm ver.
-	test_t2d_mpm_chm_s_t_bar_above_ground();
-	test_color_animation_t2d_chm_s_t_bar_above_ground();
+	//test_t2d_mpm_chm_s_t_bar_above_ground();
+	//test_color_animation_t2d_chm_s_t_bar_above_ground();
 
 	// geostatic
 	// me ver.
@@ -115,7 +116,7 @@ int main(int argc, void **argv)
 	//test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
-	/// a realistic case of t-bar penetration
+	// a realistic case of t-bar penetration
 	//test_t2d_mpm_chm_s_t_bar_real_geostatic();
 	//test_color_animation_t2d_chm_s_t_bar_real_geostatic();
 	//test_t2d_mpm_chm_s_t_bar_real_restart();

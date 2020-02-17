@@ -16,10 +16,11 @@ public:
 	double niu; // possion ratio
 	double kappa; // logrithmic recompression modulus
 	double lambda; // logrithmic compression modulus
-	double fric_angle, M2;
-	double e; // void ratio
+	double N; 
+	double fric_angle, M, M2; // critical state line parameters
+	double Gamma;
 	double pc; // pre-consolidation stress
-	double N, Gamma, M; // normal and critical state line parameters
+	double e; // void ratio
 	
 	ModifiedCamClay() :
 		ConstitutiveModel(modified_cam_clay_integration_function, ConstitutiveModelType::ModifiedCamClay),
@@ -42,43 +43,57 @@ public:
 		double _kappa,
 		double _lambda,
 		double _fric_ang,
-		double _e,
+		double _N, // void ratio at p = kPa on NCL
 		double _s[6]
 		)
 	{
+		// elastic
 		niu = _niu;
 		kappa = _kappa;
+		// NCL
 		lambda = _lambda;
-		fric_angle = _fric_ang / 180.0 * 3.14159265359;
-		M = 6.0 * sin(fric_angle) / (3.0 - sin(fric_angle));
+		N = _N;
+		// CSL
+		Gamma = N - (lambda - kappa) * log(2.0);
+		fric_angle = _fric_ang;
+		double fric_ang_tmp = _fric_ang / 180.0 * 3.14159265359;
+		M = 6.0 * sin(fric_ang_tmp) / (3.0 - sin(fric_ang_tmp));
 		M2 = M * M;
-		e = _e;
 		// stress
-		for (size_t i = 0; i < 6; ++i)
-			stress[i] = _s[i];
+		memcpy(stress, _s, sizeof(double) * 6);
 		// pre-consolidation stress
 		double p = cal_p();
 		double q = cal_q();
 		pc = cal_pc(p, q);
+		// void ratio
+		e = N - lambda * log(pc);
 		// stiffness mat
 		form_De_mat(p);
-		form_Dep_mat();
-		// NCL and CSL
-		N = e + lambda * log(pc);
-		Gamma = N - (lambda - kappa) * log(2.0);
+		//form_Dep_mat();
+		double dg_ds[6], dg_dpc;
+		double A_pc, divider;
+		cal_dg_stress(p, q, dg_ds, dg_dpc);
+		A_pc = cal_A_pc(dg_ds);
+		divider = cal_divider(dg_ds, dg_dpc, A_pc);
+		form_Dep_mat(dg_ds, divider);
 	}
 
 	void set_param_OC(double _niu,
 		double _kappa, double _lambda, double _fric_ang,
-		double _e, double _s[6], double _pc)
+		double _N, double _s[6], double _pc)
 	{
+		// elastic
 		niu = _niu;
 		kappa = _kappa;
+		// NCL
 		lambda = _lambda;
-		fric_angle = _fric_ang / 180.0 * 3.14159265359;
-		M = 6.0 * sin(fric_angle) / (3.0 - sin(fric_angle));
+		N = _N;
+		// CSL
+		Gamma = N - (lambda - kappa) * log(2.0);
+		fric_angle = _fric_ang;
+		double fric_ang_tmp = _fric_ang / 180.0 * 3.14159265359;
+		M = 6.0 * sin(fric_ang_tmp) / (3.0 - sin(fric_ang_tmp));
 		M2 = M * M;
-		e = _e;
 		// stress
 		memcpy(stress, _s, sizeof(double) * 6);
 		// pre-consolidation stress
@@ -88,27 +103,25 @@ public:
 		if (_pc > pc) // overconsolidated
 		{
 			pc = _pc;
-			// NCL
-			N = e + kappa * log(-p) + (lambda - kappa) * log(pc);
+			// void ratio
+			e = N + (kappa - lambda) * log(pc) - kappa * log(-p);
 			// stiffness mat
+			form_De_mat(p);
+			form_Dep_mat();
+		}
+		else // normally consolidated
+		{
+			// void ratio
+			e = N - lambda * log(pc);
+			// stiffness mat
+			form_De_mat(p);
 			double dg_ds[6], dg_dpc;
 			double A_pc, divider;
-			form_De_mat(p);
 			cal_dg_stress(p, q, dg_ds, dg_dpc);
 			A_pc = cal_A_pc(dg_ds);
 			divider = cal_divider(dg_ds, dg_dpc, A_pc);
 			form_Dep_mat(dg_ds, divider);
 		}
-		else // normally consolidated
-		{
-			// stiffness mat
-			form_De_mat(p);
-			form_Dep_mat();
-			// NCL
-			N = e + lambda * log(pc);
-		}
-		// CSL
-		Gamma = N - (lambda - kappa) * log(2.0);
 	}
 
 	inline double get_p(void)  noexcept { return cal_p(); }
@@ -177,9 +190,7 @@ protected:
 	}
 	inline void form_Dep_mat(void) noexcept
 	{
-		for (size_t i = 0; i < 6; ++i)
-			for (size_t j = 0; j < 6; ++j)
-				Dep_mat[i][j] = De_mat[i][j];
+		memcpy(Dep_mat, De_mat, 6 * 6 * sizeof(double));
 	}
 	inline void form_Dep_mat(double dg_ds[6], double divider) noexcept
 	{

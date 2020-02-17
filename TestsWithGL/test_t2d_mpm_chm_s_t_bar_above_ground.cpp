@@ -67,23 +67,23 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	model.init_bg_mesh(0.5, 0.5);
 
 	model.init_rigid_circle(2.5, 10.0, 17.6, 0.25);
-	model.set_rigid_circle_velocity(0.0, -1.0, 0.0);
+	model.set_rigid_circle_velocity(0.0, -0.25, 0.0);
 	//model.set_contact_stiffness(150.0, 150.0);
-	model.set_contact_stiffness(1.0e7, 1.0e7);
+	model.set_contact_stiffness(1.0e4, 1.0e4);
 
 	// elasticity
 	//model.init_pcls(mh_2_pcl, 0.4, 20.0, 10.0, 100.0, 0.0, 1000.0, 1.0e-5, 1.0);
 	//model.init_pcls(mh_2_pcl, 0.5, 2700.0, 1000.0, 2.0e6, 0.3, 2.0e7, 1.0e-12, 1.0e-3);
 	// mcc
-	model.init_pcls(mh_2_pcl, 0.5, 2700.0, 1000.0, 2.0e7, 1.0e-12, 1.0e-3);
+	model.init_pcls(mh_2_pcl, 0.62, 2650.0, 1000.0, 5.0e6, 1.0e-12, 1.0e-3);
 	ModelContainer &mc = model.model_container;
 	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
-	double ini_stress[6] = { -500.0, -500.0, -500.0, 0.0, 0.0, 0.0 };
+	double ini_stress[6] = { -20000.0, -12025.0, -12025.0, 0.0, 0.0, 0.0 };
 	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
 		ModifiedCamClay &mcc = cms[p_id];
-		mcc.set_param_OC(0.25, 0.04, 0.15, 25.0, 1.5, ini_stress, 500.0);
+		mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 19803.7);
 		pcl.set_cm(mcc);
 	}
 	mh_2_pcl.clear();
@@ -189,11 +189,11 @@ void test_t2d_mpm_chm_s_t_bar_above_ground(void)
 	
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
-	step.set_mass_scale(10.0, 10.0);
+	//step.set_mass_scale(10.0, 10.0);
 	//step.set_damping_ratio(0.05); // local damping
 	//step.set_bv_ratio(0.0); // bulk viscosity
-	step.set_time(1.0);
-	step.set_dtime(2.5e-6);
+	step.set_time(6.0);
+	step.set_dtime(3.0e-6);
 	//out1.set_interval_num(100);
 	//step.add_time_history(out1);
 	//out2.set_interval_num(100);

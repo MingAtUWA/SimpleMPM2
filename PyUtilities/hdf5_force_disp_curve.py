@@ -21,10 +21,15 @@ for th_id in range(th_num):
         rb_y.append(ini_y - cen_y)
         rb_fy.append(rf_y)
 
+hdf5_file.close()
+
+data_file = open("..\\Build\\TestsWithGL\\reaction_force.txt", "w")
+for i in range(len(rb_y)):
+    data_file.write("%f, %f\n" % (rb_y[i], rb_fy[i]))
+data_file.close()
+
 print(rb_y)
 print(rb_fy)
-
-hdf5_file.close()
 
 fig = plt.figure()
 plot1 = fig.subplots(1, 1)

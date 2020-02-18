@@ -51,10 +51,12 @@ add_executable(
     test_color_graph.cpp
     # Search triangle
     test_triangle_searching.cpp
-    # Panelty method contact
+    # t bar penetration from above
     test_t2d_mpm_me_s_t_bar_above_ground.cpp
-    test_t2d_mpm_chm_s_t_bar_above_ground_geostatic.cpp
+    # coupled simulation of t bar penetration
     test_t2d_mpm_chm_s_t_bar_above_ground.cpp
+    test_t2d_mpm_chm_s_t_bar_above_ground_geostatic.cpp
+    test_t2d_mpm_chm_s_t_bar_above_ground_restart.cpp
     # Geostatic
     test_t2d_mpm_me_s_geostatic.cpp
     test_t2d_mpm_chm_s_geostatic.cpp

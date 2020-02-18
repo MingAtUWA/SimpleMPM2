@@ -82,7 +82,7 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_chm_s_t_bar_above_ground();
 	//test_color_animation_t2d_chm_s_t_bar_above_ground();
 
-	//test_t2d_mpm_chm_s_t_bar_above_ground_geostatic();
+	test_t2d_mpm_chm_s_t_bar_above_ground_geostatic();
 	//test_color_animation_t2d_chm_s_t_bar_above_ground_geostatic();
 	test_t2d_mpm_chm_s_t_bar_above_ground_restart();
 	//test_color_animation_t2d_chm_s_t_bar_above_ground();

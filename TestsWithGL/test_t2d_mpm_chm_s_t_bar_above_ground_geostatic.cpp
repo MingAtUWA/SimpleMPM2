@@ -77,7 +77,14 @@ void test_t2d_mpm_chm_s_t_bar_above_ground_geostatic(void)
 	model.set_contact_stiffness(1.0e5, 1.0e5);
 
 	// elasticity
-	//model.init_pcls(mh_2_pcl, 0.5, 2700.0, 1000.0, 2.0e6, 0.3, 2.0e7, 1.0e-12, 1.0e-3);
+	//model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 2.0e5, 0.3, 5.0e6, 5.0e-12, 1.0e-3);
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+	//	pcl.s11 = -24050.0;
+	//	pcl.s22 = -40000.0;
+	//	pcl.s12 = 0.0;
+	//}
 	// mcc
 	model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 5.0e6, 5.0e-12, 1.0e-3);
 	ModelContainer &mc = model.model_container;

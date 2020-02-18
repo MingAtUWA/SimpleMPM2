@@ -5,8 +5,8 @@ import h5py as py
 time = []
 pressure = []
 
-hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_real_geostatic.hdf5", "r")
-frame_id = 1
+hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_chm_s_geostatic_hdf5.hdf5", "r")
+frame_id = 100
 inv_num = 10
 
 frame_dset = hdf5_file['TimeHistory']['nodal_force']['frame_%d' % frame_id]['NodalForce']

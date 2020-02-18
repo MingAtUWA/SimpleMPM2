@@ -56,22 +56,22 @@ void test_t2d_mpm_chm_s_geostatic(void)
 		vbc.v = 0.0;
 	}
 
-	//size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
-	//model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
-	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	//{
-	//	TractionBC_MPM &tbc = model.tys[t_id];
-	//	tbc.pcl_id = tbc_pcl_id[t_id];
-	//	tbc.t = 0.05 * -100.0;
-	//}
-
-	model.init_bfys(model.pcl_num);
-	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
+	model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
+	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
-		BodyForce &bf = model.bfys[p_id];
-		bf.pcl_id = p_id;
-		bf.bf = -20.0;
+		TractionBC_MPM &tbc = model.tys[t_id];
+		tbc.pcl_id = tbc_pcl_id[t_id];
+		tbc.t = 0.05 * -100.0;
 	}
+
+	//model.init_bfys(model.pcl_num);
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	//{
+	//	BodyForce &bf = model.bfys[p_id];
+	//	bf.pcl_id = p_id;
+	//	bf.bf = -20.0;
+	//}
 
 	//MemoryUtilities::ItemArray<GLfloat> pt_array;
 	//pt_array.reserve(29 * 3);

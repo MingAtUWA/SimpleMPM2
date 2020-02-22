@@ -65,8 +65,8 @@ void test_t2d_mpm_chm_s_t_bar_above_ground_restart(void)
 	using Model_T2D_CHM_s_hdf5_io_utilities::load_chm_s_model_from_hdf5_file;
 	load_chm_s_model_from_hdf5_file(
 		model,
-		"t2d_mpm_chm_t_bar_real_geostatic.hdf5",
-		"penetration",
+		"t2d_mpm_chm_t_bar_above_ground_geostatic.hdf5",
+		"geostatic",
 		100
 	);
 
@@ -162,14 +162,14 @@ void test_t2d_mpm_chm_s_t_bar_above_ground_restart(void)
 	//pt_coord = 0.0f;
 	//pt_array.add(&pt_coord);
 
-	DisplayModel_T2D disp_model;
-	disp_model.init_win();
-	disp_model.init_model(model);
-	disp_model.init_rigid_circle(model.get_rigid_circle());
-	disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
-	//disp_model.display(-0.5, 20.5, -0.5, 20.5);
-	disp_model.display(5.0, 15.0, 10.0, 20.0);
-	return;
+	//DisplayModel_T2D disp_model;
+	//disp_model.init_win();
+	//disp_model.init_model(model);
+	//disp_model.init_rigid_circle(model.get_rigid_circle());
+	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	////disp_model.display(-0.5, 20.5, -0.5, 20.5);
+	//disp_model.display(5.0, 15.0, 10.0, 20.0);
+	//return;
 
 	ResultFile_hdf5 res_file_hdf5;
 	res_file_hdf5.create("t2d_mpm_chm_t_bar_above_ground.hdf5");

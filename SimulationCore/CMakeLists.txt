@@ -94,6 +94,12 @@ add_library(
     # output model to hdf5 file
     Model_T2D_ME_s_hdf5_io_utilities.h  Model_T2D_ME_s_hdf5_io_utilities.cpp
     Model_T2D_CHM_s_hdf5_io_utilities.h Model_T2D_CHM_s_hdf5_io_utilities.cpp
+    # fluid mechanics
+    Model_T2D_fluid.h Model_T2D_fluid.cpp
+    Step_T2D_fluid.h Step_T2D_fluid.cpp
+    Model_T2D_fluid_hdf5_io_utilities.h Model_T2D_fluid_hdf5_io_utilities.cpp
+    ModelDataOutput_T2D_fluid.h ModelDataOutput_T2D_fluid.cpp
+    TimeHistoryOutput_T2D_fluid.h TimeHistoryOutput_T2D_fluid.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

@@ -88,44 +88,49 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 {
 	TriangleMesh tri_mesh;
 	tri_mesh.load_mesh("..\\..\\Asset\\rect_t_bar_real.mesh_data");
-	//std::cout << "node num: " << tri_mesh.get_node_num() << "\n"
-	//		  << "elem num: " << tri_mesh.get_elem_num() << "\n";
 	
 	Model_T2D_CHM_s model;
-	// calculation mesh
 	model.init_mesh(tri_mesh);
-	//tri_mesh.clear();
-	// acceleration mesh
 	model.init_bg_mesh(0.1, 0.1);
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	//mh_2_pcl.set_even_div_num(2);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
-	mh_2_pcl.generate_pcls();
-	mh_2_pcl.clear_points_in_rect(-3.0, 3.0, 0.0, 0.3);
+	mh_2_pcl.replace_with_grid_points(-3.0, 3.0, -3.5, 0.0, 0.06, 0.06);
 	mh_2_pcl.replace_with_grid_points(-2.0, 2.0, -2.0, 0.0, 0.02, 0.02);
 
-	model.init_pcls(mh_2_pcl, 0.706, 2700.0, 1000.0, 2.0e6, 0.3, 5.0e7, 1.0e-12, 1.0e-3);
-	mh_2_pcl.clear();
-
+	// elastic
+	//model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-12, 1.0e-3);
+	// mcc
+	model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 5.0e6, 5.0e-12, 1.0e-3);
 	ModelContainer &mc = model.model_container;
-	LinearElasticity *cms = mc.add_LinearElasticity(model.pcl_num);
-	double K = 0.3 / (1.0 - 0.3);
+	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
+	//double ini_stress[6] = { -40000.0, -24050.0, -24050.0, 0.0, 0.0, 0.0 };
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+	//	pcl.s11 = ini_stress[1];
+	//	pcl.s22 = ini_stress[0];
+	//	pcl.s12 = 0.0;
+	//	ModifiedCamClay &mcc = cms[p_id];
+	//	mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);
+	//	pcl.set_cm(mcc);
+	//}
+	double ini_stress[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
 	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		// init geostatic stress
-		pcl.s22 = -pcl.y * (2700.0 - 1000.0) * (1.0 - 0.706) * -9.81;
+		pcl.s22 = pcl.y * (2650.0 - 1000.0) * (1.0 - 0.6) * 9.81;
 		pcl.s11 = K * pcl.s22;
-		pcl.s12 = 0.0;
-		// init material model
-		LinearElasticity &cm = cms[p_id];
-		cm.set_param(2.0e6, 0.3);
-		pcl.set_cm(cm);
+		ModifiedCamClay &mcc = cms[p_id];
+		mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);
+		pcl.set_cm(mcc);
 	}
 
+	tri_mesh.clear();
+	mh_2_pcl.clear();
+
 	model.init_rigid_circle(0.25, 0.0, 0.25, 0.025);
-	//model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
+	//model.set_rigid_circle_velocity(0.0, 0.025, 0.0);
 	model.set_contact_stiffness(10.0e6, 10.0e6);
 	
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
@@ -141,14 +146,6 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 		vbc.node_id = bc_n_ids[v_id];
 		vbc.v = 0.0;
 	}
-	//model.init_vfxs(bc_n_ids_mem.get_num());
-	//for (size_t v_id = 0; v_id < model.vfx_num; ++v_id)
-	//{
-	//	VelocityBC &vbc = model.vfxs[v_id];
-	//	vbc.node_id = bc_n_ids[v_id];
-	//	vbc.v = 0.0;
-	//}
-
 	//MemoryUtilities::ItemArray<GLfloat> pt_array;
 	//pt_array.reserve(25 * 3);
 	//GLfloat pt_coord;
@@ -172,14 +169,6 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 		vbc.node_id = bc_n_ids[v_id];
 		vbc.v = 0.0;
 	}
-	//model.init_vfys(bc_n_ids_mem.get_num());
-	//for (size_t v_id = 0; v_id < model.vfy_num; ++v_id)
-	//{
-	//	VelocityBC &vbc = model.vfys[v_id];
-	//	vbc.node_id = bc_n_ids[v_id];
-	//	vbc.v = 0.0;
-	//}
-	
 	//for (size_t n_id = 0; n_id < model.vsy_num; ++n_id)
 	//{
 	//	Model_T2D_CHM_s::Node &n = model.nodes[bc_n_ids[n_id]];
@@ -255,24 +244,11 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	//	pt_array.add(&pt_coord);
 	//}
 
-	//// disp only one point
-	//MemoryUtilities::ItemArray<GLfloat> pt_array;
-	//GLfloat pt_coord;
-	//Model_T2D_CHM_s::Particle &pt = model.pcls[5];
-	////Model_T2D_CHM_s::Node &pt = model.nodes[14];
-	//pt_array.reserve(3);
-	//pt_coord = double(pt.x);
-	//pt_array.add(&pt_coord);
-	//pt_coord = double(pt.y);
-	//pt_array.add(&pt_coord);
-	//pt_coord = 0.0f;
-	//pt_array.add(&pt_coord);
-
 	//DisplayModel_T2D disp_model;
 	//disp_model.init_win();
 	//disp_model.init_model(model);
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	//disp_model.display(-3.2, 3.2, -3.7, 0.5);
 	////disp_model.display(-1.2, 1.2, -1.2, 0.2);
 	//return;
@@ -297,9 +273,9 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	// geostatic step
 	Step_T2D_CHM_s_SE_Geostatic step_gs;
 	step_gs.set_model(model);
-	step_gs.set_mass_scale(10.0, 10.0);
+	//step_gs.set_mass_scale(10.0, 10.0);
 	step_gs.set_time(1.0e-1);
-	step_gs.set_dtime(1.0e-6);
+	step_gs.set_dtime(2.5e-6);
 	// out
 	out.set_interval_num(100);
 	step_gs.add_time_history(out);

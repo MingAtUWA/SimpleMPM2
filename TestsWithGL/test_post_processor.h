@@ -39,4 +39,6 @@ void test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc(void);
 void test_color_animation_t2d_chm_s_t_bar_real_geostatic(void);
 void test_color_animation_t2d_chm_s_t_bar_real_restart(void);
 
+void test_postprocess_t2d_fluid(void);
+
 #endif

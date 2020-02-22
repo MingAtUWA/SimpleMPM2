@@ -23,6 +23,7 @@ add_library(
     GA_T2D_ME_s_hdf5.h  GA_T2D_ME_s_hdf5.cpp
     GA_T2D_CHM_s_color.h GA_T2D_CHM_s_color.cpp
     GA_T2D_CHM_s_hdf5.h  GA_T2D_CHM_s_hdf5.cpp
+    GA_T2D_fluid_hdf5.h GA_T2D_fluid_hdf5.cpp
     )
 
 target_include_directories(

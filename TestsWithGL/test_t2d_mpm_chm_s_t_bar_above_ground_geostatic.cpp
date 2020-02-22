@@ -209,18 +209,18 @@ void test_t2d_mpm_chm_s_t_bar_above_ground_geostatic(void)
 	md.set_res_file(res_file_hdf5);
 	md.output();
 
-	TimeHistoryOutput_ConsoleProgressBar out3;
-	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out4("geostatic");
-	out4.set_res_file(res_file_hdf5);
-	out4.set_output_init_state();
-	out4.set_interval_num(100);
-	
+	TimeHistoryOutput_T2D_CHM_s_SE_Geostatic out1("geostatic");
+	out1.set_res_file(res_file_hdf5);
+	out1.set_output_init_state();
+	out1.set_interval_num(100);
+	TimeHistoryOutput_ConsoleProgressBar out2;
+
 	Step_T2D_CHM_s_SE_Geostatic step;
 	step.set_model(model);
-	step.set_time(1.0);
+	step.set_time(5.0);
 	step.set_dtime(5.0e-6);
-	step.add_time_history(out3);
-	step.add_time_history(out4);
+	step.add_time_history(out1);
+	step.add_time_history(out2);
 	step.solve();
 
 	//system("pause");

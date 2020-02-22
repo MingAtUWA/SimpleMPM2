@@ -71,6 +71,8 @@ add_executable(
     # more realistic cases
     test_t2d_mpm_chm_s_t_bar_real_geostatic.cpp
     test_t2d_mpm_chm_s_t_bar_real_restart.cpp
+    # fluid mechanics
+    test_t2d_fluid.cpp
     )
 
 target_include_directories(

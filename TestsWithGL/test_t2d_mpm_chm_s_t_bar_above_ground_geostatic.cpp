@@ -89,12 +89,12 @@ void test_t2d_mpm_chm_s_t_bar_above_ground_geostatic(void)
 	model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 5.0e6, 5.0e-12, 1.0e-3);
 	ModelContainer &mc = model.model_container;
 	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
-	double ini_stress[6] = { -40000.0, -24050.0, -24050.0, 0.0, 0.0, 0.0 };
+	double ini_stress[6] = { -24050.0, -40000.0, -24050.0, 0.0, 0.0, 0.0 };
 	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		pcl.s11 = ini_stress[1];
-		pcl.s22 = ini_stress[0];
+		pcl.s11 = ini_stress[0];
+		pcl.s22 = ini_stress[1];
 		pcl.s12 = 0.0;
 		ModifiedCamClay &mcc = cms[p_id];
 		mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);

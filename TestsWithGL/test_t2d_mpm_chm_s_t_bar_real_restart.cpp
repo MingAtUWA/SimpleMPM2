@@ -3,23 +3,16 @@
 #include "ItemArray.hpp"
 
 #include "test_sim_core.h"
-
-#include "Model_T2D_CHM_s_hdf5_io_utilities.h"
-
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
-
 #include "Model_T2D_CHM_s.h"
-
 #include "Step_T2D_CHM_s_SE.h"
-
 #include "DisplayModel_T2D.h"
 #include "ModelDataOutput_T2D_CHM_s.h"
 #include "TimeHistoryOutput_T2D_CHM_s_SE.h"
 #include "TimeHistoryOutput_ConsoleProgressBar.h"
 
 #include "test_post_processor.h"
-
 #include "GA_T2D_CHM_s_hdf5.h"
 
 namespace
@@ -186,9 +179,9 @@ void test_t2d_mpm_chm_s_t_bar_real_restart(void)
 	// penetration step
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
-	step.set_mass_scale(10.0, 10.0);
-	step.set_time(10.0);
-	step.set_dtime(1.0e-5);
+	//step.set_mass_scale(10.0, 10.0);
+	step.set_time(2.0);
+	step.set_dtime(1.0e-6);
 	out.set_interval_num(100);
 	step.add_time_history(out);
 	step.add_time_history(out_pb);
@@ -217,9 +210,11 @@ void test_color_animation_t2d_chm_s_t_bar_real_restart(void)
 		-20.0e3,
 		0.0e3,
 		colors,
-		sizeof(colors) / sizeof(ColorGraph::Colori));
+		sizeof(colors) / sizeof(ColorGraph::Colori)
+		);
 	gen.generate(15.0, -3.2, 3.2, -3.7, 0.5,
 		"t2d_mpm_chm_t_bar_real_restart.hdf5",
 		"penetration",
-		"t2d_mpm_chm_t_bar_real_restart.gif");
+		"t2d_mpm_chm_t_bar_real_restart.gif"
+		);
 }

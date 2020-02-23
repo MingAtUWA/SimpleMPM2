@@ -119,8 +119,12 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		pcl.s22 = pcl.y * (2650.0 - 1000.0) * (1.0 - 0.6) * 9.81;
-		pcl.s11 = K * pcl.s22;
+		ini_stress[1] = pcl.y * (2650.0 - 1000.0) * (1.0 - 0.6) * 9.81;
+		ini_stress[0] = K * ini_stress[1];
+		ini_stress[2] = ini_stress[0];
+		pcl.s22 = ini_stress[1];
+		pcl.s11 = ini_stress[0];
+		pcl.s12 = 0.0;
 		ModifiedCamClay &mcc = cms[p_id];
 		mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);
 		pcl.set_cm(mcc);
@@ -274,7 +278,7 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	Step_T2D_CHM_s_SE_Geostatic step_gs;
 	step_gs.set_model(model);
 	//step_gs.set_mass_scale(10.0, 10.0);
-	step_gs.set_time(1.0e-1);
+	step_gs.set_time(2.5);
 	step_gs.set_dtime(2.5e-6);
 	// out
 	out.set_interval_num(100);
@@ -308,12 +312,19 @@ void test_color_animation_t2d_chm_s_t_bar_real_geostatic(void)
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		-18.0e3,
-		0.0e3,
+		-30000.0,
+		100.0,
 		colors,
-		sizeof(colors) / sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -3.2, 3.2, -3.7, 0.5,
+		sizeof(colors) / sizeof(ColorGraph::Colori)
+		);
+	gen.generate(
+		5.0,
+		-3.2,
+		3.2,
+		-3.7,
+		0.5,
 		"t2d_mpm_chm_t_bar_real_geostatic.hdf5",
 		"geostatic",
-		"t2d_mpm_chm_t_bar_real_geostatic.gif");
+		"t2d_mpm_chm_t_bar_real_geostatic.gif"
+		);
 }

@@ -122,9 +122,9 @@ int main(int argc, void **argv)
 	//test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
 	// a realistic case of t-bar penetration
-	test_t2d_mpm_chm_s_t_bar_real_geostatic();
+	//test_t2d_mpm_chm_s_t_bar_real_geostatic();
 	//test_color_animation_t2d_chm_s_t_bar_real_geostatic();
-	//test_t2d_mpm_chm_s_t_bar_real_restart();
+	test_t2d_mpm_chm_s_t_bar_real_restart();
 	//test_color_animation_t2d_chm_s_t_bar_real_restart();
 
 	//test_t2d_fluid();

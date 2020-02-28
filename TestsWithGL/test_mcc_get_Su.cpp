@@ -20,15 +20,12 @@ void test_mcc_get_Su(void)
 	std::fstream res_file;
 	const double(*Dep_mat)[6];
 	double dstrain[6];
-	//const double *stress;
 
-	//double ini_stress[6] = { -18734.0, -18734.0, -18734.0, 0.0, 0.0, 0.0 };
-	//double ini_stress[6] = { -20000.0, -12025.0, -12025.0, 0.0, 0.0, 0.0 };
-	double ini_stress[6] = { -40000.0, -24050.0, -24050.0, 0.0, 0.0, 0.0 };
+	//double ini_stress[6] = { -40000.0, -24050.0, -24050.0, 0.0, 0.0, 0.0 };
+	double ini_stress[6] = { -5000.0, -3006.3, -3006.3, 0.0, 0.0, 0.0 };
 	ModifiedCamClay mcc;
-	//mcc.set_param_NC(0.3, 0.044, 0.205, 23.5, 2.2516, ini_stress);
-	//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 19800.0);
-	mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);
+	//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);
+	mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 70718.9);
 	res_file.open("mcc_Su_res.csv", std::ios::out | std::ios::binary);
 	res_file << "strain, p, q, pc, e, e_NCRC, f, res\n"
 			 << 0.0 << ", "

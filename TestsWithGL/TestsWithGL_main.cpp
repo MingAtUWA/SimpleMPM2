@@ -130,8 +130,10 @@ int main(int argc, void **argv)
 	//test_t2d_fluid();
 	//test_color_animation_t2d_me_s_1d_compression();
 
-	test_t2d_mpm_chm_s_t_bar_conference_geo();
+	//test_t2d_mpm_chm_s_t_bar_conference_geo();
 	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
+	test_t2d_mpm_chm_s_t_bar_conference_restart();
+	//test_color_animation_t2d_chm_s_t_bar_conference_restart();
 
 	//system("pause");
 	return 0;

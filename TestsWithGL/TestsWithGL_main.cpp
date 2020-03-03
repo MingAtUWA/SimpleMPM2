@@ -67,7 +67,7 @@ int main(int argc, void **argv)
 
 	// ModifiedCamClay
 	//test_ModifiedCamClay();
-	//test_mcc_get_Su();
+	test_mcc_get_Su();
 
 	//test_t2d_mpm_me_s_t_bar_coarser();
 	//test_color_animation_t2d_me_s_t_bar_coarser();
@@ -96,7 +96,7 @@ int main(int argc, void **argv)
 
 	// trianglur mesh mpm chm
 	//test_t2d_mpm_square();
-	//test_t2d_mpm_chm_s_1d_consolidation();
+	test_t2d_mpm_chm_s_1d_consolidation();
 	//test_animation_t2d_chm_s_1d_consolidation();
 	//test_color_animation_t2d_chm_s_1d_consolidation();
 
@@ -132,8 +132,10 @@ int main(int argc, void **argv)
 
 	//test_t2d_mpm_chm_s_t_bar_conference_geo();
 	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
-	test_t2d_mpm_chm_s_t_bar_conference_restart();
+	//test_t2d_mpm_chm_s_t_bar_conference_restart();
 	//test_color_animation_t2d_chm_s_t_bar_conference_restart();
+	//test_t2d_mpm_chm_s_t_bar_conference_step2();
+	//test_color_animation_t2d_chm_s_t_bar_conference_step2();
 
 	//system("pause");
 	return 0;

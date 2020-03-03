@@ -84,34 +84,68 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.06, 0.06);
 
 	// elastic
-	model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-12, 1.0e-3);
-	// mcc
-	//model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 5.0e6, 5.0e-12, 1.0e-3);
-	//ModelContainer &mc = model.model_container;
-	//ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
-	//double ini_stress[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-	//double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
+	//model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-12, 1.0e-3);
+	//double K = 0.3 / (1.0 - 0.3);
 	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	//{
 	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-	//	ini_stress[1] = pcl.y * (2650.0 - 1000.0) * (1.0 - 0.6) * 9.81;
-	//	ini_stress[0] = K * ini_stress[1];
-	//	ini_stress[2] = ini_stress[0];
-	//	pcl.s22 = ini_stress[1];
-	//	pcl.s11 = ini_stress[0];
+	//	pcl.s22 = -1000.0;
+	//	pcl.s11 = pcl.s22 * K;
 	//	pcl.s12 = 0.0;
-	//	ModifiedCamClay &mcc = cms[p_id];
-	//	mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 39610.0);
-	//	pcl.set_cm(mcc);
 	//}
+	// mcc
+	model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 2.0e6, 1.0e-11, 1.0e-3);
+	ModelContainer &mc = model.model_container;
+	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
+	double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
+	//double ini_stress[6] = { -24267.31, -40361.43, -24267.31, 0.0, 0.0, 0.0 };
+	double ini_stress[6] = { -12025.0, -20000.0, -12025.0, 0.0, 0.0, 0.0 };
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+		pcl.s11 = ini_stress[0];
+		pcl.s22 = ini_stress[1];
+		pcl.s12 = 0.0;
+		ModifiedCamClay &mcc = cms[p_id];
+		//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 20030.8);
+		mcc.set_param_NC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress);
+		pcl.set_cm(mcc);
+	}
 	std::cout << "pcl_num: " << model.pcl_num << "\n";
 
 	tri_mesh.clear();
 	mh_2_pcl.clear();
 
-	model.init_rigid_circle(0.5, 0.0, 0.5, 0.04);
+	// traction force
+	MemoryUtilities::ItemArray<size_t> bc_pcl_ids_mem;
+	bc_pcl_ids_mem.reserve(100);
+	get_top_pcl_ids(model, bc_pcl_ids_mem);
+	size_t *tbc_pcl_ids = bc_pcl_ids_mem.get_mem();
+	model.init_tys(bc_pcl_ids_mem.get_num());
+	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	{
+		TractionBC_MPM &tbc = model.tys[t_id];
+		tbc.pcl_id = tbc_pcl_ids[t_id];
+		//tbc.t = 0.03 * -40361.43;
+		tbc.t = 0.03 * -20000.0;
+	}
+	//MemoryUtilities::ItemArray<GLfloat> pt_array;
+	//pt_array.reserve(25 * 3);
+	//GLfloat pt_coord;
+	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
+	//	pt_coord = double(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = double(pcl.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
+
+	model.init_rigid_circle(0.5, 0.0, 0.5 - 0.014, 0.04);
 	//model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
-	model.set_contact_stiffness(10.0e6, 10.0e6);
+	model.set_contact_stiffness(1.0e5, 1.0e5);
 	
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
 	bc_n_ids_mem.reserve(100);
@@ -126,9 +160,6 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 		vbc.node_id = bc_n_ids[v_id];
 		vbc.v = 0.0;
 	}
-	//MemoryUtilities::ItemArray<GLfloat> pt_array;
-	//pt_array.reserve(25 * 3);
-	//GLfloat pt_coord;
 	//for (size_t n_id = 0; n_id < model.vsx_num; ++n_id)
 	//{
 	//	Model_T2D_CHM_s::Node &n = model.nodes[bc_n_ids[n_id]];
@@ -161,36 +192,14 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	//}
 
 	// body force
-	model.init_bfys(model.pcl_num);
-	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
-	{
-		BodyForce &bf = model.bfys[p_id];
-		bf.pcl_id = p_id;
-		bf.bf = -9.81;
-	}
-
-	// traction force
-	MemoryUtilities::ItemArray<size_t> bc_pcl_ids_mem;
-	bc_pcl_ids_mem.reserve(100);
-	get_top_pcl_ids(model, bc_pcl_ids_mem);
-	size_t *tbc_pcl_ids = bc_pcl_ids_mem.get_mem();
-	model.init_tys(bc_pcl_ids_mem.get_num());
-	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	{
-		TractionBC_MPM &tbc = model.tys[t_id];
-		tbc.pcl_id = tbc_pcl_ids[t_id];
-		tbc.t = 0.02 * -1000.0;
-	}
-	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	//model.init_bfys(model.pcl_num);
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	//{
-	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
-	//	pt_coord = double(pcl.x);
-	//	pt_array.add(&pt_coord);
-	//	pt_coord = double(pcl.y);
-	//	pt_array.add(&pt_coord);
-	//	pt_coord = 0.0f;
-	//	pt_array.add(&pt_coord);
+	//	BodyForce &bf = model.bfys[p_id];
+	//	bf.pcl_id = p_id;
+	//	bf.bf = -9.81;
 	//}
+
 
 	//DisplayModel_T2D disp_model;
 	//disp_model.init_win();
@@ -222,7 +231,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	Step_T2D_CHM_s_SE_Geostatic step_gs;
 	step_gs.set_model(model);
 	//step_gs.set_mass_scale(10.0, 10.0);
-	step_gs.set_time(1.0);
+	step_gs.set_time(3.0);
 	step_gs.set_dtime(1.0e-5);
 	// out
 	out.set_interval_num(100);
@@ -256,8 +265,8 @@ void test_color_animation_t2d_chm_s_t_bar_conference_geo(void)
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		-30000.0,
-		100.0,
+		-25000.0,
+		-15000.0,
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori)
 		);

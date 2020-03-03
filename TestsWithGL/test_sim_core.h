@@ -78,5 +78,6 @@ void test_t2d_fluid(void);
 
 void test_t2d_mpm_chm_s_t_bar_conference_geo(void);
 void test_t2d_mpm_chm_s_t_bar_conference_restart(void);
+void test_t2d_mpm_chm_s_t_bar_conference_step2(void);
 
 #endif

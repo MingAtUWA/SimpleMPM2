@@ -43,5 +43,6 @@ void test_postprocess_t2d_fluid(void);
 
 void test_color_animation_t2d_chm_s_t_bar_conference_geo(void);
 void test_color_animation_t2d_chm_s_t_bar_conference_restart(void);
+void test_color_animation_t2d_chm_s_t_bar_conference_step2(void);
 
 #endif

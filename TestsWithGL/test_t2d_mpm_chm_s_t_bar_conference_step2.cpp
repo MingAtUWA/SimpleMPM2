@@ -21,63 +21,60 @@
 
 namespace
 {
-void get_left_and_right_n_ids(
-	Model_T2D_CHM_s &md, double left, double right,
-	MemoryUtilities::ItemArray<size_t> &n_ids)
-{
-	n_ids.reset();
-	double left_tol = abs(left) * 1.0e-3;
-	double right_tol = abs(right) * 1.0e-3;
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	void get_left_and_right_n_ids(
+		Model_T2D_CHM_s &md, double left, double right,
+		MemoryUtilities::ItemArray<size_t> &n_ids)
 	{
-		Model_T2D_CHM_s::Node &n = md.nodes[n_id];
-		if (n.x > left - left_tol   && n.x < left + left_tol ||
-			n.x > right - right_tol && n.x < right + right_tol)
-			n_ids.add(&n_id);
+		n_ids.reset();
+		double left_tol = abs(left) * 1.0e-3;
+		double right_tol = abs(right) * 1.0e-3;
+		for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+		{
+			Model_T2D_CHM_s::Node &n = md.nodes[n_id];
+			if (n.x > left - left_tol   && n.x < left + left_tol ||
+				n.x > right - right_tol && n.x < right + right_tol)
+				n_ids.add(&n_id);
+		}
 	}
-}
 
-void get_bottom_n_ids(Model_T2D_CHM_s &md, double bottom,
-	MemoryUtilities::ItemArray<size_t> &n_ids)
-{
-	n_ids.reset();
-	double bottom_tol = abs(bottom) * 1.0e-3;
-	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	void get_bottom_n_ids(Model_T2D_CHM_s &md, double bottom,
+		MemoryUtilities::ItemArray<size_t> &n_ids)
 	{
-		Model_T2D_CHM_s::Node &n = md.nodes[n_id];
-		if (n.y > bottom - bottom_tol && n.y < bottom + bottom_tol)
-			n_ids.add(&n_id);
+		n_ids.reset();
+		double bottom_tol = abs(bottom) * 1.0e-3;
+		for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+		{
+			Model_T2D_CHM_s::Node &n = md.nodes[n_id];
+			if (n.y > bottom - bottom_tol && n.y < bottom + bottom_tol)
+				n_ids.add(&n_id);
+		}
 	}
-}
 
-void get_top_pcl_ids(Model_T2D_CHM_s &md,
-	MemoryUtilities::ItemArray<size_t> &pcl_ids)
-{
-	pcl_ids.reset();
-	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+	void get_top_pcl_ids(Model_T2D_CHM_s &md,
+		MemoryUtilities::ItemArray<size_t> &pcl_ids)
 	{
-		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
-		if (pcl.y > -0.021 && pcl.y < 0.0)
-			pcl_ids.add(&p_id);
+		pcl_ids.reset();
+		for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+		{
+			Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
+			if (pcl.y > -0.021 && pcl.y < 0.0)
+				pcl_ids.add(&p_id);
+		}
 	}
-}
 };
 
-void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
+// restart from previous step
+void test_t2d_mpm_chm_s_t_bar_conference_step2(void)
 {
 	Model_T2D_CHM_s model;
 
 	using Model_T2D_CHM_s_hdf5_io_utilities::load_chm_s_model_from_hdf5_file;
 	load_chm_s_model_from_hdf5_file(
 		model,
-		"t2d_mpm_chm_t_bar_conference_geo.hdf5",
-		"geostatic",
-		100
-		);
-
-	model.init_bg_mesh(0.2, 0.2);
-
-	model.set_rigid_circle_velocity(0.0, -0.5, 0.0);
+		"t2d_mpm_chm_t_bar_conference_restart.hdf5",
+		"penetration",
+		300 // ?
+	);
 
 	// traction force
 	MemoryUtilities::ItemArray<size_t> bc_pcl_ids_mem;
@@ -101,6 +98,10 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	//	pt_coord = 0.0f;
 	//	pt_array.add(&pt_coord);
 	//}
+
+	model.init_bg_mesh(0.2, 0.2);
+
+	model.set_rigid_circle_velocity(0.0, -0.5, 0.0);
 
 	// boundary conditions
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
@@ -142,7 +143,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	//}
 
 	ResultFile_hdf5 res_file_hdf5;
-	res_file_hdf5.create("t2d_mpm_chm_t_bar_conference_restart.hdf5");
+	res_file_hdf5.create("t2d_mpm_chm_t_bar_conference_step2.hdf5");
 
 	// output model
 	ModelDataOutput_T2D_CHM_s md("md1");
@@ -158,16 +159,15 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	// penetration step
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
-	//step.set_mass_scale(4.0, 4.0);
-	step.set_time(0.3);
+	step.set_time(0.1);
 	step.set_dtime(2.0e-7);
-	out.set_interval_num(300);
+	out.set_interval_num(100);
 	step.add_time_history(out);
 	step.add_time_history(out_pb);
 	step.solve();
 }
 
-void test_color_animation_t2d_chm_s_t_bar_conference_restart(void)
+void test_color_animation_t2d_chm_s_t_bar_conference_step2(void)
 {
 	// Abaqus "rainbow" spectrum scheme
 	ColorGraph::Colori colors[] = {
@@ -176,26 +176,24 @@ void test_color_animation_t2d_chm_s_t_bar_conference_restart(void)
 		{ 0,   185, 255 },
 		{ 0,   255, 232 },
 		{ 0,   255, 139 },
-		{ 0,   255, 46  },
-		{ 46,  255, 0   },
-		{ 139, 255, 0   },
-		{ 232, 255, 0   },
-		{ 255, 185, 0   },
-		{ 255, 93,  0   },
-		{ 255, 0,   0   }
+		{ 0,   255, 46 },
+		{ 46,  255, 0 },
+		{ 139, 255, 0 },
+		{ 232, 255, 0 },
+		{ 255, 185, 0 },
+		{ 255, 93,  0 },
+		{ 255, 0,   0 }
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		-35000.0,
-		-15000.0,
+		-20.0e3,
+		0.0e3,
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori)
-		);
-	gen.generate(10.0,
-		//-2.0, 2.0, -1.5, 0.5,
-		-3.6, 3.6, -5.1, 1.1,
-		"t2d_mpm_chm_t_bar_conference_restart.hdf5",
+	);
+	gen.generate(15.0, -3.2, 3.2, -3.7, 0.5,
+		"t2d_mpm_chm_t_bar_real_restart.hdf5",
 		"penetration",
-		"t2d_mpm_chm_t_bar_conference_restart.gif"
-		);
+		"t2d_mpm_chm_t_bar_real_restart.gif"
+	);
 }

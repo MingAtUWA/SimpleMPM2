@@ -11,7 +11,7 @@ plot1 = fig.subplots(1, 1)
 plot1.set_xlabel("Time")
 plot1.set_ylabel("Settlement")
 
-def extract_disp_time_curve_from_file(xml_file_name):
+def extract_disp_time_curve_from_file(xml_file_name, pcl_id):
     # Read result file
     res_tree = xml_etree.parse(xml_file_name)
     # node.tag, node.attrib, node.text
@@ -24,9 +24,6 @@ def extract_disp_time_curve_from_file(xml_file_name):
         time.append(float(th.find("total_time").text))
         mp_obj = th.find("MaterialPointObject")
         pcl_num = int(mp_obj.find("pcl_num").text)
-        # The particle needed to read
-        pcl_id = 499 # top point
-        #pcl_id = 133 # top point
         field_data_text = mp_obj.find("field_data").text
         field_data_buf = io.StringIO(field_data_text)
         field_data_buf.readline()
@@ -42,11 +39,15 @@ def extract_disp_time_curve_from_file(xml_file_name):
         settlement.append(cur_y - init_y)
     return time, settlement
 
-time, settlement = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\t2d_mpm_1d_consolidation.xml")
+#time, settlement = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\t2d_mpm_1d_consolidation.xml", 499)
+time, settlement = extract_disp_time_curve_from_file("..\\Build\\TestsWithGL\\t2d_mpm_1d_consolidation.xml", 133)
 line1, = plot1.plot(time, settlement)
+with open("consolidation_disp_numeri_SE.csv", "w") as out_file:
+    for i in range(len(time)):
+        out_file.write("%f, %f\n" % (time[i], settlement[i]))
 
 #################################################################################################
-u0 = 250.0
+u0 = 1.0
 E = 1000.0
 niu = 0.0 # possion ratio
 kv = 1.0e-4
@@ -73,6 +74,9 @@ for i in range(data_num):
 # plot1.set_ylim([-0.1, 0.2])
 
 line2, = plot1.plot(t_list, u_list, 'r--')
+with open("consolidation_disp_ana_SE.csv", "w") as out_file:
+    for i in range(len(t_list)):
+        out_file.write("%f, %f\n" % (t_list[i], u_list[i]))
 
 plt.legend(handles=[line1, line2], labels=['MPM', 'Analytical Solution'])
 

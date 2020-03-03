@@ -23,7 +23,7 @@ for th_id in range(th_num):
 
 hdf5_file.close()
 
-data_file = open("..\\Build\\TestsWithGL\\reaction_force.txt", "w")
+data_file = open("..\\Build\\TestsWithGL\\reaction_force.csv", "w")
 for i in range(len(rb_y)):
     data_file.write("%f, %f\n" % (rb_y[i], rb_fy[i]))
 data_file.close()

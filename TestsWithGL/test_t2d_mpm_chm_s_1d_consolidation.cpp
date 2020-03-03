@@ -282,18 +282,19 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	md.set_res_file(res_file_xml);
 	md.output();
 
-	TimeHistoryOutput_T2D_CHM_s_SE out1("th1");
+	TimeHistoryOutput_T2D_CHM_s out1("th1");
+	//TimeHistoryOutput_T2D_CHM_s_SE out1("th1");
 	out1.set_res_file(res_file_pb);
 	out1.set_output_init_state();
-	TimeHistoryOutput_T2D_CHM_s_SE out2("th2");
+	TimeHistoryOutput_T2D_CHM_s out2("th2");
+	//TimeHistoryOutput_T2D_CHM_s_SE out2("th2");
 	out2.set_res_file(res_file_xml);
 	out2.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out3;
 
-	Step_T2D_CHM_s_SE step;
+	Step_T2D_CHM_s step;
+	//Step_T2D_CHM_s_SE step;
 	step.set_model(model);
-	//step.set_damping_ratio(0.0); // local damping
-	//step.set_bv_ratio(1.0); // bulk viscosity
 	step.set_time(15.0);
 	step.set_dtime(1.0e-5);
 	out1.set_interval_num(100);
@@ -341,9 +342,15 @@ void test_color_animation_t2d_chm_s_1d_consolidation(void)
 		{ 255, 0,   0 }
 	};
 	GA_T2D_CHM_s_color gen;
-	gen.init_color_graph(500.0, 60.0, 40.0, 480.0,
-			0.0, 1.0, colors, sizeof(colors)/sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -padding_width, soil_width + padding_width,
-				 -padding_height, soil_height + padding_height,
-				 "t2d_mpm_1d_consolidation.bin", "t2d_mpm_1d_consolidation.gif");
+	gen.init_color_graph(
+		500.0, 60.0, 40.0, 480.0,
+		0.0, 1.0,
+		colors, sizeof(colors)/sizeof(ColorGraph::Colori)
+		);
+	gen.generate(5.0,
+		-padding_width, soil_width + padding_width,
+		-padding_height, soil_height + padding_height,
+		"t2d_mpm_1d_consolidation.bin"
+		"t2d_mpm_1d_consolidation.gif"
+		);
 }

@@ -265,7 +265,7 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//DisplayModel_T2D disp_model;
 	//disp_model.init_win();
 	//disp_model.init_model(model);
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num()/3);
+	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num()/3);
 	//disp_model.display(-0.05, 0.25, -0.05, 1.05);
 	//return;
 

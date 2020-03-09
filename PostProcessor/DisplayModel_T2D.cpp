@@ -315,7 +315,8 @@ int DisplayModel_T2D::init_pcls(Model_T2D_ME_s &md)
 void DisplayModel_T2D::render(void)
 {
 	// background
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	shader.use();
 
@@ -334,7 +335,8 @@ void DisplayModel_T2D::render(void)
 	if (pcls_vao)
 	{
 		shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(pcls_mv_mat));
-		glm::vec4 yellow(1.0f, 0.8f, 0.0f, 1.0f);
+		//glm::vec4 yellow(1.0f, 0.8f, 0.0f, 1.0f);
+		glm::vec4 yellow(0.28235f, 0.23921f, 0.54510f, 1.0f);
 		shader.set_uniform_vec4f(color_id, glm::value_ptr(yellow));
 		glBindVertexArray(pcls_vao);
 		// draw particles

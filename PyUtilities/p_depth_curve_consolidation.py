@@ -60,7 +60,7 @@ for i in range(30):
     pcl_list.append(6*i)
 pressure, position, cal_time = extract_pressure_depth_cuve_from_xml(
     "..\\Build\\TestsWithGL\\t2d_mpm_1d_consolidation.xml",
-    50, # 10, 20, 30, 50, 80
+    80, # 10, 20, 30, 50, 80
     pcl_list
     )
 

@@ -200,7 +200,6 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	//	bf.bf = -9.81;
 	//}
 
-
 	//DisplayModel_T2D disp_model;
 	//disp_model.init_win();
 	//disp_model.init_model(model);

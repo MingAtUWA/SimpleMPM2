@@ -191,9 +191,11 @@ void test_color_animation_t2d_chm_s_t_bar_conference_step2(void)
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori)
 	);
-	gen.generate(15.0, -3.2, 3.2, -3.7, 0.5,
-		"t2d_mpm_chm_t_bar_real_restart.hdf5",
+	gen.generate(
+		15.0,
+		-3.2, 3.2, -3.7, 0.5,
+		"t2d_mpm_chm_t_bar_real_step2.hdf5",
 		"penetration",
-		"t2d_mpm_chm_t_bar_real_restart.gif"
+		"t2d_mpm_chm_t_bar_real_step2.gif"
 	);
 }

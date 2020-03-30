@@ -186,11 +186,12 @@ void test_color_animation_t2d_chm_s_t_bar_conference_restart(void)
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		0.0, 40000,
+		0.0,
+		40000,
 		colors, sizeof(colors) / sizeof(ColorGraph::Colori)
 		);
 	gen.generate(5.0,
-		//-2.0, 2.0, -1.5, 0.5,
+		//-2.5, 2.5, -1.9, 1.1,
 		-3.6, 3.6, -5.1, 1.1,
 		"t2d_mpm_chm_t_bar_conference_restart.hdf5",
 		"penetration",

@@ -64,6 +64,7 @@ add_executable(
     # Geostatic
     test_t2d_mpm_me_s_geostatic.cpp
     test_t2d_mpm_chm_s_geostatic.cpp
+    test_t2d_chm_geostatic.cpp
     # Modified Cam Clay
     test_ModifiedCamClay.cpp
     test_mcc_get_Su.cpp

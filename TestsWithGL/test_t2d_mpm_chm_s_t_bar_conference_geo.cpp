@@ -22,7 +22,6 @@
 
 namespace
 {
-
 void get_left_and_right_n_ids(
 	Model_T2D_CHM_s &md,
 	double left,

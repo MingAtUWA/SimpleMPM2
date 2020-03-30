@@ -6,6 +6,7 @@
 #include "SquareParticleSystem.h"
 
 #include "Model_T2D_ME_s.h"
+#include "Model_T2D_fluid.h"
 #include "Model_T2D_CHM_s.h"
 
 // Usage:
@@ -28,6 +29,7 @@ public:
 
 	int init_model(Model_T2D_CHM_s &md);
 	int init_model(Model_T2D_ME_s &md);
+	int init_model(Model_T2D_fluid &md);
 
 	int init_points(GLfloat *n_coords, size_t num); // num = sizeof(n_coords) * 3
 	int init_rigid_circle(DispConRigidCircle &rc);
@@ -68,6 +70,9 @@ protected:
 protected:
 	int init_bg_mesh(Model_T2D_ME_s &md);
 	int init_pcls(Model_T2D_ME_s &md);
+
+	int init_bg_mesh(Model_T2D_fluid &md);
+	int init_pcls(Model_T2D_fluid &md);
 
 	int init_bg_mesh(Model_T2D_CHM_s &md);
 	int init_pcls(Model_T2D_CHM_s &md);

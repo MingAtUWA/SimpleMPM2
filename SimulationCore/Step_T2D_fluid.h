@@ -4,7 +4,12 @@
 #include "Step.h"
 #include "Model_T2D_fluid.h"
 
+// calculate shear stress when updating pcl variables
 int solve_substep_T2D_fluid(void *_self);
+// calculate shear stress after mapping velocity
+int solve_substep_T2D_fluid2(void *_self);
+// mixed integration
+int solve_substep_T2D_fluid_MI(void *_self);
 
 // for single object only
 class Step_T2D_fluid : public Step
@@ -16,7 +21,11 @@ public:
 
 protected:
 	int init_calculation(void) override;
+
 	friend int solve_substep_T2D_fluid(void *_self);
+	friend int solve_substep_T2D_fluid2(void *_self);
+	friend int solve_substep_T2D_fluid_MI(void *_self);
+
 	int finalize_calculation(void) override;
 
 public:

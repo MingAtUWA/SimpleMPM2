@@ -468,6 +468,10 @@ public:
 		grid_x_num = 0;
 		grid_y_num = 0;
 	}
+
+public: // for debug
+	void sum_vol_for_each_elements();
+
 };
 
 template <typename Point>

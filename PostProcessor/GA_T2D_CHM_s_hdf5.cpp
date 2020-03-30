@@ -317,6 +317,9 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 		ParticleData &pd = pds[pcl_id];
 		//pcl_color = color_graph.get_color(pd.p);
 		pcl_color = color_graph.get_color(pd.s22);
+		//pcl_color = color_graph.get_color(pd.s11);
+		//pcl_color = color_graph.get_color(sqrt((pd.e22-pd.e11)*(pd.e22-pd.e11)+4.0*pd.e12*pd.e12));
+		//pcl_color = color_graph.get_color(pd.e11 + pd.e22);
 		pcls_mem.add_pcl(
 			pd.x,
 			pd.y,

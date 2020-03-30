@@ -25,15 +25,37 @@
 #include "test_post_processor.h"
 #include "GA_T2D_CHM_s_hdf5.h"
 
+namespace
+{
+	void get_top_pcl_ids(Model_T2D_CHM_s &md,
+		MemoryUtilities::ItemArray<size_t> &pcl_ids)
+	{
+		pcl_ids.reset();
+		for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+		{
+			Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
+			if (pcl.y > 0.98)
+				pcl_ids.add(&p_id);
+		}
+	}
+};
+
+
 void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 {
 	TriangleMesh tri_mesh;
 	tri_mesh.load_mesh("..\\..\\Asset\\rect.mesh_data");
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_even_div_num(2);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
-	mh_2_pcl.generate_pcls();
+	//
+	//mh_2_pcl.set_even_div_num(2);
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
+	//mh_2_pcl.generate_pcls();
+	//
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
+	//mh_2_pcl.generate_pcls();
+	//
+	mh_2_pcl.generate_grid_points(0.0, 0.2, 0.0, 1.0, 0.025, 0.025);
 
 	Model_T2D_CHM_s model;
 	model.init_mesh(tri_mesh);
@@ -57,7 +79,8 @@ void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		pcl.s22 = -(1.0 - pcl.y) * 100.0;
+		//pcl.s22 = -(1.0 - pcl.y) * 10.0;
+		pcl.s22 = -10.0;
 		pcl.s11 = K * pcl.s22;
 		pcl.s12 = 0.0;
 		ini_stress[0] = pcl.s11;
@@ -80,6 +103,10 @@ void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 	model.set_rigid_circle_velocity(0.0, 0.0, 0.0);
 	model.set_contact_stiffness(100.0, 100.0);
 
+	MemoryUtilities::ItemArray<GLfloat> pt_array;
+	pt_array.reserve(25 * 3);
+	GLfloat pt_coord;
+
 	size_t vx_bc_n_id[] = { 0, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23,
 							1, 2, 5,  6,  7,  8,  9,  10, 11, 12, 13 };
 	model.init_vsxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
@@ -98,23 +125,66 @@ void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 		vbc.v = 0.0;
 	}
 
-	//size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
-	//model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
+	MemoryUtilities::ItemArray<size_t> tbc_pcls;
+	get_top_pcl_ids(model, tbc_pcls);
+	size_t *tbc_pcl_id = tbc_pcls.get_mem();
+	model.init_tys(tbc_pcls.get_num());
+	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	{
+		TractionBC_MPM &tbc = model.tys[t_id];
+		tbc.pcl_id = tbc_pcl_id[t_id];
+		//tbc.t = 0.05 * -10.0;
+		tbc.t = 0.025 * -10.0;
+	}
 	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	//{
-	//	TractionBC_MPM &tbc = model.tys[t_id];
-	//	tbc.pcl_id = tbc_pcl_id[t_id];
-	//	tbc.t = 0.05 * -100.0;
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
+	//	pt_coord = GLfloat(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = GLfloat(pcl.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
 	//}
 
-	model.init_bfys(model.pcl_num);
-	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
-	{
-		BodyForce &bf = model.bfys[p_id];
-		bf.pcl_id = p_id;
-		bf.bf = -20.0;
-	}
+	//model.init_bfys(model.pcl_num);
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	//{
+	//	BodyForce &bf = model.bfys[p_id];
+	//	bf.pcl_id = p_id;
+	//	bf.bf = -20.0;
+	//}
 	
+	// add elements
+	size_t elem_ids[] = {
+		33, 35, 38, 40, 42, 43,
+		31, 32, 36, 39, 41, 44, 45
+		};
+	for (size_t i = 0; i < sizeof(elem_ids) / sizeof(elem_ids[0]); ++i)
+	{
+		Model_T2D_CHM_s::Element &e = model.elems[elem_ids[i]];
+		Model_T2D_CHM_s::Node &n1 = model.nodes[e.n1];
+		Model_T2D_CHM_s::Node &n2 = model.nodes[e.n2];
+		Model_T2D_CHM_s::Node &n3 = model.nodes[e.n3];
+		pt_coord = GLfloat(n1.x + n2.x + n3.x) / 3.0;
+		pt_array.add(&pt_coord);
+		pt_coord = GLfloat(n1.y + n2.y + n3.y) / 3.0;
+		pt_array.add(&pt_coord);
+		pt_coord = 0.0f;
+		pt_array.add(&pt_coord);
+	}
+
+	DisplayModel_T2D disp_model;
+	disp_model.init_win();
+	disp_model.init_model(model);
+	disp_model.init_rigid_circle(model.get_rigid_circle());
+	disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	disp_model.display(-0.05, 0.25,-0.05, 1.05);
+	//return;
+
+	model.sum_vol_for_each_elements();
+	return;
+
 	ResultFile_XML res_file_xml;
 	res_file_xml.init("t2d_chm_s_geostatic_hdf5_mcc.xml");
 	ResultFile_hdf5 res_file_hdf5;
@@ -183,8 +253,8 @@ void test_color_animation_t2d_chm_s_geostatic_hdf5_mcc(void)
 		60.0,
 		40.0,
 		480.0,
-		-100,
-		0.0,
+		-11.0,
+		-8.0,
 		colors, 
 		sizeof(colors) / sizeof(ColorGraph::Colori)
 		);

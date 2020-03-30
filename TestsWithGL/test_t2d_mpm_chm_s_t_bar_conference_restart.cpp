@@ -159,9 +159,9 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
 	//step.set_mass_scale(4.0, 4.0);
-	step.set_time(0.3);
+	step.set_time(1.0);
 	step.set_dtime(2.0e-7);
-	out.set_interval_num(300);
+	out.set_interval_num(1000);
 	step.add_time_history(out);
 	step.add_time_history(out_pb);
 	step.solve();
@@ -186,12 +186,10 @@ void test_color_animation_t2d_chm_s_t_bar_conference_restart(void)
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	gen.init_color_graph(
-		-35000.0,
-		-15000.0,
-		colors,
-		sizeof(colors) / sizeof(ColorGraph::Colori)
+		0.0, 40000,
+		colors, sizeof(colors) / sizeof(ColorGraph::Colori)
 		);
-	gen.generate(10.0,
+	gen.generate(5.0,
 		//-2.0, 2.0, -1.5, 0.5,
 		-3.6, 3.6, -5.1, 1.1,
 		"t2d_mpm_chm_t_bar_conference_restart.hdf5",

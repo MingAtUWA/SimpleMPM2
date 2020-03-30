@@ -262,7 +262,7 @@ int GA_T2D_fluid_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
 	{
 		ParticleData &pd = pds[pcl_id];
-		pcl_color = color_graph.get_color(pd.p);
+		pcl_color = color_graph.get_color((pd.t11 + pd.t22) / 3.0 - pd.p);
 		pcls_mem.add_pcl(
 			pd.x,
 			pd.y,

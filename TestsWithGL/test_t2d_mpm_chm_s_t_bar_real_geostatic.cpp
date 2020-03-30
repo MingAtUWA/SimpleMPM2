@@ -94,8 +94,8 @@ void test_t2d_mpm_chm_s_t_bar_real_geostatic(void)
 	model.init_bg_mesh(0.1, 0.1);
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.replace_with_grid_points(-3.0, 3.0, -3.5, 0.0, 0.06, 0.06);
-	mh_2_pcl.replace_with_grid_points(-2.0, 2.0, -2.0, 0.0, 0.02, 0.02);
+	//mh_2_pcl.replace_with_grid_points(-3.0, 3.0, -3.5, 0.0, 0.06, 0.06);
+	//mh_2_pcl.replace_with_grid_points(-2.0, 2.0, -2.0, 0.0, 0.02, 0.02);
 
 	// elastic
 	//model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-12, 1.0e-3);

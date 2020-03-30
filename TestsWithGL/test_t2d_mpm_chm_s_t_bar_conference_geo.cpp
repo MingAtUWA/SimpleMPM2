@@ -145,7 +145,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 
 	model.init_rigid_circle(0.5, 0.0, 0.5 - 0.014, 0.04);
 	//model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
-	model.set_contact_stiffness(1.0e5, 1.0e5);
+	model.set_contact_stiffness(1.0e5, 1.0e3);
 	
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
 	bc_n_ids_mem.reserve(100);

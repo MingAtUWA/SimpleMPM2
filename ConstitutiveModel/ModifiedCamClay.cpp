@@ -33,7 +33,6 @@ int modified_cam_clay_integration_function(ConstitutiveModel *_self, double dstr
 	f = self.cal_f(p, q);
 	if (f <= 0.0)
 	{
-
 		self.form_De_mat(p);
 		self.form_Dep_mat();
 		self.e += (self.e + 1.0) * (dstrain[0] + dstrain[1] + dstrain[2]);
@@ -95,7 +94,7 @@ int modified_cam_clay_integration_function(ConstitutiveModel *_self, double dstr
 		q = self.cal_q();
 		f = self.cal_f(p, q);
 		if (self.cal_norm_f(f, p) < 1.0e-8)
-			//if (f < 1.0e-4)
+		//if (f < 1.0e-4)
 		{
 			// update e
 			self.e += (self.e + 1.0) * (dstrain[0] + dstrain[1] + dstrain[2]);

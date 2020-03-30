@@ -555,3 +555,57 @@ void Model_T2D_CHM_s::add_elem_to_bg_grid(Element &e)
 		}
 	}
 }
+
+
+#include <fstream>
+
+void Model_T2D_CHM_s::sum_vol_for_each_elements()
+{
+	// init elements
+	for (size_t e_id = 0; e_id < elem_num; ++e_id)
+	{
+		Element &e = elems[e_id];
+		e.vol = 0.0;
+		e.pcls = nullptr;
+	}
+
+	for (size_t p_id = 0; p_id < pcl_num; ++p_id)
+	{
+		Particle &pcl = pcls[p_id];
+		if (!(pcl.pe = find_in_which_element(pcl)))
+			continue;
+		pcl.pe->add_pcl(pcl);
+
+		pcl.vol_s = pcl.m_s / pcl.density_s;
+		pcl.vol = pcl.vol_s / (1.0 - pcl.n);
+		pcl.pe->vol += pcl.vol;
+	}
+
+	std::fstream out_file;
+	out_file.open("area.txt", std::ios::binary | std::ios::out);
+	for (size_t e_id = 0; e_id < elem_num; ++e_id)
+	{
+		Element &e = elems[e_id];
+		if (e.pcls)
+		{
+			if (e.vol > e.area)
+			{
+				out_file << "id: " << e.id << ", elem_a: " << e.area
+					<< ", pcl_a:" << e.vol 
+					<< " * +" << (e.vol - e.area) / e.area * 100.0 << "% *\n";
+			}
+			else if (e.vol < e.area)
+			{
+				out_file << "id: " << e.id << ", elem_a: " << e.area
+					<< ", pcl_a:" << e.vol
+					<< " * -" << (e.area - e.vol) / e.area * 100.0 <<"% *\n";
+			}
+			else
+			{
+				out_file << "id: " << e.id << ", elem_a: " << e.area
+					<< ", pcl_a:" << e.vol << "\n";
+			}
+		}
+	}
+	out_file.close();
+}

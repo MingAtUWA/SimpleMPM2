@@ -24,15 +24,36 @@
 #include "test_post_processor.h"
 #include "GA_T2D_CHM_s_hdf5.h"
 
+namespace
+{
+void get_top_pcl_ids(Model_T2D_CHM_s &md,
+	MemoryUtilities::ItemArray<size_t> &pcl_ids)
+{
+	pcl_ids.reset();
+	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
+		if (pcl.y > 0.98)
+			pcl_ids.add(&p_id);
+	}
+}
+};
+
 void test_t2d_chm_s_geostatic_hdf5(void)
 {
 	TriangleMesh tri_mesh;
 	tri_mesh.load_mesh("..\\..\\Asset\\rect.mesh_data");
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.set_even_div_num(2);
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
+	//
+	//mh_2_pcl.set_even_div_num(2);
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
+	//mh_2_pcl.generate_pcls();
+	//
+	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
 	mh_2_pcl.generate_pcls();
+	//
+	//mh_2_pcl.generate_grid_points(0.0, 0.2, 0.0, 1.0, 0.025, 0.025);
 
 	Model_T2D_CHM_s model;
 	model.init_mesh(tri_mesh);
@@ -74,15 +95,31 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 		vbc.v = 0.0;
 	}
 
-	size_t tbc_pcl_id[] = { 132, 133, 168, 169 };
-	model.init_tys(sizeof(tbc_pcl_id) / sizeof(tbc_pcl_id[0]));
+	MemoryUtilities::ItemArray<size_t> tbc_pcls;
+	get_top_pcl_ids(model, tbc_pcls);
+	size_t *tbc_pcl_id = tbc_pcls.get_mem();
+	model.init_tys(tbc_pcls.get_num());
 	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	{
 		TractionBC_MPM &tbc = model.tys[t_id];
 		tbc.pcl_id = tbc_pcl_id[t_id];
+		//tbc.t = 0.025 * -10.0;
 		tbc.t = 0.05 * -10.0;
 	}
-
+	MemoryUtilities::ItemArray<GLfloat> pt_array;
+	pt_array.reserve(25 * 3);
+	GLfloat pt_coord;
+	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
+		pt_coord = double(pcl.x);
+		pt_array.add(&pt_coord);
+		pt_coord = double(pcl.y);
+		pt_array.add(&pt_coord);
+		pt_coord = 0.0f;
+		pt_array.add(&pt_coord);
+	}
+	
 	//model.init_bfys(model.pcl_num);
 	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	//{
@@ -91,8 +128,14 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	//	bf.bf = -20.0;
 	//}
 	
-	//ResultFile_PlainBin res_file_pb;
-	//res_file_pb.init("t2d_chm_s_geostatic_hdf5.bin");
+	//DisplayModel_T2D disp_model;
+	//disp_model.init_win();
+	//disp_model.init_model(model);
+	//disp_model.init_rigid_circle(model.get_rigid_circle());
+	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	//disp_model.display(-0.05, 0.25,-0.05, 1.05);
+	//return;
+
 	ResultFile_XML res_file_xml;
 	res_file_xml.init("t2d_chm_s_geostatic_hdf5.xml");
 	ResultFile_hdf5 res_file_hdf5;
@@ -136,8 +179,6 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	step.add_time_history(out_nf);
 	step.add_time_history(out4);
 	step.solve();
-
-	//system("pause");
 }
 
 void test_color_animation_t2d_chm_s_geostatic_hdf5(void)
@@ -169,8 +210,16 @@ void test_color_animation_t2d_chm_s_geostatic_hdf5(void)
 		480.0,
 		-11.0,
 		-8.0,
-		colors, sizeof(colors) / sizeof(ColorGraph::Colori));
-	gen.generate(5.0, -padding_width, soil_width + padding_width,
-		-padding_height, soil_height + padding_height,
-		"t2d_chm_s_geostatic_hdf5.hdf5", "th3", "t2d_chm_s_geostatic_hdf5.gif");
+		colors,
+		sizeof(colors) / sizeof(ColorGraph::Colori)
+		);
+	gen.generate(5.0,
+		-padding_width,
+		soil_width + padding_width,
+		-padding_height,
+		soil_height + padding_height,
+		"t2d_chm_s_geostatic_hdf5.hdf5",
+		"th3",
+		"t2d_chm_s_geostatic_hdf5.gif"
+		);
 }

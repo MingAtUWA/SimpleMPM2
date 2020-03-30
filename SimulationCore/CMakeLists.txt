@@ -78,6 +78,7 @@ add_library(
     Step_T2D_CHM_s.h Step_T2D_CHM_s.cpp
     ModelDataOutput_T2D_CHM_s.h ModelDataOutput_T2D_CHM_s.cpp
     TimeHistoryOutput_T2D_CHM_s.h TimeHistoryOutput_T2D_CHM_s.cpp
+    #Step_T2D_CHM_s_sum_vol.h
     # Rigid ciricle controlled by displacement
     DispConRigidCircle.h DispConRigidCircle.cpp
     # Strain enhancement
@@ -96,10 +97,14 @@ add_library(
     Model_T2D_CHM_s_hdf5_io_utilities.h Model_T2D_CHM_s_hdf5_io_utilities.cpp
     # fluid mechanics
     Model_T2D_fluid.h Model_T2D_fluid.cpp
-    Step_T2D_fluid.h Step_T2D_fluid.cpp
+    Step_T2D_fluid.h Step_T2D_fluid.cpp Step_T2D_fluid_MI.cpp
     Model_T2D_fluid_hdf5_io_utilities.h Model_T2D_fluid_hdf5_io_utilities.cpp
     ModelDataOutput_T2D_fluid.h ModelDataOutput_T2D_fluid.cpp
     TimeHistoryOutput_T2D_fluid.h TimeHistoryOutput_T2D_fluid.cpp
+    # double set of particles
+    ParticleContactDetectionGrid.h ParticleContactDetectionGrid.cpp
+    Model_T2D_CHM_DP.h Model_T2D_CHM_DP.cpp
+    Step_T2D_CHM_DP.h  Step_T2D_CHM_DP.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

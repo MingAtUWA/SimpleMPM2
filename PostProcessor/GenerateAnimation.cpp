@@ -125,7 +125,7 @@ int GenerateAnimation::generate(double ani_time, double xl, double xu, double yl
 	real_time = time_rcds[time_rcd_num-1].total_time - time_rcds[0].total_time;
 	animation_time = ani_time;
 	ani_real_ratio = animation_time / real_time;
-	min_delay_real = 0.01 / ani_real_ratio;
+	min_delay_real = 0.02 / ani_real_ratio;
 
 	// gif output
 	GifWriter gif_file;
@@ -196,10 +196,12 @@ bool GenerateAnimation::find_next_frame(void)
 	for (frame_id = cur_time_rcd_id + 1; frame_id < time_rcd_num; ++frame_id)
 	{
 		diff_time = time_rcds[frame_id].total_time - prev_time;
-		if (diff_time >= min_delay_real)
+		if (diff_time >= min_delay_real * 0.999)
 		{
 			delay_ani = diff_time * ani_real_ratio;
 			delay_ani_100th = unsigned short int(delay_ani * 100);
+			if (delay_ani_100th == 0)
+				delay_ani_100th = 1;
 			break;
 		}
 	}

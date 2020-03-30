@@ -52,7 +52,12 @@ void ResultFile_hdf5::close(void)
 // =========================== group operation ==========================
 hid_t ResultFile_hdf5::create_group(hid_t parent_id, const char *name)
 {
-	return H5Gcreate(parent_id, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	hid_t cpl_id = H5Pcreate(H5P_FILE_CREATE);
+	// can be iterated according to creation order
+	H5Pset_link_creation_order(cpl_id, H5P_CRT_ORDER_TRACKED | H5P_CRT_ORDER_INDEXED);
+	hid_t grp_id = H5Gcreate(parent_id, name, H5P_DEFAULT, cpl_id, H5P_DEFAULT);
+	H5Pclose(cpl_id);
+	return grp_id;
 }
 
 hid_t ResultFile_hdf5::open_group(hid_t parent_id, const char *name)

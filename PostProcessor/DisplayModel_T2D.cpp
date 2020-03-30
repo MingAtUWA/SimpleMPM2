@@ -142,6 +142,17 @@ int DisplayModel_T2D::init_model(Model_T2D_ME_s &md)
 	return 0;
 }
 
+int DisplayModel_T2D::init_model(Model_T2D_fluid &md)
+{
+	int res;
+	res = init_bg_mesh(md);
+	if (res) return res;
+	res = init_pcls(md);
+	if (res) return res;
+
+	return 0;
+}
+
 int DisplayModel_T2D::init_points(GLfloat *n_coords, size_t num)
 {
 	pt_mv_mat = glm::mat4(1.0f);
@@ -234,6 +245,43 @@ int DisplayModel_T2D::init_bg_mesh(Model_T2D_ME_s &md)
 	return 0;
 }
 
+int DisplayModel_T2D::init_bg_mesh(Model_T2D_fluid &md)
+{
+	bgm_mv_mat = glm::mat4(1.0f);
+
+	glGenVertexArrays(1, &bgm_vao);
+	glBindVertexArray(bgm_vao);
+	glGenBuffers(1, &bgm_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, bgm_vbo);
+	GLfloat *node_coords = new GLfloat[md.node_num * 3];
+	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
+	{
+		Model_T2D_fluid::Node &n = md.nodes[n_id];
+		node_coords[3 * n_id] = GLfloat(n.x);
+		node_coords[3 * n_id + 1] = GLfloat(n.y);
+		node_coords[3 * n_id + 2] = 0.0f;
+	}
+	glBufferData(GL_ARRAY_BUFFER, md.node_num * 3 * sizeof(GLfloat), node_coords, GL_STATIC_DRAW);
+	delete[] node_coords;
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
+	glEnableVertexAttribArray(0);
+
+	glGenBuffers(1, &bgm_ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bgm_ibo);
+	bgm_elem_n_id_num = md.elem_num * 3;
+	GLuint *elem_indices = new GLuint[bgm_elem_n_id_num];
+	for (size_t e_id = 0; e_id < md.elem_num; ++e_id)
+	{
+		Model_T2D_fluid::Element &e = md.elems[e_id];
+		elem_indices[3 * e_id] = GLuint(e.n1);
+		elem_indices[3 * e_id + 1] = GLuint(e.n2);
+		elem_indices[3 * e_id + 2] = GLuint(e.n3);
+	}
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, bgm_elem_n_id_num * sizeof(GLuint), elem_indices, GL_STATIC_DRAW);
+	delete[] elem_indices;
+
+	return 0;
+}
 
 int DisplayModel_T2D::init_rigid_circle(DispConRigidCircle &rc)
 {
@@ -311,6 +359,30 @@ int DisplayModel_T2D::init_pcls(Model_T2D_ME_s &md)
 	return 0;
 }
 
+int DisplayModel_T2D::init_pcls(Model_T2D_fluid &md)
+{
+	pcls_mv_mat = glm::mat4(1.0f);
+
+	glGenVertexArrays(1, &pcls_vao);
+	glBindVertexArray(pcls_vao);
+	pcls_id_num = md.pcl_num;
+	pcls_mem.reset();
+	for (size_t pcl_id = 0; pcl_id < md.pcl_num; ++pcl_id)
+	{
+		Model_T2D_fluid::Particle &pcl = md.pcls[pcl_id];
+		pcls_mem.add_pcl(pcl.x, pcl.y, pcl.m / pcl.density * 0.25);
+	}
+	glGenBuffers(1, &pcls_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, pcls_vbo);
+	glBufferData(GL_ARRAY_BUFFER, pcls_mem.get_point_num() * sizeof(GLfloat), pcls_mem.get_pcls(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
+	glEnableVertexAttribArray(0);
+	glGenBuffers(1, &pcls_veo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pcls_veo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pcls_mem.get_index_num() * sizeof(GLuint), pcls_mem.get_indices(), GL_STATIC_DRAW);
+
+	return 0;
+}
 
 void DisplayModel_T2D::render(void)
 {

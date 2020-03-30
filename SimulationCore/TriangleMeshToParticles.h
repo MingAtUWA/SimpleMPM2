@@ -126,13 +126,15 @@ protected:
 
 	size_t evenly_div_num;
 	void EvenlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
-	void RandomlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
-
 public:
 	inline void set_even_div_num(size_t num) noexcept { evenly_div_num = num; }
 
+protected:
+	void RandomlyDistributedPointGenerator(Point &p1, Point &p2, Point &p3, double vol);
+
 public:
 	void clear_points_in_rect(double xl, double xu, double yl, double yu);
+	void generate_grid_points(double xl, double xu, double yl, double yu, double pcl_w, double pcl_h);
 	void replace_with_grid_points(double xl, double xu, double yl, double yu, double pcl_w, double pcl_h);
 };
 

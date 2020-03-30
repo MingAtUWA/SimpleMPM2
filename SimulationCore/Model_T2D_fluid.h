@@ -43,8 +43,8 @@ public: // Node, Element and Particle data structures
 		double fx_ext, fy_ext;
 		double fx_int, fy_int;
 
-		// strain enhancement approach
-		//double vol, de_vol;
+		// strain enhancement
+		double vol, de_vol, de_vol_dt;
 	};
 
 	struct Element;
@@ -83,10 +83,9 @@ public: // Node, Element and Particle data structures
 		double dN1_dx, dN1_dy;
 		double dN2_dx, dN2_dy;
 		double dN3_dx, dN3_dy;
-
-		// stress
+		
 		double t11, t22, t12;
-		// strain increment
+		// volumetric strain
 		double de_vol;
 
 		// particles list
@@ -98,10 +97,7 @@ public: // Node, Element and Particle data structures
 		}
 
 		// mixed integration
-		//double vol, s11, s22, s12;
-		// strain enhancement apprach
-		//double dde11, dde22, de12;
-		//double de_vol;
+		double vol, p;
 	};
 
 public:

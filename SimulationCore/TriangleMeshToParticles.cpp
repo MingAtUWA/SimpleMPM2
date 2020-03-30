@@ -223,17 +223,12 @@ void TriangleMeshToParticles::clear_points_in_rect(
 	}
 }
 
-void TriangleMeshToParticles::replace_with_grid_points(
-	double xl, double xu, double yl, double yu, double pcl_w, double pcl_h)
+void TriangleMeshToParticles::generate_grid_points(
+	double xl, double xu,
+	double yl, double yu,
+	double pcl_w, double pcl_h
+	)
 {
-	for (Particle *ppcl = first(); not_end_yet(ppcl); ppcl = next(ppcl))
-	{
-		Particle &pcl = *ppcl;
-		if (pcl.x >= xl && pcl.x <= xu &&
-			pcl.y >= yl && pcl.y <= yu)
-			del_pcl(pcl);
-	}
-
 	double width, height, pcl_start_x, pcl_start_y;
 	size_t pcl_x_num, pcl_y_num;
 	// x direction
@@ -254,4 +249,14 @@ void TriangleMeshToParticles::replace_with_grid_points(
 			pcl.y = pcl_start_y + pcl_h * double(row_id);
 			pcl.vol = pcl_w * pcl_h;
 		}
+}
+
+void TriangleMeshToParticles::replace_with_grid_points(
+	double xl, double xu,
+	double yl, double yu,
+	double pcl_w, double pcl_h
+	)
+{
+	clear_points_in_rect(xl, xu, yl, yu);
+	generate_grid_points(xl, xu, yl, yu, pcl_w, pcl_h);
 }

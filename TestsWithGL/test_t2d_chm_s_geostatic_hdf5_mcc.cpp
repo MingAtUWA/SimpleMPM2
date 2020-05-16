@@ -38,6 +38,29 @@ namespace
 				pcl_ids.add(&p_id);
 		}
 	}
+
+	void paint_element(
+		Model_T2D_CHM_s &model,
+		size_t elem_ids[],
+		size_t elem_num,
+		MemoryUtilities::ItemArray<GLfloat> &pt_array
+		)
+	{
+		GLfloat pt_coord;
+		for (size_t i = 0; i < elem_num; ++i)
+		{
+			Model_T2D_CHM_s::Element &e = model.elems[elem_ids[i]];
+			Model_T2D_CHM_s::Node &n1 = model.nodes[e.n1];
+			Model_T2D_CHM_s::Node &n2 = model.nodes[e.n2];
+			Model_T2D_CHM_s::Node &n3 = model.nodes[e.n3];
+			pt_coord = GLfloat(n1.x + n2.x + n3.x) / 3.0;
+			pt_array.add(&pt_coord);
+			pt_coord = GLfloat(n1.y + n2.y + n3.y) / 3.0;
+			pt_array.add(&pt_coord);
+			pt_coord = 0.0f;
+			pt_array.add(&pt_coord);
+		}
+	}
 };
 
 
@@ -104,7 +127,9 @@ void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 	model.set_contact_stiffness(100.0, 100.0);
 
 	MemoryUtilities::ItemArray<GLfloat> pt_array;
-	pt_array.reserve(25 * 3);
+	pt_array.reserve(100);
+	
+	//pt_array.reserve(25 * 3);
 	GLfloat pt_coord;
 
 	size_t vx_bc_n_id[] = { 0, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23,
@@ -160,30 +185,33 @@ void test_t2d_chm_s_geostatic_hdf5_mcc(void)
 		33, 35, 38, 40, 42, 43,
 		31, 32, 36, 39, 41, 44, 45
 		};
-	for (size_t i = 0; i < sizeof(elem_ids) / sizeof(elem_ids[0]); ++i)
-	{
-		Model_T2D_CHM_s::Element &e = model.elems[elem_ids[i]];
-		Model_T2D_CHM_s::Node &n1 = model.nodes[e.n1];
-		Model_T2D_CHM_s::Node &n2 = model.nodes[e.n2];
-		Model_T2D_CHM_s::Node &n3 = model.nodes[e.n3];
-		pt_coord = GLfloat(n1.x + n2.x + n3.x) / 3.0;
-		pt_array.add(&pt_coord);
-		pt_coord = GLfloat(n1.y + n2.y + n3.y) / 3.0;
-		pt_array.add(&pt_coord);
-		pt_coord = 0.0f;
-		pt_array.add(&pt_coord);
-	}
+	
+	paint_element(model, elem_ids, sizeof(elem_ids) / sizeof(elem_ids[0]), pt_array);
+	//for (size_t i = 0; i < sizeof(elem_ids) / sizeof(elem_ids[0]); ++i)
+	//{
+	//	Model_T2D_CHM_s::Element &e = model.elems[elem_ids[i]];
+	//	Model_T2D_CHM_s::Node &n1 = model.nodes[e.n1];
+	//	Model_T2D_CHM_s::Node &n2 = model.nodes[e.n2];
+	//	Model_T2D_CHM_s::Node &n3 = model.nodes[e.n3];
+	//	pt_coord = GLfloat(n1.x + n2.x + n3.x) / 3.0;
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = GLfloat(n1.y + n2.y + n3.y) / 3.0;
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
 
 	DisplayModel_T2D disp_model;
 	disp_model.init_win();
 	disp_model.init_model(model);
 	disp_model.init_rigid_circle(model.get_rigid_circle());
+	std::cout << pt_array.get_mem() << " " << pt_array.get_num() << "\n";
 	disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	disp_model.display(-0.05, 0.25,-0.05, 1.05);
-	//return;
-
-	model.sum_vol_for_each_elements();
 	return;
+
+	//model.sum_vol_for_each_elements();
+	//return;
 
 	ResultFile_XML res_file_xml;
 	res_file_xml.init("t2d_chm_s_geostatic_hdf5_mcc.xml");

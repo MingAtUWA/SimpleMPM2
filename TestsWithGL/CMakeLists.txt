@@ -78,6 +78,13 @@ add_executable(
     test_t2d_mpm_chm_s_t_bar_real_restart.cpp
     # fluid mechanics
     test_t2d_fluid.cpp
+    # s2d geostatic
+    test_s2d_mpm_me_s_geostatic.cpp
+    test_s2d_mpm_me_s.cpp
+    # area distribution
+    test_s2d_area_distribution.cpp
+    test_t2d_area_distribution.cpp
+    test_triaxial_test_cam_clay.cpp
     )
 
 target_include_directories(

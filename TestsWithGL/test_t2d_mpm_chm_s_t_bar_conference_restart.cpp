@@ -185,11 +185,18 @@ void test_color_animation_t2d_chm_s_t_bar_conference_restart(void)
 		{ 255, 0,   0   }
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
+	// pore pressure
+	//gen.init_color_graph(
+	//	0.0,
+	//	40000,
+	//	colors, sizeof(colors) / sizeof(ColorGraph::Colori)
+	//	);
+	// strain
 	gen.init_color_graph(
 		0.0,
-		40000,
+		1.5,
 		colors, sizeof(colors) / sizeof(ColorGraph::Colori)
-		);
+	);
 	gen.generate(5.0,
 		//-2.5, 2.5, -1.9, 1.1,
 		-3.6, 3.6, -5.1, 1.1,

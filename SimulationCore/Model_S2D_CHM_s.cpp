@@ -451,7 +451,7 @@ bool Model_S2D_CHM_s::init_pcl_GIMP(Particle &pcl)
 			var_info.pos = y_var_infos[i - 1].pos + (y_var_infos[i - 1].len + h) * 0.5;
 			var_info.elem_id = y_var_infos[i - 1].elem_id + 1;
 		}
-		y_var_infos[y_num - 1].len = yu - double(yu_id - 1) * h - x0;
+		y_var_infos[y_num - 1].len = yu - double(yu_id - 1) * h - y0;
 		y_var_infos[y_num - 1].pos = yu - y_var_infos[y_num - 1].len * 0.5;
 		y_var_infos[y_num - 1].elem_id = size_t((y_var_infos[y_num - 1].pos - y0) / h);
 	}

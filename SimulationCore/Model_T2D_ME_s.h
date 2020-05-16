@@ -163,6 +163,9 @@ public:
 	void init_mesh(TriangleMesh &tri_mesh);
 	void init_pcls(TriangleMeshToParticles &mh_2_pcl, double density, double E, double niu);
 
+	inline size_t get_elem_num() { return elem_num; }
+	inline Element *get_elems() { return elems; }
+
 #define INIT_BC_TEMPLATE(name, type)    \
 	void init_ ## name ## s(size_t num) \
 	{                                   \
@@ -360,6 +363,8 @@ protected:
 public:
 	template <typename Point>
 	Element *find_in_which_element(Point &p);
+	
+	Element *find_in_which_element(double x, double y);
 
 	int init_bg_mesh(double hx, double hy);
 	inline void clear_bg_mesh(void)
@@ -377,6 +382,9 @@ public:
 		grid_x_num = 0;
 		grid_y_num = 0;
 	}
+
+public: // for debug
+	void sum_vol_for_each_elements();
 };
 
 template <typename Point>
@@ -394,6 +402,25 @@ inline Model_T2D_ME_s::Element *Model_T2D_ME_s::find_in_which_element(Point &p)
 	{
 		elem = pelem->e;
 		if (is_in_triangle(*elem, p))
+			return elem;
+		pelem = pelem->next;
+	}
+	return nullptr;
+}
+
+inline Model_T2D_ME_s::Element *Model_T2D_ME_s::find_in_which_element(double x, double y)
+{
+	if (x < grid_x_min || x > grid_x_max || y < grid_y_min || y > grid_y_max)
+		return nullptr;
+	size_t x_id = size_t((x - grid_x_min) / grid_hx);
+	size_t y_id = size_t((y - grid_y_min) / grid_hy);
+	Grid &g = bg_grids[grid_x_num * y_id + x_id];
+	PElement *pelem = g.pelems;
+	Element *elem;
+	while (pelem)
+	{
+		elem = pelem->e;
+		if (is_in_triangle(*elem, x , y))
 			return elem;
 		pelem = pelem->next;
 	}

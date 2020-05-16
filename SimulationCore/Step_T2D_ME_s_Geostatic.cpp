@@ -405,11 +405,3 @@ int solve_substep_T2D_ME_s_Geostatic(void *_self)
 	
 	return 0;
 }
-
-//double E_tmp = md.E / ((1.0 + md.niu) * (1.0 - 2.0 * md.niu));
-//ds11 = E_tmp * ((1.0 - md.niu) * de11 + md.niu * de22);
-//ds22 = E_tmp * (md.niu * de11 + (1.0 - md.niu) * de22);
-//ds12 = md.E / (2.0 * (1.0 + md.niu)) * 2.0 * de12;
-//pcl.s11 += ds11;
-//pcl.s22 += ds22;
-//pcl.s12 += ds12;

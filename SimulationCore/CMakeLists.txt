@@ -9,6 +9,7 @@ add_library(
     BC.h
     # Utilities
     TriangleMeshToParticles.h TriangleMeshToParticles.cpp
+    AdjustParticlesWithTriangleMesh.hpp
     # Base Class
     Model.h
     Step.h Step.cpp
@@ -105,6 +106,17 @@ add_library(
     ParticleContactDetectionGrid.h ParticleContactDetectionGrid.cpp
     Model_T2D_CHM_DP.h Model_T2D_CHM_DP.cpp
     Step_T2D_CHM_DP.h  Step_T2D_CHM_DP.cpp
+    # me geostatic with volume enhancement
+    Model_S2D_ME_s.h Model_S2D_ME_s.cpp
+    ModelDataOutput_S2D_ME_s.h ModelDataOutput_S2D_ME_s.cpp
+    Model_S2D_ME_s_hdf5_io_utilities.h Model_S2D_ME_s_hdf5_io_utilities.cpp
+    # geostatic
+    Step_S2D_ME_s_Geostatic.h Step_S2D_ME_s_Geostatic.cpp Step_S2D_ME_s_Geostatic_VE.cpp
+    TimeHistoryOutput_S2D_ME_s_Geostatic.h TimeHistoryOutput_S2D_ME_s_Geostatic.cpp
+    # deformation
+    Step_S2D_ME_s.h Step_S2D_ME_s.cpp Step_S2D_ME_s_VE.cpp
+    TimeHistoryOutput_S2D_ME_s.h TimeHistoryOutput_S2D_ME_s.cpp
+    TimeHistoryOutput_S2D_ME_s_elem_vol.h TimeHistoryOutput_S2D_ME_s_elem_vol.cpp
     )
 
 add_subdirectory(TriangleMeshRigidBody/)

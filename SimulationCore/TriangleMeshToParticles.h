@@ -7,16 +7,24 @@
 #include "geometry.h"
 #include "TriangleMesh.h"
 
+template <typename TriMesh>
+class AdjustParticlesWithTriangleMesh;
+
 class TriangleMeshToParticles
 {
+	template <typename TriMesh>
+	friend class AdjustParticlesWithTriangleMesh;
 public:
 	struct Particle
 	{
 		friend TriangleMeshToParticles;
+		template <typename TriMesh>
+		friend class AdjustParticlesWithTriangleMesh;
 		double x, y, vol;
 	protected:
 		Particle *prev;
 		Particle *next;
+		Particle *next2; // for adjusting particles
 	};
 	typedef MemoryUtilities::ItemBuffer<Particle> ParticleBuffer;
 	enum class GeneratorType : unsigned int
@@ -106,6 +114,7 @@ public:
 		res->x = pcl.x;
 		res->y = pcl.y;
 		res->vol = pcl.vol;
+		return res;
 	}
 
 	inline void del_pcl(Particle &pcl)

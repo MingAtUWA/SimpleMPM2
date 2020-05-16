@@ -2,16 +2,19 @@
 
 #include "ResultFile_hdf5_DataStruct.h"
 
-#include "GA_T2D_CHM_s_hdf5.h"
+#include "GA_S2D_ME_s_hdf5.h"
 
 using namespace ResultFile_hdf5_DataStruct;
-using namespace Model_T2D_CHM_s_hdf5_io_utilities;
+using namespace Model_S2D_ME_s_hdf5_io_utilities;
 
-GA_T2D_CHM_s_hdf5::GA_T2D_CHM_s_hdf5(GLsizei win_w, GLsizei win_h) :
-	GenerateAnimation(win_w, win_h), th_id(-1),
-	cbar_pt_data(nullptr), cbar_id_data(nullptr), cbar_is_init(false) {}
+GA_S2D_ME_s_hdf5::GA_S2D_ME_s_hdf5(GLsizei win_w, GLsizei win_h) :
+	GenerateAnimation(win_w, win_h),
+	cbar_pt_data(nullptr),
+	cbar_id_data(nullptr),
+	th_id(-1),
+	cbar_is_init(false) {}
 
-GA_T2D_CHM_s_hdf5::~GA_T2D_CHM_s_hdf5()
+GA_S2D_ME_s_hdf5::~GA_S2D_ME_s_hdf5()
 {
 	if (cbar_pt_data)
 	{
@@ -24,10 +27,13 @@ GA_T2D_CHM_s_hdf5::~GA_T2D_CHM_s_hdf5()
 		cbar_id_data = nullptr;
 	}
 	if (th_id >= 0)
+	{
 		rf_hdf5.close_group(th_id);
+		th_id = -1;
+	}
 }
 
-int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
+int GA_S2D_ME_s_hdf5::_init(const char *file_name, const char *th_name)
 {
 	rf_hdf5.open(file_name);
 	res_file_id = rf_hdf5.get_file_id();
@@ -61,61 +67,54 @@ int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
 	model_data_id = rf_hdf5.get_model_data_grp_id();
 
 	// bg mesh
+	double x0, y0, hx, hy;
+	size_t elem_x_num, elem_y_num;
 	hid_t bg_mesh_id = rf_hdf5.open_group(model_data_id, "BackgroundMesh");
-	size_t node_num, elem_num;
-	rf_hdf5.read_attribute(bg_mesh_id, "node_num", node_num);
-	rf_hdf5.read_attribute(bg_mesh_id, "element_num", elem_num);
+	rf_hdf5.read_attribute(bg_mesh_id, "x0", x0);
+	rf_hdf5.read_attribute(bg_mesh_id, "y0", y0);
+	rf_hdf5.read_attribute(bg_mesh_id, "elem_x_num", elem_x_num);
+	rf_hdf5.read_attribute(bg_mesh_id, "elem_y_num", elem_y_num);
+	rf_hdf5.read_attribute(bg_mesh_id, "hx", hx);
+	rf_hdf5.read_attribute(bg_mesh_id, "hy", hy);
+	rf_hdf5.close_group(bg_mesh_id);
+	double xn, yn;
+	xn = x0 + double(elem_x_num) * hx;
+	yn = y0 + double(elem_y_num) * hy;
 
-	// nodes
-	NodeData *nodes_data = new NodeData[node_num];
-	hid_t nd_dt_id = get_nd_dt_id();
-	rf_hdf5.read_dataset(
-		bg_mesh_id,
-		"NodeCoordinate",
-		node_num,
-		nodes_data,
-		nd_dt_id
-		);
-	H5Tclose(nd_dt_id);
-	GLfloat *coords = new GLfloat[node_num * 3];
-	for (size_t n_id = 0; n_id < node_num; ++n_id)
+	size_t node_x_num = elem_x_num + 1;
+	size_t node_y_num = elem_y_num + 1;
+	elem_n_id_num = (node_x_num + node_y_num) * 2;
+	GLfloat *node_coords = new GLfloat[elem_n_id_num * 3];
+	GLuint *elem_indices = new GLuint[elem_n_id_num];
+	for (size_t n_id = 0; n_id < node_x_num; ++n_id)
 	{
-		NodeData &node_data = nodes_data[n_id];
-		coords[n_id * 3 + 0] = GLfloat(node_data.x);
-		coords[n_id * 3 + 1] = GLfloat(node_data.y);
-		coords[n_id * 3 + 2] = 0.0f;
+		node_coords[6 * n_id] = x0 + GLfloat(n_id) * hx;
+		node_coords[6 * n_id + 1] = y0;
+		node_coords[6 * n_id + 2] = 0.0f;
+		node_coords[6 * n_id + 3] = x0 + GLfloat(n_id) * hx;
+		node_coords[6 * n_id + 4] = yn;
+		node_coords[6 * n_id + 5] = 0.0f;
+		elem_indices[2 * n_id] = 2 * n_id;
+		elem_indices[2 * n_id + 1] = 2 * n_id + 1;
 	}
-	bg_grid_data.init_array_buffer(coords, node_num * 3);
+	size_t node_num_tmp = node_x_num + node_y_num;
+	for (size_t n_id = node_x_num; n_id < node_num_tmp; ++n_id)
+	{
+		node_coords[6 * n_id] = x0;
+		node_coords[6 * n_id + 1] = y0 + GLfloat(n_id - node_x_num) * hy;
+		node_coords[6 * n_id + 2] = 0.0f;
+		node_coords[6 * n_id + 3] = xn;
+		node_coords[6 * n_id + 4] = y0 + GLfloat(n_id - node_x_num) * hy;
+		node_coords[6 * n_id + 5] = 0.0f;
+		elem_indices[2 * n_id] = 2 * n_id;
+		elem_indices[2 * n_id + 1] = 2 * n_id + 1;
+	}
+	bg_grid_data.init_array_buffer(node_coords, elem_n_id_num * 3);
+	delete[] node_coords;
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
 	glEnableVertexAttribArray(0);
-	delete[] coords;
-	delete[] nodes_data;
-
-	// elements
-	ElemData *elems_data = new ElemData[elem_num];
-	elem_n_id_num = elem_num * 3;
-	hid_t ed_dt_id = get_ed_dt_id();
-	rf_hdf5.read_dataset(
-		bg_mesh_id,
-		"ElementTopology",
-		elem_num,
-		elems_data,
-		ed_dt_id
-		);
-	H5Tclose(ed_dt_id);
-	GLuint *indices = new GLuint[elem_num * 3];
-	for (size_t e_id = 0; e_id < elem_num; ++e_id)
-	{
-		ElemData &ed = elems_data[e_id];
-		indices[e_id * 3 + 0] = GLuint(ed.n1);
-		indices[e_id * 3 + 1] = GLuint(ed.n2);
-		indices[e_id * 3 + 2] = GLuint(ed.n3);
-	}
-	bg_grid_data.init_elem_array_buffer(indices, elem_num * 3);
-	delete[] indices;
-	delete[] elems_data;
-
-	rf_hdf5.close_group(bg_mesh_id);
+	bg_grid_data.init_elem_array_buffer(elem_indices, elem_n_id_num);
+	delete[] elem_indices;
 
 	// frame number
 	time_history_id = rf_hdf5.get_time_history_grp_id();
@@ -154,13 +153,13 @@ int GA_T2D_CHM_s_hdf5::_init(const char *file_name, const char *th_name)
 	return 0;
 }
 
-int GA_T2D_CHM_s_hdf5::init_color_graph(
+int GA_S2D_ME_s_hdf5::init_color_graph(
 	double bar_xpos, double bar_ypos, double bar_wid, double bar_len,
 	double lower, double upper, ColorGraph::Colori *colors, size_t num,
 	bool apply_out_of_bound_color)
 {
 	int res = color_graph.init(lower, upper, colors, num, apply_out_of_bound_color);
-	
+
 	color_num = num;
 
 	GLfloat y_inv = bar_len / GLfloat(num);
@@ -182,13 +181,13 @@ int GA_T2D_CHM_s_hdf5::init_color_graph(
 		cbar_pt_data[24 * i + 10] = co.g / 255.0;
 		cbar_pt_data[24 * i + 11] = co.b / 255.0;
 		cbar_pt_data[24 * i + 12] = bar_xpos + bar_wid;
-		cbar_pt_data[24 * i + 13] = bar_ypos + GLfloat(i+1) * y_inv;
+		cbar_pt_data[24 * i + 13] = bar_ypos + GLfloat(i + 1) * y_inv;
 		cbar_pt_data[24 * i + 14] = 0.0f;
 		cbar_pt_data[24 * i + 15] = co.r / 255.0;
 		cbar_pt_data[24 * i + 16] = co.g / 255.0;
 		cbar_pt_data[24 * i + 17] = co.b / 255.0;
 		cbar_pt_data[24 * i + 18] = bar_xpos;
-		cbar_pt_data[24 * i + 19] = bar_ypos + GLfloat(i+1) * y_inv;
+		cbar_pt_data[24 * i + 19] = bar_ypos + GLfloat(i + 1) * y_inv;
 		cbar_pt_data[24 * i + 20] = 0.0f;
 		cbar_pt_data[24 * i + 21] = co.r / 255.0;
 		cbar_pt_data[24 * i + 22] = co.g / 255.0;
@@ -206,7 +205,7 @@ int GA_T2D_CHM_s_hdf5::init_color_graph(
 	return res;
 }
 
-int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
+int GA_S2D_ME_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 {
 	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // white
@@ -218,7 +217,7 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	shader.set_uniform_matrix4f(proj_mat_id, glm::value_ptr(proj_mat));
 	shader_color.use();
 	shader_color.set_uniform_matrix4f(c_proj_mat_id, glm::value_ptr(proj_mat));
-	
+
 	// draw bg grid
 	// model/view matrix
 	shader.use();
@@ -230,65 +229,12 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	shader.set_uniform_vec4f(color_id, glm::value_ptr(grey));
 	// draw
 	bg_grid_data.use();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawElements(GL_TRIANGLES, elem_n_id_num, GL_UNSIGNED_INT, (GLvoid *)0);
+	glLineWidth(1.5f);
+	glDrawElements(GL_LINES, elem_n_id_num, GL_UNSIGNED_INT, (GLvoid *)0);
 
 	char frame_name[30];
 	snprintf(frame_name, 30, "frame_%zu", cur_time_rcd_id);
 	hid_t frame_id = rf_hdf5.open_group(th_id, frame_name);
-
-	// draw rigid circle
-	if (rf_hdf5.has_group(frame_id, "RigidBody"))
-	{
-		hid_t rb_id = rf_hdf5.open_group(frame_id, "RigidBody");
-
-		// model/view matrix
-		glm::mat4 identity_mat = glm::mat4(1.0f);
-		shader.set_uniform_matrix4f(mv_mat_id, glm::value_ptr(identity_mat));
-		// color
-		glm::vec4 dodgerblue(0.11765f, 0.56471f, 1.0f, 1.0f);
-		shader.set_uniform_vec4f(color_id, glm::value_ptr(dodgerblue));
-		
-		double cen_x, cen_y, theta;
-		size_t rb_pcl_num;
-		rf_hdf5.read_attribute(rb_id, "cen_x",  cen_x);
-		rf_hdf5.read_attribute(rb_id, "cen_y", cen_y);
-		rf_hdf5.read_attribute(rb_id, "theta", theta);
-		rf_hdf5.read_attribute(rb_id, "pcl_num", rb_pcl_num);
-		
-		// read rigid body particle data
-		rb_pcls_data.resize(rb_pcl_num);
-		RigidBodyParticleData *rbpds = rb_pcls_data.get_mem();
-		hid_t rc_dt_id = get_rc_dt_id();
-		rf_hdf5.read_dataset(
-			rb_id,
-			"ParticleData",
-			rb_pcl_num,
-			rbpds,
-			rc_dt_id
-			);
-		H5Tclose(rc_dt_id);
-		double pcl_x, pcl_y;
-		rc_pcls_mem.reset();
-		for (size_t pcl_id = 0; pcl_id < rb_pcl_num; ++pcl_id)
-		{
-			RigidBodyParticleData &rbpd = rbpds[pcl_id];
-			pcl_x = cen_x + rbpd.xr * cos(theta) + rbpd.yr * -sin(theta);
-			pcl_y = cen_y + rbpd.xr * sin(theta) + rbpd.yr *  cos(theta);
-			rc_pcls_mem.add_pcl(pcl_x, pcl_y, rbpd.vol * 0.25);
-		}
-
-		rf_hdf5.close_group(rb_id);
-
-		rc_data.clear();
-		rc_data.init_array_buffer(rc_pcls_mem.get_pcls(), rc_pcls_mem.get_point_num());
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (GLvoid *)0);
-		glEnableVertexAttribArray(0);
-		rc_data.init_elem_array_buffer(rc_pcls_mem.get_indices(), rc_pcls_mem.get_index_num());
-		// draw particles
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDrawElements(GL_TRIANGLES, rc_pcls_mem.get_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
-	}
 
 	// draw material points
 	// model/view matrix
@@ -308,26 +254,23 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 		pcl_num,
 		pds,
 		pcl_dt_id
-		);
+	);
 	H5Tclose(pcl_dt_id);
 	ColorGraph::Colorf pcl_color;
 	pcls_mem.reset();
 	for (size_t pcl_id = 0; pcl_id < pcl_num; ++pcl_id)
 	{
 		ParticleData &pd = pds[pcl_id];
-		pcl_color = color_graph.get_color(pd.p);
-		//pcl_color = color_graph.get_color(pd.s22);
-		//pcl_color = color_graph.get_color(pd.s11);
-		//pcl_color = color_graph.get_color(sqrt((pd.e22-pd.e11)*(pd.e22-pd.e11)+4.0*pd.e12*pd.e12));
-		//pcl_color = color_graph.get_color(pd.e11 + pd.e22);
+		//pcl_color = color_graph.get_color(pd.p);
+		pcl_color = color_graph.get_color(pd.s22);
 		pcls_mem.add_pcl(
 			pd.x,
 			pd.y,
-			pd.m_s / ((1.0-pd.n)*pd.density_s) * 0.25, // vol
+			pd.m / pd.density * 0.25, // vol
 			pcl_color.r, // color
 			pcl_color.g,
 			pcl_color.b
-			); 
+		);
 	}
 	mp_data.clear();
 	mp_data.init_array_buffer(pcls_mem.get_coord_and_color(), pcls_mem.get_coord_and_color_size());
@@ -341,7 +284,7 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	glDrawElements(GL_TRIANGLES, pcls_mem.get_index_num(), GL_UNSIGNED_INT, (GLvoid *)0);
 
 	rf_hdf5.close_group(frame_id);
-	
+
 	// color bar
 	if (cbar_is_init)
 	{
@@ -361,7 +304,7 @@ int GA_T2D_CHM_s_hdf5::render_frame(double xl, double xu, double yl, double yu)
 	return 0;
 }
 
-int GA_T2D_CHM_s_hdf5::generate(double ani_time, double xl, double xu, double yl, double yu,
+int GA_S2D_ME_s_hdf5::generate(double ani_time, double xl, double xu, double yl, double yu,
 	const char *file_name, const char *th_name, const char *gif_name)
 {
 	th_name_str = th_name;

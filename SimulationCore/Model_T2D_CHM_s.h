@@ -242,6 +242,9 @@ public:
 		double n, double density_s, double density_f,
 		double _Kf, double _k, double _miu);
 
+	inline size_t get_elem_num() { return elem_num; }
+	inline Element *get_elems() { return elems; }
+
 #define INIT_BC_TEMPLATE(name, type)    \
 	void init_ ## name ## s(size_t num) \
 	{                                   \
@@ -452,6 +455,8 @@ public:
 	template <typename Point>
 	Element *find_in_which_element(Point &p);
 
+	Element *find_in_which_element(double x, double y);
+	
 	int init_bg_mesh(double hx, double hy);
 	inline void clear_bg_mesh(void)
 	{
@@ -489,6 +494,26 @@ inline Model_T2D_CHM_s::Element *Model_T2D_CHM_s::find_in_which_element(Point &p
 	{
 		elem = pelem->e;
 		if (is_in_triangle(*elem, p))
+			return elem;
+		pelem = pelem->next;
+	}
+	return nullptr;
+}
+
+
+inline Model_T2D_CHM_s::Element *Model_T2D_CHM_s::find_in_which_element(double x, double y)
+{
+	if (x < grid_x_min || x > grid_x_max || y < grid_y_min || y > grid_y_max)
+		return nullptr;
+	size_t x_id = size_t((x - grid_x_min) / grid_hx);
+	size_t y_id = size_t((y - grid_y_min) / grid_hy);
+	Grid &g = bg_grids[grid_x_num * y_id + x_id];
+	PElement *pelem = g.pelems;
+	Element *elem;
+	while (pelem)
+	{
+		elem = pelem->e;
+		if (is_in_triangle(*elem, x, y))
 			return elem;
 		pelem = pelem->next;
 	}

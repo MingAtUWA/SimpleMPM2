@@ -68,6 +68,7 @@ int main(int argc, void **argv)
 	// ModifiedCamClay
 	//test_ModifiedCamClay();
 	//test_mcc_get_Su();
+	//test_triaxial_test_cam_clay();
 
 	//test_t2d_mpm_me_s_t_bar_coarser();
 	//test_color_animation_t2d_me_s_t_bar_coarser();
@@ -96,9 +97,9 @@ int main(int argc, void **argv)
 
 	// trianglur mesh mpm chm
 	//test_t2d_mpm_square();
-	//test_t2d_mpm_chm_s_1d_consolidation();
+	test_t2d_mpm_chm_s_1d_consolidation();
 	//test_animation_t2d_chm_s_1d_consolidation();
-	//test_color_animation_t2d_chm_s_1d_consolidation();
+	test_color_animation_t2d_chm_s_1d_consolidation();
 
 	// 1d consolidation wave propagation
 	// wave are damped out by the "enhanced strain method"
@@ -114,7 +115,6 @@ int main(int argc, void **argv)
 
 	//test_t2d_chm_s_geostatic_hdf5();
 	//test_color_animation_t2d_chm_s_geostatic_hdf5();
-	//test_t2d_chm_s_restart_from_geostatic_hdf5();
 
 	//test_t2d_chm_s_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_geostatic_hdf5_mcc();
@@ -138,8 +138,18 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_chm_s_t_bar_conference_step2();
 	//test_color_animation_t2d_chm_s_t_bar_conference_step2();
 
-	test_t2d_chm_geostatic();
+	//test_t2d_chm_geostatic();
 	//test_t2d_chm_geostatic_animation();
+
+	//test_s2d_mpm_me_s_geostatic();
+	//display_s2d_mpm_me_s_geostatic();
+
+	//test_s2d_mpm_me_s();
+	//display_s2d_mpm_me_s();
+
+	//test_s2d_area_distribution();
+	//test_t2d_area_distribution();
+	//test_t2d_area_distribution2();
 
 	//system("pause");
 	return 0;

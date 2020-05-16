@@ -157,12 +157,12 @@ void test_t2d_chm_geostatic()
 	//	pt_array.add(&pt_coord);
 	//}
 
-	//DisplayModel_T2D disp_model;
-	//disp_model.init_win();
-	//disp_model.init_model(model);
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
-	//disp_model.display(-0.05, 1.55, -0.05, 2.05);
-	//return;
+	DisplayModel_T2D disp_model;
+	disp_model.init_win();
+	disp_model.init_model(model);
+	disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	disp_model.display(-0.05, 1.55, -0.05, 2.05);
+	return;
 
 	ResultFile_hdf5 res_file_hdf5;
 	res_file_hdf5.create("t2d_mpm_chm_geostatic.hdf5");

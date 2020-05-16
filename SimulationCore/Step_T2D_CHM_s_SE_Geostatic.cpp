@@ -376,15 +376,15 @@ int solve_substep_T2D_CHM_s_SE_Geostatic(void *_self)
 		self.e_kin_ratio = sqrt(self.e_kin_prev / self.e_kin_max);
 
 	// output to file
-	if (self.substep_num % 100 == 1)
-	{
-		const char *rcd_str = "%lf, %lf, %lf, %lf, %lf, %lf, %lf\n";
-		char rcd[100];
-		snprintf(rcd, sizeof(rcd) / sizeof(rcd[0]), rcd_str,
-			self.current_time, self.f_ub_ratio, self.e_kin_ratio, f_ub, e_kin,
-			md.pcls[161].y, md.pcls[161].s22);
-		self.out_file.write(rcd, strlen(rcd));
-	}
+	//if (self.substep_num % 100 == 1)
+	//{
+	//	const char *rcd_str = "%lf, %lf, %lf, %lf, %lf, %lf, %lf\n";
+	//	char rcd[100];
+	//	snprintf(rcd, sizeof(rcd) / sizeof(rcd[0]), rcd_str,
+	//		self.current_time, self.f_ub_ratio, self.e_kin_ratio, f_ub, e_kin,
+	//		md.pcls[161].y, md.pcls[161].s22);
+	//	self.out_file.write(rcd, strlen(rcd));
+	//}
 
 	if (e_kin < self.e_kin_prev)
 		if (self.e_kin_ratio < self.e_kin_ratio_bound &&

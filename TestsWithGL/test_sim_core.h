@@ -81,4 +81,13 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void);
 void test_t2d_mpm_chm_s_t_bar_conference_restart(void);
 void test_t2d_mpm_chm_s_t_bar_conference_step2(void);
 
+void test_s2d_mpm_me_s_geostatic();
+void test_s2d_mpm_me_s();
+
+void test_s2d_area_distribution();
+void test_t2d_area_distribution();
+void test_t2d_area_distribution2();
+
+void test_triaxial_test_cam_clay();
+
 #endif

@@ -45,6 +45,9 @@ void test_color_animation_t2d_chm_s_t_bar_conference_geo(void);
 void test_color_animation_t2d_chm_s_t_bar_conference_restart(void);
 void test_color_animation_t2d_chm_s_t_bar_conference_step2(void);
 
-void test_t2d_chm_geostatic_animation(void);
+void test_t2d_chm_geostatic_animation();
+
+void display_s2d_mpm_me_s_geostatic();
+void display_s2d_mpm_me_s();
 
 #endif

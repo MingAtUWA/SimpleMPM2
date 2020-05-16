@@ -104,7 +104,7 @@ namespace MemoryUtilities
 			++cur;
 			return;
 		}
-		inline Item *pop(void)
+		inline bool pop(Item &item)
 		{
 			--cur;
 			if (cur < start)
@@ -112,14 +112,15 @@ namespace MemoryUtilities
 				if (cur_page == &first_page)
 				{
 					cur = start;
-					return nullptr;
+					return false;
 				}
 				cur_page = cur_page->prev;
 				start = cur_page->start;
 				end = cur_page->end;
 				cur = end - 1;
 			}
-			return cur;
+			item = *cur;
+			return true;
 		}
 		inline bool is_empty(void) const
 		{

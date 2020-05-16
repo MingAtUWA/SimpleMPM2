@@ -6,6 +6,7 @@
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
+#include "AdjustParticlesWithTriangleMesh.hpp"
 #include "Model_T2D_CHM_s.h"
 #include "Step_T2D_CHM_s_SE_Geostatic.h"
 
@@ -33,7 +34,7 @@ void get_top_pcl_ids(Model_T2D_CHM_s &md,
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = md.pcls[p_id];
-		if (pcl.y > 0.98)
+		if (pcl.y > 0.985)
 			pcl_ids.add(&p_id);
 	}
 }
@@ -44,20 +45,23 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	TriangleMesh tri_mesh;
 	tri_mesh.load_mesh("..\\..\\Asset\\rect.mesh_data");
 
+	Model_T2D_CHM_s model;
+	model.init_mesh(tri_mesh);
+	model.init_bg_mesh(0.05, 0.05);
+
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
 	//
 	//mh_2_pcl.set_even_div_num(2);
 	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::EvenlyDistributedPoint);
 	//mh_2_pcl.generate_pcls();
 	//
-	mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
-	mh_2_pcl.generate_pcls();
+	//mh_2_pcl.set_generator(TriangleMeshToParticles::GeneratorType::SecondOrderGaussPoint);
+	//mh_2_pcl.generate_pcls();
 	//
-	//mh_2_pcl.generate_grid_points(0.0, 0.2, 0.0, 1.0, 0.025, 0.025);
-
-	Model_T2D_CHM_s model;
-	model.init_mesh(tri_mesh);
-	tri_mesh.clear();
+	mh_2_pcl.generate_grid_points(0.0, 0.2, 0.0, 1.0, 0.025, 0.025);
+	
+	AdjustParticlesWithTriangleMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
+	ap_mh.distribute_points_area_to_mesh(model, 0.025, 0.025, 0.2, 0.2);
 
 	// elasticity
 	model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
@@ -68,9 +72,9 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	}
 	// mcc
 	//model.init_pcls(mh_2_pcl, );
-	mh_2_pcl.clear();
 
-	model.init_bg_mesh(0.05, 0.05);
+	tri_mesh.clear();
+	mh_2_pcl.clear();
 
 	// rigid objects
 	model.init_rigid_circle(0.1, 0.1, 1.15, 0.01);
@@ -103,8 +107,8 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	{
 		TractionBC_MPM &tbc = model.tys[t_id];
 		tbc.pcl_id = tbc_pcl_id[t_id];
-		//tbc.t = 0.025 * -10.0;
-		tbc.t = 0.05 * -10.0;
+		tbc.t = 0.025 * -10.0;
+		//tbc.t = 0.05 * -10.0;
 	}
 	MemoryUtilities::ItemArray<GLfloat> pt_array;
 	pt_array.reserve(25 * 3);
@@ -209,7 +213,7 @@ void test_color_animation_t2d_chm_s_geostatic_hdf5(void)
 		40.0,
 		480.0,
 		-11.0,
-		-8.0,
+		-9.0,
 		colors,
 		sizeof(colors) / sizeof(ColorGraph::Colori)
 		);

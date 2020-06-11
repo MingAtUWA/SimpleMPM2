@@ -66,6 +66,33 @@ void get_top_pcl_ids(Model_T2D_CHM_s &md,
 			pcl_ids.add(&p_id);
 	}
 }
+
+void get_mid_top_pcl_ids(Model_T2D_CHM_s &md,
+	MemoryUtilities::ItemArray<size_t> &pcl_ids)
+{
+	pcl_ids.reset();
+	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle& pcl = md.pcls[p_id];
+		if (pcl.y > -0.021 && pcl.y < 0.0 &&
+			(pcl.x < -2.5 || pcl.x > 2.5))
+			pcl_ids.add(&p_id);
+	}
+}
+
+void get_left_right_top_pcl_ids(Model_T2D_CHM_s& md,
+	MemoryUtilities::ItemArray<size_t>& pcl_ids)
+{
+	pcl_ids.reset();
+	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle& pcl = md.pcls[p_id];
+		if (pcl.y > -0.011 && pcl.y < 0.0 &&
+			pcl.x > -2.5 && pcl.x < 2.5)
+			pcl_ids.add(&p_id);
+	}
+}
+
 };
 
 
@@ -81,7 +108,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
 	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
 	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
-	// another
+	// another pcl arrangement
 	mh_2_pcl.generate_grid_points(-3.5, 3.5, -3.5, 0.0, 0.04, 0.04);
 	mh_2_pcl.generate_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
 	mh_2_pcl.replace_with_grid_points(-2.5, 2.5, -3.5, 0.0, 0.02, 0.02);
@@ -91,57 +118,94 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	ap_mh.adjust_particles2(model);
 
 	// elastic
-	//model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-12, 1.0e-3);
-	//double K = 0.3 / (1.0 - 0.3);
-	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
-	//{
-	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-	//	pcl.s22 = -1000.0;
-	//	pcl.s11 = pcl.s22 * K;
-	//	pcl.s12 = 0.0;
-	//}
-	// mcc
-	model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 2.0e6, 1.0e-11, 1.0e-3);
-	ModelContainer &mc = model.model_container;
-	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
-	double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
-	//double ini_stress[6] = { -24267.31, -40361.43, -24267.31, 0.0, 0.0, 0.0 };
-	double ini_stress[6] = { -12025.0, -20000.0, -12025.0, 0.0, 0.0, 0.0 };
+	model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-11, 1.0e-3);
+	double K = 0.3 / (1.0 - 0.3);
 	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		pcl.s11 = ini_stress[0];
-		pcl.s22 = ini_stress[1];
+		pcl.s22 = -20000.0;
+		pcl.s11 = pcl.s22 * K;
 		pcl.s12 = 0.0;
-		ModifiedCamClay &mcc = cms[p_id];
-		//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 20030.8);
-		mcc.set_param_NC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress);
-		pcl.set_cm(mcc);
 	}
+	// mcc
+	//model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 2.0e6, 1.0e-11, 1.0e-3);
+	//ModelContainer &mc = model.model_container;
+	//ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
+	//double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
+	////double ini_stress[6] = { -24267.31, -40361.43, -24267.31, 0.0, 0.0, 0.0 };
+	//double ini_stress[6] = { -12025.0, -20000.0, -12025.0, 0.0, 0.0, 0.0 };
+	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+	//	pcl.s11 = ini_stress[0];
+	//	pcl.s22 = ini_stress[1];
+	//	pcl.s12 = 0.0;
+	//	ModifiedCamClay &mcc = cms[p_id];
+	//	//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 20030.8);
+	//	mcc.set_param_NC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress);
+	//	pcl.set_cm(mcc);
+	//}
 	std::cout << "pcl_num: " << model.pcl_num << "\n";
 
 	tri_mesh.clear();
 	mh_2_pcl.clear();
 
 	// traction force
-	MemoryUtilities::ItemArray<size_t> bc_pcl_ids_mem;
-	bc_pcl_ids_mem.reserve(100);
-	get_top_pcl_ids(model, bc_pcl_ids_mem);
-	size_t *tbc_pcl_ids = bc_pcl_ids_mem.get_mem();
-	model.init_tys(bc_pcl_ids_mem.get_num());
-	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	{
-		TractionBC_MPM &tbc = model.tys[t_id];
-		tbc.pcl_id = tbc_pcl_ids[t_id];
-		//tbc.t = 0.03 * -40361.43;
-		tbc.t = 0.03 * -20000.0;
-	}
-	//MemoryUtilities::ItemArray<GLfloat> pt_array;
-	//pt_array.reserve(25 * 3);
-	//GLfloat pt_coord;
+	//MemoryUtilities::ItemArray<size_t> bc_pcl_ids_mem;
+	//bc_pcl_ids_mem.reserve(100);
+	//get_top_pcl_ids(model, bc_pcl_ids_mem);
+	//size_t *tbc_pcl_ids = bc_pcl_ids_mem.get_mem();
+	//model.init_tys(bc_pcl_ids_mem.get_num());
 	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
 	//{
-	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
+	//	TractionBC_MPM &tbc = model.tys[t_id];
+	//	tbc.pcl_id = tbc_pcl_ids[t_id];
+	//	//tbc.t = 0.03 * -40361.43;
+	//	tbc.t = 0.03 * -20000.0;
+	//}
+
+	MemoryUtilities::ItemArray<size_t> mid_tbc_pcl_ids_mem;
+	mid_tbc_pcl_ids_mem.reserve(100);
+	get_mid_top_pcl_ids(model, mid_tbc_pcl_ids_mem);
+	size_t *mid_tbc_pcl_ids = mid_tbc_pcl_ids_mem.get_mem();
+	size_t mid_tbc_num = mid_tbc_pcl_ids_mem.get_num();
+
+	MemoryUtilities::ItemArray<size_t> left_right_tbc_pcl_ids_mem;
+	left_right_tbc_pcl_ids_mem.reserve(100);
+	get_left_right_top_pcl_ids(model, left_right_tbc_pcl_ids_mem);
+	size_t *left_right_tbc_pcl_ids = left_right_tbc_pcl_ids_mem.get_mem();
+	size_t left_right_tbc_num = left_right_tbc_pcl_ids_mem.get_num();
+
+	model.init_tys(mid_tbc_num + left_right_tbc_num);
+	for (size_t t_id = 0; t_id < mid_tbc_num; ++t_id)
+	{
+		TractionBC_MPM &tbc = model.tys[t_id];
+		tbc.pcl_id = mid_tbc_pcl_ids[t_id];
+		tbc.t = 0.02 * -20000.0;
+	}
+	for (size_t t_id = 0; t_id < left_right_tbc_num; ++t_id)
+	{
+		TractionBC_MPM& tbc = model.tys[mid_tbc_num + t_id];
+		tbc.pcl_id = left_right_tbc_pcl_ids[t_id];
+		tbc.t = 0.04 * -20000.0;
+	}
+
+	MemoryUtilities::ItemArray<GLfloat> pt_array;
+	pt_array.reserve(100);
+	GLfloat pt_coord;
+	//for (size_t t_id = 0; t_id < mid_tbc_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[mid_tbc_pcl_ids[t_id]];
+	//	pt_coord = double(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = double(pcl.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
+	//for (size_t t_id = 0; t_id < left_right_tbc_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle& pcl = model.pcls[left_right_tbc_pcl_ids[t_id]];
 	//	pt_coord = double(pcl.x);
 	//	pt_array.add(&pt_coord);
 	//	pt_coord = double(pcl.y);
@@ -213,7 +277,12 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
 	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	//disp_model.display(-3.6, 3.6, -5.1, 1.1);
-	//disp_model.display(-1.2, 1.2, -1.2, 0.2);
+	// left
+	//disp_model.display(-3.8, -2.2, -1.0, 1.0);
+	// middle
+	//disp_model.display(-2.6, -2.2, -0.25, 0.25);
+	// right
+	//disp_model.display(2.2, 3.8, -1.0, 1.0);
 	//return;
 
 	ResultFile_hdf5 res_file_hdf5;

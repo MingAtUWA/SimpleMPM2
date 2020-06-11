@@ -5,6 +5,8 @@
 #include "ItemArray.hpp"
 
 #include "AdjustParticlesWithTriangleMesh.hpp"
+#include "AdjustParticleSizeWithMesh.hpp"
+
 #include "Model_T2D_CHM_s.h"
 #include "Step_T2D_CHM_s_SE.h"
 #include "DisplayModel_T2D.h"
@@ -147,8 +149,11 @@ void test_t2d_mpm_chm_s_1d_consolidation(void)
 	//
 	mh_2_pcl.generate_grid_points(0.0, 0.2, 0.0, 1.0, 0.02, 0.02);
 
-	AdjustParticlesWithTriangleMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
-	ap_mh.distribute_points_area_to_mesh(model, 0.02, 0.02, 0.2, 0.2);
+	//AdjustParticlesWithTriangleMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
+	//ap_mh.distribute_points_area_to_mesh(model, 0.02, 0.02, 0.2, 0.2);
+
+	AdjustParticleSizeWithMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
+	ap_mh.adjust_particles2(model);
 
 	model.init_pcls(mh_2_pcl, 0.4, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
 	

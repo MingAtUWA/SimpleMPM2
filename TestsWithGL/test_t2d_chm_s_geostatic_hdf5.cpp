@@ -7,6 +7,7 @@
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
 #include "AdjustParticlesWithTriangleMesh.hpp"
+#include "AdjustParticleSizeWithMesh.hpp"
 #include "Model_T2D_CHM_s.h"
 #include "Step_T2D_CHM_s_SE_Geostatic.h"
 
@@ -60,8 +61,12 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	//
 	mh_2_pcl.generate_grid_points(0.0, 0.2, 0.0, 1.0, 0.025, 0.025);
 	
-	AdjustParticlesWithTriangleMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
-	ap_mh.distribute_points_area_to_mesh(model, 0.025, 0.025, 0.2, 0.2);
+	//AdjustParticlesWithTriangleMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
+	//ap_mh.distribute_points_area_to_mesh(model, 0.025, 0.025, 0.2, 0.2);
+
+	AdjustParticleSizeWithMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
+	//ap_mh.adjust_particles(model, 4, 0.025, 0.025);
+	ap_mh.adjust_particles2(model);
 
 	// elasticity
 	model.init_pcls(mh_2_pcl, 0.5, 20.0, 10.0, 1000.0, 0.0, 40000.0, 1.0e-4, 1.0);
@@ -81,6 +86,18 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	model.set_rigid_circle_velocity(0.0, 0.0, 0.0);
 	model.set_contact_stiffness(100.0, 100.0);
 
+	MemoryUtilities::ItemArray<size_t> tbc_pcls;
+	get_top_pcl_ids(model, tbc_pcls);
+	size_t* tbc_pcl_id = tbc_pcls.get_mem();
+	model.init_tys(tbc_pcls.get_num());
+	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
+	{
+		TractionBC_MPM& tbc = model.tys[t_id];
+		tbc.pcl_id = tbc_pcl_id[t_id];
+		tbc.t = 0.025 * -10.0;
+		//tbc.t = 0.05 * -10.0;
+	}
+
 	size_t vx_bc_n_id[] = { 0, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23,
 							1, 2, 5,  6,  7,  8,  9,  10, 11, 12, 13 };
 	model.init_vsxs(sizeof(vx_bc_n_id) / sizeof(vx_bc_n_id[0]));
@@ -99,17 +116,6 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 		vbc.v = 0.0;
 	}
 
-	MemoryUtilities::ItemArray<size_t> tbc_pcls;
-	get_top_pcl_ids(model, tbc_pcls);
-	size_t *tbc_pcl_id = tbc_pcls.get_mem();
-	model.init_tys(tbc_pcls.get_num());
-	for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	{
-		TractionBC_MPM &tbc = model.tys[t_id];
-		tbc.pcl_id = tbc_pcl_id[t_id];
-		tbc.t = 0.025 * -10.0;
-		//tbc.t = 0.05 * -10.0;
-	}
 	MemoryUtilities::ItemArray<GLfloat> pt_array;
 	pt_array.reserve(25 * 3);
 	GLfloat pt_coord;
@@ -132,13 +138,13 @@ void test_t2d_chm_s_geostatic_hdf5(void)
 	//	bf.bf = -20.0;
 	//}
 	
-	//DisplayModel_T2D disp_model;
-	//disp_model.init_win();
-	//disp_model.init_model(model);
+	DisplayModel_T2D disp_model;
+	disp_model.init_win();
+	disp_model.init_model(model);
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
 	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
-	//disp_model.display(-0.05, 0.25,-0.05, 1.05);
-	//return;
+	disp_model.display(-0.05, 0.25,-0.05, 1.05);
+	return;
 
 	ResultFile_XML res_file_xml;
 	res_file_xml.init("t2d_chm_s_geostatic_hdf5.xml");

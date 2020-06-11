@@ -1,5 +1,5 @@
-#ifndef __TRIANGLE_MESH_TO_PARTICLES_HPP__
-#define __TRIANGLE_MESH_TO_PARTICLES_HPP__
+#ifndef __Triangle_Mesh_To_Particles_h__
+#define __Triangle_Mesh_To_Particles_h__
 
 #include "ItemArray.hpp"
 #include "ItemBuffer.hpp"
@@ -18,13 +18,11 @@ public:
 	struct Particle
 	{
 		friend TriangleMeshToParticles;
-		template <typename TriMesh>
-		friend class AdjustParticlesWithTriangleMesh;
 		double x, y, vol;
+		Particle* next2; // for adjusting particles
 	protected:
 		Particle *prev;
 		Particle *next;
-		Particle *next2; // for adjusting particles
 	};
 	typedef MemoryUtilities::ItemBuffer<Particle> ParticleBuffer;
 	enum class GeneratorType : unsigned int

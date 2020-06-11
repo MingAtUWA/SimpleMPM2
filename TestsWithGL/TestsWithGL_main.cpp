@@ -95,11 +95,15 @@ int main(int argc, void **argv)
 	//test_t2d_mpm_chm_s_geostatic();
 	//test_color_animation_t2d_mpm_chm_s_geostatic();
 
+	// chm geostatic
+	//test_t2d_chm_s_geostatic_hdf5(); // *****
+	//test_color_animation_t2d_chm_s_geostatic_hdf5();
+
 	// trianglur mesh mpm chm
 	//test_t2d_mpm_square();
-	test_t2d_mpm_chm_s_1d_consolidation();
+	//test_t2d_mpm_chm_s_1d_consolidation(); // ******
 	//test_animation_t2d_chm_s_1d_consolidation();
-	test_color_animation_t2d_chm_s_1d_consolidation();
+	//test_color_animation_t2d_chm_s_1d_consolidation();
 
 	// 1d consolidation wave propagation
 	// wave are damped out by the "enhanced strain method"
@@ -112,9 +116,6 @@ int main(int argc, void **argv)
 
 	// output to hdf5 file
 	//test_t2d_chm_s_hdf5_output();
-
-	//test_t2d_chm_s_geostatic_hdf5();
-	//test_color_animation_t2d_chm_s_geostatic_hdf5();
 
 	//test_t2d_chm_s_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_geostatic_hdf5_mcc();
@@ -131,7 +132,7 @@ int main(int argc, void **argv)
 	//test_t2d_fluid();
 	//test_postprocess_t2d_fluid();
 
-	//test_t2d_mpm_chm_s_t_bar_conference_geo();
+	test_t2d_mpm_chm_s_t_bar_conference_geo(); // **
 	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
 	//test_t2d_mpm_chm_s_t_bar_conference_restart();
 	//test_color_animation_t2d_chm_s_t_bar_conference_restart();

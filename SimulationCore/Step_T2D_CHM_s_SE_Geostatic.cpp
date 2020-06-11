@@ -45,7 +45,7 @@ int Step_T2D_CHM_s_SE_Geostatic::init_calculation(void)
 	e_kin_prev = 0.0;
 	e_kin_ratio = 1.0;
 
-	out_file.open("ratio_res.txt", std::ios::out | std::ios::binary);
+	//out_file.open("ratio_res.txt", std::ios::out | std::ios::binary);
 
 	return 0;
 }
@@ -67,7 +67,7 @@ int Step_T2D_CHM_s_SE_Geostatic::finalize_calculation(void)
 		pcl.e12 = 0.0;
 	}
 
-	out_file.close();
+	//out_file.close();
 
 	return 0;
 }

@@ -9,7 +9,8 @@ add_library(
     BC.h
     # Utilities
     TriangleMeshToParticles.h TriangleMeshToParticles.cpp
-    AdjustParticlesWithTriangleMesh.hpp
+    AdjustParticlesWithTriangleMesh.hpp # divide particle according to mesh
+    AdjustParticleSizeWithMesh.hpp # adjust particles size according to mesh
     # Base Class
     Model.h
     Step.h Step.cpp

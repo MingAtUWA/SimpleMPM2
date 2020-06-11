@@ -244,6 +244,8 @@ public:
 
 	inline size_t get_elem_num() { return elem_num; }
 	inline Element *get_elems() { return elems; }
+	inline size_t get_node_num() { return node_num; }
+	inline Node* get_nodes() { return nodes; }
 
 #define INIT_BC_TEMPLATE(name, type)    \
 	void init_ ## name ## s(size_t num) \

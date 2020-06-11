@@ -6,8 +6,8 @@
 
 #include "TriangleMesh.h"
 #include "TriangleMeshToParticles.h"
+#include "AdjustParticleSizeWithMesh.hpp"
 #include "Model_T2D_CHM_s.h"
-
 #include "Step_T2D_CHM_s_SE_Geostatic.h"
 
 #include "DisplayModel_T2D.h"
@@ -79,8 +79,16 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	model.init_bg_mesh(0.2, 0.2);
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
-	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.06, 0.06);
+	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
+	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
+	// another
+	mh_2_pcl.generate_grid_points(-3.5, 3.5, -3.5, 0.0, 0.04, 0.04);
+	mh_2_pcl.generate_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
+	mh_2_pcl.replace_with_grid_points(-2.5, 2.5, -3.5, 0.0, 0.02, 0.02);
+
+	AdjustParticleSizeWithMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
+	//ap_mh.adjust_particles(model, 4, 0.025, 0.025);
+	ap_mh.adjust_particles2(model);
 
 	// elastic
 	//model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-12, 1.0e-3);
@@ -203,9 +211,9 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	//disp_model.init_win();
 	//disp_model.init_model(model);
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
-	////disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	//disp_model.display(-3.6, 3.6, -5.1, 1.1);
-	////disp_model.display(-1.2, 1.2, -1.2, 0.2);
+	//disp_model.display(-1.2, 1.2, -1.2, 0.2);
 	//return;
 
 	ResultFile_hdf5 res_file_hdf5;

@@ -60,7 +60,6 @@ add_executable(
     # for the Durham conference paper
     test_t2d_mpm_chm_s_t_bar_conference_geo.cpp
     test_t2d_mpm_chm_s_t_bar_conference_restart.cpp
-    test_t2d_mpm_chm_s_t_bar_conference_step2.cpp
     # Geostatic
     test_t2d_mpm_me_s_geostatic.cpp
     test_t2d_mpm_chm_s_geostatic.cpp

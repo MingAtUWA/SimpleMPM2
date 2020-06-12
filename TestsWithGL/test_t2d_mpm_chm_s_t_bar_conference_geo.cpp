@@ -74,8 +74,8 @@ void get_mid_top_pcl_ids(Model_T2D_CHM_s &md,
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle& pcl = md.pcls[p_id];
-		if (pcl.y > -0.021 && pcl.y < 0.0 &&
-			(pcl.x < -2.5 || pcl.x > 2.5))
+		if (pcl.y > -0.011 && pcl.y < 0.0 &&
+			pcl.x > -2.5 && pcl.x < 2.5)
 			pcl_ids.add(&p_id);
 	}
 }
@@ -87,8 +87,8 @@ void get_left_right_top_pcl_ids(Model_T2D_CHM_s& md,
 	for (size_t p_id = 0; p_id < md.pcl_num; ++p_id)
 	{
 		Model_T2D_CHM_s::Particle& pcl = md.pcls[p_id];
-		if (pcl.y > -0.011 && pcl.y < 0.0 &&
-			pcl.x > -2.5 && pcl.x < 2.5)
+		if (pcl.y > -0.021 && pcl.y < 0.0 &&
+			(pcl.x < -2.5 || pcl.x > 2.5))
 			pcl_ids.add(&p_id);
 	}
 }
@@ -276,11 +276,12 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	//disp_model.init_model(model);
 	//disp_model.init_rigid_circle(model.get_rigid_circle());
 	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	// all
 	//disp_model.display(-3.6, 3.6, -5.1, 1.1);
 	// left
 	//disp_model.display(-3.8, -2.2, -1.0, 1.0);
 	// middle
-	//disp_model.display(-2.6, -2.2, -0.25, 0.25);
+	//disp_model.display(2.3, 2.7, -0.25, 0.25);
 	// right
 	//disp_model.display(2.2, 3.8, -1.0, 1.0);
 	//return;

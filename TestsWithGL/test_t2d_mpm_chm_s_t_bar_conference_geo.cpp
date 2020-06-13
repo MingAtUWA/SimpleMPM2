@@ -118,33 +118,33 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	ap_mh.adjust_particles2(model);
 
 	// elastic
-	model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-11, 1.0e-3);
-	double K = 0.3 / (1.0 - 0.3);
-	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
-	{
-		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-		pcl.s22 = -20000.0;
-		pcl.s11 = pcl.s22 * K;
-		pcl.s12 = 0.0;
-	}
-	// mcc
-	//model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 2.0e6, 1.0e-11, 1.0e-3);
-	//ModelContainer &mc = model.model_container;
-	//ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
-	//double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
-	////double ini_stress[6] = { -24267.31, -40361.43, -24267.31, 0.0, 0.0, 0.0 };
-	//double ini_stress[6] = { -12025.0, -20000.0, -12025.0, 0.0, 0.0, 0.0 };
+	//model.init_pcls(mh_2_pcl, 0.3, 2700.0, 1000.0, 1.0e5, 0.3, 5.0e6, 1.0e-11, 1.0e-3);
+	//double K = 0.3 / (1.0 - 0.3);
 	//for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
 	//{
 	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
-	//	pcl.s11 = ini_stress[0];
-	//	pcl.s22 = ini_stress[1];
+	//	pcl.s22 = -20000.0;
+	//	pcl.s11 = pcl.s22 * K;
 	//	pcl.s12 = 0.0;
-	//	ModifiedCamClay &mcc = cms[p_id];
-	//	//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 20030.8);
-	//	mcc.set_param_NC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress);
-	//	pcl.set_cm(mcc);
 	//}
+	// mcc
+	model.init_pcls(mh_2_pcl, 0.6, 2650.0, 1000.0, 2.0e6, 1.0e-11, 1.0e-3);
+	ModelContainer &mc = model.model_container;
+	ModifiedCamClay *cms = mc.add_ModifiedCamClay(model.pcl_num);
+	double K = 1.0 - sin(23.5 / 180.0 * 3.14159165359);
+	//double ini_stress[6] = { -24267.31, -40361.43, -24267.31, 0.0, 0.0, 0.0 };
+	double ini_stress[6] = { -12025.0, -20000.0, -12025.0, 0.0, 0.0, 0.0 };
+	for (size_t p_id = 0; p_id < model.pcl_num; ++p_id)
+	{
+		Model_T2D_CHM_s::Particle &pcl = model.pcls[p_id];
+		pcl.s11 = ini_stress[0];
+		pcl.s22 = ini_stress[1];
+		pcl.s12 = 0.0;
+		ModifiedCamClay &mcc = cms[p_id];
+		//mcc.set_param_OC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress, 20030.8);
+		mcc.set_param_NC(0.3, 0.044, 0.205, 23.5, 3.6677, ini_stress);
+		pcl.set_cm(mcc);
+	}
 	std::cout << "pcl_num: " << model.pcl_num << "\n";
 
 	tri_mesh.clear();

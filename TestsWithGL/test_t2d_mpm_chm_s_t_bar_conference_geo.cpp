@@ -307,7 +307,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	Step_T2D_CHM_s_SE_Geostatic step_gs;
 	step_gs.set_model(model);
 	//step_gs.set_mass_scale(10.0, 10.0);
-	step_gs.set_time(3.0);
+	step_gs.set_time(1.0);
 	step_gs.set_dtime(1.0e-5);
 	// out
 	out.set_interval_num(100);

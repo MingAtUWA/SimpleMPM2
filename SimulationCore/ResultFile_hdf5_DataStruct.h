@@ -104,8 +104,7 @@ struct ModifiedCamClayStateData
 	void to_cm(ModifiedCamClay &cm)
 	{
 		double stress[6] = { s11, s22, s33, s12, s23, s31 };
-		fric_angle = fric_angle / 3.14159265359 * 180.0;
-		cm.set_param_OC(niu, kappa, lambda, fric_angle, e, stress, pc);
+		cm.set_param_OC(niu, kappa, lambda, fric_angle, N, stress, pc);
 	}
 };
 

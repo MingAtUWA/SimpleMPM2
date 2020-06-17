@@ -46,12 +46,12 @@ int Step::solve_th_only(void)
 
 	} while (current_time < step_time_minus_tol);
 
+	// finalize calculation
+	finalize_calculation();
+	
 	// finalize time history
 	for (TimeHistoryOutput *pth = time_history_top; pth; pth = pth->next)
 		pth->finalize_per_step();
-
-	// finalize calculation
-	finalize_calculation();
 
 	return 0;
 }

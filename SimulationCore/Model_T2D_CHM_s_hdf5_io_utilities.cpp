@@ -235,10 +235,8 @@ int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf
 		{
 			LinearElasticityStateData &cmd = cm_data[cm_id];
 			LinearElasticity &cm = cms[cm_id];
-			//std::cout << cmd.pcl_id << " " << md.pcls[cmd.pcl_id].id << "\n";
 			cmd.to_cm(cm);
-			cm.ext_data = &md.pcls[cmd.pcl_id];
-			md.pcls[cmd.pcl_id].cm = &cm;
+			md.pcls[cmd.pcl_id].set_cm(cm);
 		}
 		delete[] cm_data;
 	}

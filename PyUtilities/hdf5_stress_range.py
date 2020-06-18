@@ -3,8 +3,8 @@ import h5py as py
 import matplotlib.pyplot as plt
 import sys
 
-hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_above_ground.hdf5", "r")
-frame_id = 100
+hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_conference_restart.hdf5", "r")
+frame_id = 0
 
 th_grp = hdf5_file['TimeHistory']['penetration']
 pcl_dset = th_grp['frame_%d' % frame_id]['ParticleData']

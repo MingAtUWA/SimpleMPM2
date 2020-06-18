@@ -106,12 +106,12 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	model.init_bg_mesh(0.2, 0.2);
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
-	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
+	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
+	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.06, 0.06);
 	// another pcl arrangement
-	mh_2_pcl.generate_grid_points(-3.5, 3.5, -3.5, 0.0, 0.04, 0.04);
-	mh_2_pcl.generate_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
-	mh_2_pcl.replace_with_grid_points(-2.5, 2.5, -3.5, 0.0, 0.02, 0.02);
+	//mh_2_pcl.generate_grid_points(-3.5, 3.5, -3.5, 0.0, 0.04, 0.04);
+	//mh_2_pcl.generate_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
+	//mh_2_pcl.replace_with_grid_points(-2.5, 2.5, -3.5, 0.0, 0.02, 0.02);
 
 	AdjustParticleSizeWithMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
 	//ap_mh.adjust_particles(model, 4, 0.025, 0.025);
@@ -271,20 +271,21 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	//	bf.bf = -9.81;
 	//}
 
-	//DisplayModel_T2D disp_model;
-	//disp_model.init_win();
-	//disp_model.init_model(model);
-	//disp_model.init_rigid_circle(model.get_rigid_circle());
-	//disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
+	DisplayModel_T2D disp_model;
+	disp_model.init_win();
+	disp_model.init_model(model);
+	disp_model.init_rigid_circle(model.get_rigid_circle());
+	disp_model.init_points(pt_array.get_mem(), pt_array.get_num() / 3);
 	// all
 	//disp_model.display(-3.6, 3.6, -5.1, 1.1);
+	disp_model.display(-3.6, 3.6, -5.1, -3.4);
 	// left
 	//disp_model.display(-3.8, -2.2, -1.0, 1.0);
 	// middle
 	//disp_model.display(2.3, 2.7, -0.25, 0.25);
 	// right
 	//disp_model.display(2.2, 3.8, -1.0, 1.0);
-	//return;
+	return;
 
 	ResultFile_hdf5 res_file_hdf5;
 	res_file_hdf5.create("t2d_mpm_chm_t_bar_conference_geo.hdf5");

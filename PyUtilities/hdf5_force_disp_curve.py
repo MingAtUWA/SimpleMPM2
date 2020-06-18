@@ -1,7 +1,7 @@
 import h5py as py
 import matplotlib.pyplot as plt
 
-hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_above_ground.hdf5", "r")
+hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_conference_restart.hdf5", "r")
 
 th_grp = hdf5_file['TimeHistory']['penetration']
 th_num = th_grp.attrs['output_num']

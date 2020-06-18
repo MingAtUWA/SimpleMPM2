@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 depth = []
 s22 = []
 
-hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_real_geostatic.hdf5", "r")
+hdf5_file = py.File("..\\Build\\TestsWithGL\\t2d_mpm_chm_t_bar_conference_geo.hdf5", "r")
 frame_id = 0
 
 frame_dset = hdf5_file['TimeHistory']['geostatic']['frame_%d' % frame_id]['ParticleData']

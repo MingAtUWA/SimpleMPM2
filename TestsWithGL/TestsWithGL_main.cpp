@@ -79,14 +79,6 @@ int main(int argc, void **argv)
 	// me ver.
 	//test_t2d_mpm_me_s_t_bar_above_ground();
 	//test_color_animation_t2d_me_s_t_bar_above_ground();
-	// chm ver.
-	//test_t2d_mpm_chm_s_t_bar_above_ground();
-	//test_color_animation_t2d_chm_s_t_bar_above_ground();
-
-	//test_t2d_mpm_chm_s_t_bar_above_ground_geostatic();
-	//test_color_animation_t2d_chm_s_t_bar_above_ground_geostatic();
-	//test_t2d_mpm_chm_s_t_bar_above_ground_restart();
-	//test_color_animation_t2d_chm_s_t_bar_above_ground();
 
 	// geostatic
 	// me ver.
@@ -122,20 +114,9 @@ int main(int argc, void **argv)
 	//test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 	
-	// a realistic case of t-bar penetration
-	//test_t2d_mpm_chm_s_t_bar_real_geostatic();
-	//test_color_animation_t2d_chm_s_t_bar_real_geostatic();
-	//test_t2d_mpm_chm_s_t_bar_real_restart();
-	//test_color_animation_t2d_chm_s_t_bar_real_restart();
-	
 	// fluid mechanics
 	//test_t2d_fluid();
 	//test_postprocess_t2d_fluid();
-
-	//test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
-	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
-	//test_t2d_mpm_chm_s_t_bar_conference_restart(); // *****
-	test_color_animation_t2d_chm_s_t_bar_conference_restart();
 
 	//test_t2d_chm_geostatic();
 	//test_t2d_chm_geostatic_animation();
@@ -149,6 +130,11 @@ int main(int argc, void **argv)
 	//test_s2d_area_distribution();
 	//test_t2d_area_distribution();
 	//test_t2d_area_distribution2();
+
+	//test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
+	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
+	test_t2d_mpm_chm_s_t_bar_conference_restart(); // *****
+	//test_color_animation_t2d_chm_s_t_bar_conference_restart();
 
 	//system("pause");
 	return 0;

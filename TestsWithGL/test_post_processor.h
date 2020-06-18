@@ -20,9 +20,6 @@ void test_color_animation_t2d_chm_s_t_bar();
 void test_animation_t2d_chm_s_t_bar_coarser();
 void test_color_animation_t2d_chm_s_t_bar_coarser();
 
-void test_color_animation_t2d_chm_s_t_bar_above_ground();
-void test_color_animation_t2d_chm_s_t_bar_above_ground_geostatic();
-
 void test_color_graph();
 
 void test_color_animation_t2d_me_s_1d_compression();
@@ -33,9 +30,6 @@ void test_color_animation_t2d_chm_s_1d_wave();
 void test_color_animation_t2d_chm_s_geostatic_hdf5();
 void test_color_animation_t2d_chm_s_geostatic_hdf5_mcc();
 void test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
-
-void test_color_animation_t2d_chm_s_t_bar_real_geostatic();
-void test_color_animation_t2d_chm_s_t_bar_real_restart();
 
 void test_postprocess_t2d_fluid();
 

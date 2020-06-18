@@ -41,15 +41,9 @@ void test_triangle_searching();
 
 void test_t2d_mpm_square();
 void test_t2d_mpm_chm_s_1d_consolidation();
-void test_t2d_mpm_chm_s_t_bar();
-void test_t2d_mpm_chm_s_t_bar_coarser();
-void test_t2d_mpm_chm_s_t_bar_above_ground();
 
 void test_t2d_mpm_me_s_1d_compression();
-void test_t2d_mpm_me_s_t_bar_coarser();
 
-void test_t2d_mpm_chm_s_t_bar_above_ground_geostatic();
-void test_t2d_mpm_chm_s_t_bar_above_ground_restart();
 void test_t2d_mpm_me_s_t_bar_above_ground();
 
 void test_t2d_mpm_me_s_geostatic();
@@ -57,10 +51,6 @@ void test_t2d_mpm_chm_s_geostatic();
 void test_t2d_chm_geostatic();
 
 void test_t2d_mpm_chm_s_1d_wave();
-
-// Modified cam clay
-void test_ModifiedCamClay();
-void test_mcc_get_Su();
 
 void test_t2d_chm_s_hdf5_output();
 
@@ -70,15 +60,9 @@ void test_t2d_chm_s_restart_from_geostatic_hdf5();
 void test_t2d_chm_s_geostatic_hdf5_mcc();
 void test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
-void test_t2d_mpm_chm_s_t_bar_real_geostatic();
-void test_t2d_mpm_chm_s_t_bar_real_restart();
-
 void test_mcc_get_Su();
 
 void test_t2d_fluid();
-
-void test_t2d_mpm_chm_s_t_bar_conference_geo();
-void test_t2d_mpm_chm_s_t_bar_conference_restart();
 
 void test_s2d_mpm_me_s_geostatic();
 void test_s2d_mpm_me_s();
@@ -87,6 +71,12 @@ void test_s2d_area_distribution();
 void test_t2d_area_distribution();
 void test_t2d_area_distribution2();
 
+// Modified cam clay
+void test_ModifiedCamClay();
+void test_mcc_get_Su();
 void test_triaxial_test_cam_clay();
+
+void test_t2d_mpm_chm_s_t_bar_conference_geo();
+void test_t2d_mpm_chm_s_t_bar_conference_restart();
 
 #endif

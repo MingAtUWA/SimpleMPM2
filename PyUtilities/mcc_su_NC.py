@@ -16,6 +16,8 @@ def Su_from_szz_NC(phi, lmd, kap, szz):
     phi *= math.pi / 180.0
     M = 6.0 * math.sin(phi) / (3.0 - math.sin(phi))
     K = 1.0 - math.sin(phi)
+    shh = K*szz
+    print("shh = %f" % shh)
     alpha = (1.0 + 2.0 * K) / 3.0
     belta = (1.0 - K) * (1.0 - K) / (M * M * alpha) + alpha
     Su = M * 0.5 * math.exp((math.log(2.0)*(kpa-lmd) + (lmd-kpa)*math.log(belta) + kpa*math.log(alpha) + lmd*math.log(szz)) / lmd)
@@ -33,6 +35,6 @@ if __name__ == "__main__":
     #Su = 57.2e3
     #szz_from_Su_NC(phi, lmd, kpa, Su)
     
-    szz = 200000.0
+    szz = 20000.0
     Su_from_szz_NC(phi, lmd, kpa, szz)
     

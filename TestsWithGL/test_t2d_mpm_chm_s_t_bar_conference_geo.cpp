@@ -106,12 +106,12 @@ void test_t2d_mpm_chm_s_t_bar_conference_geo(void)
 	model.init_bg_mesh(0.2, 0.2);
 
 	TriangleMeshToParticles mh_2_pcl(tri_mesh);
-	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
-	mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.06, 0.06);
+	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -3.5, 0.0, 0.03, 0.03);
+	//mh_2_pcl.replace_with_grid_points(-3.5, 3.5, -5.0, -3.5, 0.06, 0.06);
 	// another pcl arrangement
-	//mh_2_pcl.generate_grid_points(-3.5, 3.5, -3.5, 0.0, 0.04, 0.04);
-	//mh_2_pcl.generate_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
-	//mh_2_pcl.replace_with_grid_points(-2.5, 2.5, -3.5, 0.0, 0.02, 0.02);
+	mh_2_pcl.generate_grid_points(-3.5, 3.5, -3.5, 0.0, 0.04, 0.04);
+	mh_2_pcl.generate_grid_points(-3.5, 3.5, -5.0, -3.5, 0.04, 0.04);
+	mh_2_pcl.replace_with_grid_points(-2.5, 2.5, -3.5, 0.0, 0.02, 0.02);
 
 	AdjustParticleSizeWithMesh<Model_T2D_CHM_s> ap_mh(mh_2_pcl);
 	//ap_mh.adjust_particles(model, 4, 0.025, 0.025);

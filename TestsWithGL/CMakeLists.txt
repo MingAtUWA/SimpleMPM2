@@ -27,12 +27,9 @@ add_executable(
     test_slide_down_frictional_slope2.cpp
     # me - mpm
     test_t2d_mpm_me_s_1d_compression.cpp
-    test_t2d_mpm_me_s_t_bar_coarser.cpp
     # chm - mpm
     test_mpm_chm_s_1d_consolidation.cpp
     test_t2d_mpm_chm_s_1d_consolidation.cpp
-    test_t2d_mpm_chm_s_t_bar.cpp
-    test_t2d_mpm_chm_s_t_bar_coarser.cpp
     test_t2d_mpm_chm_s_1d_wave.cpp
     test_t2d_chm_s_hdf5_output.cpp
     # Animation output
@@ -51,15 +48,8 @@ add_executable(
     test_color_graph.cpp
     # Search triangle
     test_triangle_searching.cpp
-    # t bar penetration from above
+    # t bar penetration from above ground
     test_t2d_mpm_me_s_t_bar_above_ground.cpp
-    # coupled simulation of t bar penetration
-    test_t2d_mpm_chm_s_t_bar_above_ground.cpp
-    test_t2d_mpm_chm_s_t_bar_above_ground_geostatic.cpp
-    test_t2d_mpm_chm_s_t_bar_above_ground_restart.cpp
-    # for the Durham conference paper
-    test_t2d_mpm_chm_s_t_bar_conference_geo.cpp
-    test_t2d_mpm_chm_s_t_bar_conference_restart.cpp
     # Geostatic
     test_t2d_mpm_me_s_geostatic.cpp
     test_t2d_mpm_chm_s_geostatic.cpp
@@ -72,9 +62,6 @@ add_executable(
     test_t2d_chm_s_restart_from_geostatic_hdf5.cpp
     test_t2d_chm_s_geostatic_hdf5_mcc.cpp
     test_t2d_chm_s_restart_from_geostatic_hdf5_mcc.cpp
-    # more realistic cases
-    test_t2d_mpm_chm_s_t_bar_real_geostatic.cpp
-    test_t2d_mpm_chm_s_t_bar_real_restart.cpp
     # fluid mechanics
     test_t2d_fluid.cpp
     # s2d geostatic
@@ -84,6 +71,9 @@ add_executable(
     test_s2d_area_distribution.cpp
     test_t2d_area_distribution.cpp
     test_triaxial_test_cam_clay.cpp
+    # for the Durham conference paper
+    test_t2d_mpm_chm_s_t_bar_conference_geo.cpp
+    test_t2d_mpm_chm_s_t_bar_conference_restart.cpp
     )
 
 target_include_directories(

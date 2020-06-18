@@ -103,32 +103,10 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 		101
 		);
 
-	model.init_bg_mesh(0.2, 0.2);
+	model.init_bg_mesh(0.05, 0.05);
 
-	model.set_rigid_circle_velocity(0.0, -0.5, 0.0);
-
-	// traction force
-	//MemoryUtilities::ItemArray<size_t> bc_pcl_ids_mem;
-	//bc_pcl_ids_mem.reserve(100);
-	//get_top_pcl_ids(model, bc_pcl_ids_mem);
-	//size_t *tbc_pcl_ids = bc_pcl_ids_mem.get_mem();
-	//model.init_tys(bc_pcl_ids_mem.get_num());
-	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	//{
-	//	TractionBC_MPM &tbc = model.tys[t_id];
-	//	tbc.pcl_id = tbc_pcl_ids[t_id];
-	//	tbc.t = 0.03 * -20000.0;
-	//}
-	//for (size_t t_id = 0; t_id < model.ty_num; ++t_id)
-	//{
-	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[model.tys[t_id].pcl_id];
-	//	pt_coord = double(pcl.x);
-	//	pt_array.add(&pt_coord);
-	//	pt_coord = double(pcl.y);
-	//	pt_array.add(&pt_coord);
-	//	pt_coord = 0.0f;
-	//	pt_array.add(&pt_coord);
-	//}
+	//model.set_rigid_circle_velocity(0.0, -0.5, 0.0);
+	model.set_rigid_circle_velocity(0.0, -0.05, 0.0);
 
 	MemoryUtilities::ItemArray<size_t> mid_tbc_pcl_ids_mem;
 	mid_tbc_pcl_ids_mem.reserve(100);
@@ -169,16 +147,16 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	//	pt_coord = 0.0f;
 	//	pt_array.add(&pt_coord);
 	//}
-	for (size_t t_id = 0; t_id < left_right_tbc_num; ++t_id)
-	{
-		Model_T2D_CHM_s::Particle& pcl = model.pcls[left_right_tbc_pcl_ids[t_id]];
-		pt_coord = double(pcl.x);
-		pt_array.add(&pt_coord);
-		pt_coord = double(pcl.y);
-		pt_array.add(&pt_coord);
-		pt_coord = 0.0f;
-		pt_array.add(&pt_coord);
-	}
+	//for (size_t t_id = 0; t_id < left_right_tbc_num; ++t_id)
+	//{
+	//	Model_T2D_CHM_s::Particle& pcl = model.pcls[left_right_tbc_pcl_ids[t_id]];
+	//	pt_coord = double(pcl.x);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = double(pcl.y);
+	//	pt_array.add(&pt_coord);
+	//	pt_coord = 0.0f;
+	//	pt_array.add(&pt_coord);
+	//}
 
 	// boundary conditions
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
@@ -251,8 +229,8 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	// penetration step
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
-	step.set_time(1.0); // 1.0s
-	step.set_dtime(2.0e-7);
+	step.set_time(4.0); // 1.0s
+	step.set_dtime(2.0e-6); // 2.0e-7
 	out.set_interval_num(1000);
 	step.add_time_history(out);
 	step.add_time_history(out_pb);
@@ -278,17 +256,17 @@ void test_color_animation_t2d_chm_s_t_bar_conference_restart(void)
 	};
 	GA_T2D_CHM_s_hdf5 gen(1000, 1000); // window size
 	// pore pressure
-	//gen.init_color_graph(
-	//	0.0,
-	//	40000,
-	//	colors, sizeof(colors) / sizeof(ColorGraph::Colori)
-	//	);
-	// strain
 	gen.init_color_graph(
 		0.0,
-		1.5,
+		40000,
 		colors, sizeof(colors) / sizeof(ColorGraph::Colori)
-	);
+		);
+	// strain
+	//gen.init_color_graph(
+	//	0.0,
+	//	1.5,
+	//	colors, sizeof(colors) / sizeof(ColorGraph::Colori)
+	//);
 	gen.generate(5.0,
 		//-2.5, 2.5, -1.9, 1.1,
 		-3.6, 3.6, -5.1, 1.1,

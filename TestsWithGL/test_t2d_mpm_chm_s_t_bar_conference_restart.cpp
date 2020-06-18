@@ -90,6 +90,7 @@ void get_left_right_top_pcl_ids(Model_T2D_CHM_s& md,
 
 };
 
+
 void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 {
 	Model_T2D_CHM_s model;
@@ -99,7 +100,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 		model,
 		"t2d_mpm_chm_t_bar_conference_geo.hdf5",
 		"geostatic",
-		100
+		101
 		);
 
 	model.init_bg_mesh(0.2, 0.2);
@@ -168,16 +169,16 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	//	pt_coord = 0.0f;
 	//	pt_array.add(&pt_coord);
 	//}
-	//for (size_t t_id = 0; t_id < left_right_tbc_num; ++t_id)
-	//{
-	//	Model_T2D_CHM_s::Particle& pcl = model.pcls[left_right_tbc_pcl_ids[t_id]];
-	//	pt_coord = double(pcl.x);
-	//	pt_array.add(&pt_coord);
-	//	pt_coord = double(pcl.y);
-	//	pt_array.add(&pt_coord);
-	//	pt_coord = 0.0f;
-	//	pt_array.add(&pt_coord);
-	//}
+	for (size_t t_id = 0; t_id < left_right_tbc_num; ++t_id)
+	{
+		Model_T2D_CHM_s::Particle& pcl = model.pcls[left_right_tbc_pcl_ids[t_id]];
+		pt_coord = double(pcl.x);
+		pt_array.add(&pt_coord);
+		pt_coord = double(pcl.y);
+		pt_array.add(&pt_coord);
+		pt_coord = 0.0f;
+		pt_array.add(&pt_coord);
+	}
 
 	// boundary conditions
 	MemoryUtilities::ItemArray<size_t> bc_n_ids_mem;
@@ -250,8 +251,7 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart(void)
 	// penetration step
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
-	//step.set_mass_scale(4.0, 4.0);
-	step.set_time(1.0);
+	step.set_time(1.0); // 1.0s
 	step.set_dtime(2.0e-7);
 	out.set_interval_num(1000);
 	step.add_time_history(out);

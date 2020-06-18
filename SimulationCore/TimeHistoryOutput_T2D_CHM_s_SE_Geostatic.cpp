@@ -212,3 +212,9 @@ int time_history_output_func_t2d_chm_s_SE_geostatic_to_hdf5_res_file(TimeHistory
 	++th.output_id;
 	return 0;
 }
+
+void TimeHistoryOutput_T2D_CHM_s_SE_Geostatic::finalize_per_step()
+{
+	// output the last frame
+	output();
+}

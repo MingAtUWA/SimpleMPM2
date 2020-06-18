@@ -66,7 +66,7 @@ public:
 		double q = cal_q();
 		pc = cal_pc(p, q);
 		// void ratio
-		e = N - lambda * log(pc);
+		e = N + (kappa - lambda) * log(pc) - kappa * log(-p);
 		// stiffness mat
 		form_De_mat(p);
 		//form_Dep_mat();
@@ -112,7 +112,8 @@ public:
 		else // normally consolidated
 		{
 			// void ratio
-			e = N - lambda * log(pc);
+			//e = N - lambda * log(pc);
+			e = N + (kappa - lambda) * log(pc) - kappa * log(-p);
 			// stiffness mat
 			form_De_mat(p);
 			double dg_ds[6], dg_dpc;

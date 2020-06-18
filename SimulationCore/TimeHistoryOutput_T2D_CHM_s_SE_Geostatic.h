@@ -30,6 +30,7 @@ public:
 	~TimeHistoryOutput_T2D_CHM_s_SE_Geostatic() { close(); }
 
 	int init_per_step(void) { return init(); }
+	void finalize_per_step() override;
 
 	friend int time_history_output_func_t2d_chm_s_SE_geostatic_to_plain_bin_res_file(TimeHistoryOutput &_self);
 	inline void set_res_file(ResultFile_PlainBin &_res_file) noexcept

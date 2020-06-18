@@ -134,8 +134,8 @@ int main(int argc, void **argv)
 
 	//test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
 	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
-	test_t2d_mpm_chm_s_t_bar_conference_restart(); // *****
-	//test_color_animation_t2d_chm_s_t_bar_conference_restart();
+	//test_t2d_mpm_chm_s_t_bar_conference_restart(); // *****
+	test_color_animation_t2d_chm_s_t_bar_conference_restart();
 
 	//test_t2d_chm_geostatic();
 	//test_t2d_chm_geostatic_animation();

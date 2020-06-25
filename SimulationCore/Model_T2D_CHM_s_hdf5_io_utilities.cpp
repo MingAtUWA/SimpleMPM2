@@ -27,6 +27,9 @@ int output_model_data_to_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf)
 	rf.write_attribute(bg_mesh_id, "type", strlen(bg_mesh_type), bg_mesh_type);
 	rf.write_attribute(bg_mesh_id, "node_num", md.node_num);
 	rf.write_attribute(bg_mesh_id, "element_num", md.elem_num);
+	// bg grid attributes
+	rf.write_attribute(bg_mesh_id, "bg_grid_hx", md.get_bg_grid_hx());
+	rf.write_attribute(bg_mesh_id, "bg_grid_hy", md.get_bg_grid_hy());
 	// node coordinates
 	NodeData *nodes_data = new NodeData[md.node_num];
 	for (size_t n_id = 0; n_id < md.node_num; ++n_id)
@@ -138,10 +141,433 @@ int load_model_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf)
 	delete[] elems_data;
 
 	md.init_mesh(tri_mesh);
+
+	// init bg_grid
+	double bg_grid_hx, bg_grid_hy;
+	rf.read_attribute(bg_mesh_id, "bg_grid_hx", bg_grid_hx);
+	rf.read_attribute(bg_mesh_id, "bg_grid_hy", bg_grid_hy);
+	
+	md.init_bg_mesh(bg_grid_hx, bg_grid_hy);
+
 	rf.close_group(bg_mesh_id);
 	return 0;
 }
 
+int output_bcs_to_hdf5_file(Model_T2D_CHM_s& md, ResultFile_hdf5& rf)
+{
+	hid_t md_id = rf.get_model_data_grp_id();
+
+	hid_t bc_id = rf.create_group(md_id, "BoundaryCondition");
+	rf.write_attribute(bc_id, "asx_num", md.asx_num);
+	rf.write_attribute(bc_id, "asy_num", md.asy_num);
+	rf.write_attribute(bc_id, "afx_num", md.afx_num);
+	rf.write_attribute(bc_id, "afy_num", md.afy_num);
+	rf.write_attribute(bc_id, "vsx_num", md.vsx_num);
+	rf.write_attribute(bc_id, "vsy_num", md.vsy_num);
+	rf.write_attribute(bc_id, "vfx_num", md.vfx_num);
+	rf.write_attribute(bc_id, "vfy_num", md.vfy_num);
+	rf.write_attribute(bc_id, "tx_num", md.tx_num);
+	rf.write_attribute(bc_id, "ty_num", md.ty_num);
+	rf.write_attribute(bc_id, "bfx_num", md.bfx_num);
+	rf.write_attribute(bc_id, "bfy_num", md.bfy_num);
+	
+	hid_t abc_dt_id = get_abc_dt_id();
+	AccelerationBCData* abcds;
+	
+	if (md.asx_num)
+	{
+		abcds = new AccelerationBCData[md.asx_num];
+		for (size_t a_id = 0; a_id < md.asx_num; ++a_id)
+		{
+			AccelerationBC& abc = md.asxs[a_id];
+			AccelerationBCData& abcd = abcds[a_id];
+			abcd.from_abc(abc);
+		}
+		rf.write_dataset(bc_id, "asx", md.asx_num, abcds, abc_dt_id);
+		delete[] abcds;
+	}
+
+	if (md.asy_num)
+	{
+		abcds = new AccelerationBCData[md.asy_num];
+		for (size_t a_id = 0; a_id < md.asy_num; ++a_id)
+		{
+			AccelerationBC &abc = md.asys[a_id];
+			AccelerationBCData& abcd = abcds[a_id];
+			abcd.from_abc(abc);
+		}
+		rf.write_dataset(bc_id, "asy", md.asx_num, abcds, abc_dt_id);
+		delete[] abcds;
+	}
+
+	if (md.afx_num)
+	{
+		abcds = new AccelerationBCData[md.afx_num];
+		for (size_t a_id = 0; a_id < md.afx_num; ++a_id)
+		{
+			AccelerationBC& abc = md.afxs[a_id];
+			AccelerationBCData& abcd = abcds[a_id];
+			abcd.from_abc(abc);
+		}
+		rf.write_dataset(bc_id, "afx", md.afx_num, abcds, abc_dt_id);
+		delete[] abcds;
+	}
+
+	if (md.afy_num)
+	{
+		abcds = new AccelerationBCData[md.afy_num];
+		for (size_t a_id = 0; a_id < md.afy_num; ++a_id)
+		{
+			AccelerationBC& abc = md.afys[a_id];
+			AccelerationBCData& abcd = abcds[a_id];
+			abcd.from_abc(abc);
+		}
+		rf.write_dataset(bc_id, "afy", md.afy_num, abcds, abc_dt_id);
+		delete[] abcds;
+	}
+
+	H5Tclose(abc_dt_id);
+
+	hid_t vbc_dt_id = get_vbc_dt_id();
+	VelocityBCData *vbcds;
+
+	if (md.vsx_num)
+	{
+		vbcds = new VelocityBCData[md.vsx_num];
+		for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
+		{
+			VelocityBC& vbc = md.vsxs[v_id];
+			VelocityBCData& vbcd = vbcds[v_id];
+			vbcd.from_vbc(vbc);
+		}
+		rf.write_dataset(bc_id, "vsx", md.vsx_num, vbcds, vbc_dt_id);
+		delete[] vbcds;
+	}
+
+	if (md.vsy_num)
+	{
+		vbcds = new VelocityBCData[md.vsy_num];
+		for (size_t v_id = 0; v_id < md.vsy_num; ++v_id)
+		{
+			VelocityBC& vbc = md.vsys[v_id];
+			VelocityBCData& vbcd = vbcds[v_id];
+			vbcd.from_vbc(vbc);
+		}
+		rf.write_dataset(bc_id, "vsy", md.vsy_num, vbcds, vbc_dt_id);
+		delete[] vbcds;
+	}
+
+	if (md.vfx_num)
+	{
+		vbcds = new VelocityBCData[md.vfx_num];
+		for (size_t v_id = 0; v_id < md.vfx_num; ++v_id)
+		{
+			VelocityBC& vbc = md.vfxs[v_id];
+			VelocityBCData& vbcd = vbcds[v_id];
+			vbcd.from_vbc(vbc);
+		}
+		rf.write_dataset(bc_id, "vfx", md.vfx_num, vbcds, vbc_dt_id);
+		delete[] vbcds;
+	}
+
+	if (md.vfy_num)
+	{
+		vbcds = new VelocityBCData[md.vfy_num];
+		for (size_t v_id = 0; v_id < md.vfy_num; ++v_id)
+		{
+			VelocityBC& vbc = md.vfys[v_id];
+			VelocityBCData& vbcd = vbcds[v_id];
+			vbcd.from_vbc(vbc);
+		}
+		rf.write_dataset(bc_id, "vfy", md.vfy_num, vbcds, vbc_dt_id);
+		delete[] vbcds;
+	}
+	
+	H5Tclose(vbc_dt_id);
+
+	// traction bc
+	hid_t tbc_dt_id = get_tbc_dt_id();
+	TractionBC_MPMData* tbcds;
+
+	if (md.tx_num)
+	{
+		tbcds = new TractionBC_MPMData[md.tx_num];
+		for (size_t t_id = 0; t_id < md.tx_num; ++t_id)
+		{
+			TractionBC_MPM& tbc = md.txs[t_id];
+			TractionBC_MPMData& tbcd = tbcds[t_id];
+			tbcd.from_tbc(tbc);
+		}
+		rf.write_dataset(bc_id, "tx", md.tx_num, tbcds, tbc_dt_id);
+		delete[] tbcds;
+	}
+
+	if (md.ty_num)
+	{
+		tbcds = new TractionBC_MPMData[md.ty_num];
+		for (size_t t_id = 0; t_id < md.ty_num; ++t_id)
+		{
+			TractionBC_MPM& tbc = md.tys[t_id];
+			TractionBC_MPMData& tbcd = tbcds[t_id];
+			tbcd.from_tbc(tbc);
+		}
+		rf.write_dataset(bc_id, "ty", md.ty_num, tbcds, tbc_dt_id);
+		delete[] tbcds;
+	}
+
+	H5Tclose(tbc_dt_id);
+
+	// body force bc
+	hid_t bf_dt_id = get_bf_dt_id();
+	BodyForceData* bfds;
+
+	if (md.bfx_num)
+	{
+		bfds = new BodyForceData[md.bfx_num];
+		for (size_t bf_id = 0; bf_id < md.bfx_num; ++bf_id)
+		{
+			BodyForce& bf = md.bfxs[bf_id];
+			BodyForceData& bfd = bfds[bf_id];
+			bfd.from_bf(bf);
+		}
+		rf.write_dataset(bc_id, "bfx", md.bfx_num, bfds, bf_dt_id);
+		delete[] bfds;
+	}
+
+	if (md.bfy_num)
+	{
+		bfds = new BodyForceData[md.bfy_num];
+		for (size_t bf_id = 0; bf_id < md.bfy_num; ++bf_id)
+		{
+			BodyForce& bf = md.bfys[bf_id];
+			BodyForceData& bfd = bfds[bf_id];
+			bfd.from_bf(bf);
+		}
+		rf.write_dataset(bc_id, "bfy", md.bfy_num, bfds, bf_dt_id);
+		delete[] bfds;
+	}
+
+	H5Tclose(bf_dt_id);
+
+	rf.close_group(bc_id);
+
+	return 0;
+}
+
+int load_bcs_to_hdf5_file(Model_T2D_CHM_s& md, ResultFile_hdf5& rf)
+{
+	hid_t md_id = rf.get_model_data_grp_id();
+
+	hid_t bc_id = rf.open_group(md_id, "BoundaryCondition");
+	rf.read_attribute(bc_id, "asx_num", md.asx_num);
+	rf.read_attribute(bc_id, "asy_num", md.asy_num);
+	rf.read_attribute(bc_id, "afx_num", md.afx_num);
+	rf.read_attribute(bc_id, "afy_num", md.afy_num);
+	rf.read_attribute(bc_id, "vsx_num", md.vsx_num);
+	rf.read_attribute(bc_id, "vsy_num", md.vsy_num);
+	rf.read_attribute(bc_id, "vfx_num", md.vfx_num);
+	rf.read_attribute(bc_id, "vfy_num", md.vfy_num);
+	rf.read_attribute(bc_id, "tx_num", md.tx_num);
+	rf.read_attribute(bc_id, "ty_num", md.ty_num);
+	rf.read_attribute(bc_id, "bfx_num", md.bfx_num);
+	rf.read_attribute(bc_id, "bfy_num", md.bfy_num);
+
+	// acceleration bcs
+	hid_t abc_dt_id = get_abc_dt_id();
+	AccelerationBCData *abcds;
+
+	if (md.asx_num)
+	{
+		md.init_asxs(md.asx_num);
+		abcds = new AccelerationBCData[md.asx_num];
+		rf.read_dataset(bc_id, "asx", md.asx_num, abcds, abc_dt_id);
+		for (size_t a_id = 0; a_id < md.asx_num; ++a_id)
+		{
+			AccelerationBCData& abcd = abcds[a_id];
+			AccelerationBC& abc = md.asxs[a_id];
+			abcd.to_abc(abc);
+		}
+		delete[] abcds;
+	}
+
+	if (md.asy_num)
+	{
+		md.init_asys(md.asy_num);
+		abcds = new AccelerationBCData[md.asy_num];
+		rf.read_dataset(bc_id, "asy", md.asy_num, abcds, abc_dt_id);
+		for (size_t a_id = 0; a_id < md.asy_num; ++a_id)
+		{
+			AccelerationBCData& abcd = abcds[a_id];
+			AccelerationBC& abc = md.asys[a_id];
+			abcd.to_abc(abc);
+		}
+		delete[] abcds;
+	}
+
+	if (md.afx_num)
+	{
+		md.init_afxs(md.afx_num);
+		abcds = new AccelerationBCData[md.afx_num];
+		rf.read_dataset(bc_id, "afx", md.afx_num, abcds, abc_dt_id);
+		for (size_t a_id = 0; a_id < md.afx_num; ++a_id)
+		{
+			AccelerationBCData& abcd = abcds[a_id];
+			AccelerationBC& abc = md.afxs[a_id];
+			abcd.to_abc(abc);
+		}
+		delete[] abcds;
+	}
+
+	if (md.afy_num)
+	{
+		md.init_afys(md.afy_num);
+		abcds = new AccelerationBCData[md.afy_num];
+		rf.read_dataset(bc_id, "afy", md.afy_num, abcds, abc_dt_id);
+		for (size_t a_id = 0; a_id < md.afy_num; ++a_id)
+		{
+			AccelerationBCData& abcd = abcds[a_id];
+			AccelerationBC& abc = md.afys[a_id];
+			abcd.to_abc(abc);
+		}
+		delete[] abcds;
+	}
+
+	H5Tclose(abc_dt_id);
+
+	// velocity bcs
+	hid_t vbc_dt_id = get_vbc_dt_id();
+	VelocityBCData* vbcds;
+
+	if (md.vsx_num)
+	{
+		md.init_vsxs(md.vsx_num);
+		vbcds = new VelocityBCData[md.vsx_num];
+		rf.read_dataset(bc_id, "vsx", md.vsx_num, vbcds, vbc_dt_id);
+		for (size_t v_id = 0; v_id < md.vsx_num; ++v_id)
+		{
+			VelocityBCData& vbcd = vbcds[v_id];
+			VelocityBC &vbc = md.vsxs[v_id];
+			vbcd.to_vbc(vbc);
+		}
+		delete[] vbcds;
+	}
+
+	if (md.vsy_num)
+	{
+		md.init_vsys(md.vsy_num);
+		vbcds = new VelocityBCData[md.vsy_num];
+		rf.read_dataset(bc_id, "vsy", md.vsy_num, vbcds, vbc_dt_id);
+		for (size_t v_id = 0; v_id < md.vsy_num; ++v_id)
+		{
+			VelocityBCData &vbcd = vbcds[v_id];
+			VelocityBC &vbc = md.vsys[v_id];
+			vbcd.to_vbc(vbc);
+		}
+		delete[] vbcds;
+	}
+
+	if (md.vfx_num)
+	{
+		md.init_vfxs(md.vfx_num);
+		vbcds = new VelocityBCData[md.vfx_num];
+		rf.read_dataset(bc_id, "vfx", md.vfx_num, vbcds, vbc_dt_id);
+		for (size_t v_id = 0; v_id < md.vfx_num; ++v_id)
+		{
+			VelocityBCData &vbcd = vbcds[v_id];
+			VelocityBC &vbc = md.vfxs[v_id];
+			vbcd.to_vbc(vbc);
+		}
+		delete[] vbcds;
+	}
+
+	if (md.vfy_num)
+	{
+		md.init_vfys(md.vfy_num);
+		vbcds = new VelocityBCData[md.vfy_num];
+		rf.read_dataset(bc_id, "vfy", md.vfy_num, vbcds, vbc_dt_id);
+		for (size_t v_id = 0; v_id < md.vfy_num; ++v_id)
+		{
+			VelocityBCData& vbcd = vbcds[v_id];
+			VelocityBC& vbc = md.vfys[v_id];
+			vbcd.to_vbc(vbc);
+		}
+		delete[] vbcds;
+	}
+
+	H5Tclose(vbc_dt_id);
+
+	// tbc
+	hid_t tbc_dt_id = get_tbc_dt_id();
+	TractionBC_MPMData* tbcds;
+
+	if (md.tx_num)
+	{
+		md.init_txs(md.tx_num);
+		tbcds = new TractionBC_MPMData[md.tx_num];
+		rf.read_dataset(bc_id, "tx", md.tx_num, tbcds, tbc_dt_id);
+		for (size_t t_id = 0; t_id < md.tx_num; ++t_id)
+		{
+			TractionBC_MPMData& tbcd = tbcds[t_id];
+			TractionBC_MPM& tbc = md.txs[t_id];
+			tbcd.to_tbc(tbc);
+		}
+		delete[] tbcds;
+	}
+
+	if (md.ty_num)
+	{
+		md.init_tys(md.ty_num);
+		tbcds = new TractionBC_MPMData[md.ty_num];
+		rf.read_dataset(bc_id, "ty", md.ty_num, tbcds, tbc_dt_id);
+		for (size_t t_id = 0; t_id < md.ty_num; ++t_id)
+		{
+			TractionBC_MPMData& tbcd = tbcds[t_id];
+			TractionBC_MPM& tbc = md.tys[t_id];
+			tbcd.to_tbc(tbc);
+		}
+		delete[] tbcds;
+	}
+
+	H5Tclose(tbc_dt_id);
+
+	// body force
+	hid_t bf_dt_id = get_bf_dt_id();
+	BodyForceData* bfds;
+
+	if (md.bfx_num)
+	{
+		md.init_bfxs(md.bfx_num);
+		bfds = new BodyForceData[md.bfx_num];
+		rf.read_dataset(bc_id, "bfx", md.bfx_num, bfds, bf_dt_id);
+		for (size_t bf_id = 0; bf_id < md.bfx_num; ++bf_id)
+		{
+			BodyForceData& bfd = bfds[bf_id];
+			BodyForce& bf = md.bfxs[bf_id];
+			bfd.to_bf(bf);
+		}
+		delete[] bfds;
+	}
+
+	if (md.bfy_num)
+	{
+		md.init_bfys(md.bfy_num);
+		bfds = new BodyForceData[md.bfy_num];
+		rf.read_dataset(bc_id, "bfy", md.bfy_num, bfds, bf_dt_id);
+		for (size_t bf_id = 0; bf_id < md.bfy_num; ++bf_id)
+		{
+			BodyForceData& bfd = bfds[bf_id];
+			BodyForce& bf = md.bfys[bf_id];
+			bfd.to_bf(bf);
+		}
+		delete[] bfds;
+	}
+
+	H5Tclose(bf_dt_id);
+
+	rf.close_group(bc_id);
+
+	return 0;
+}
 
 namespace
 {
@@ -450,6 +876,7 @@ int load_chm_s_model_from_hdf5_file(Model_T2D_CHM_s &md,
 
 	// model data
 	load_model_data_from_hdf5_file(md, rf);
+	load_bcs_to_hdf5_file(md, rf);
 
 	// time history output
 	hid_t th_grp_id = rf.get_time_history_grp_id();

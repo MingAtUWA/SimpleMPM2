@@ -108,7 +108,7 @@ int main(int argc, void **argv)
 
 	// output to hdf5 file
 	//test_t2d_chm_s_hdf5_output();
-
+	
 	//test_t2d_chm_s_geostatic_hdf5_mcc();
 	//test_color_animation_t2d_chm_s_geostatic_hdf5_mcc();
 	//test_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
@@ -131,10 +131,12 @@ int main(int argc, void **argv)
 	//test_t2d_area_distribution();
 	//test_t2d_area_distribution2();
 
-	//test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
+	test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
 	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
-	test_t2d_mpm_chm_s_t_bar_conference_restart(); // *****
-	//test_color_animation_t2d_chm_s_t_bar_conference_restart();
+	//test_t2d_mpm_chm_s_t_bar_conference_restart1(); // *****
+	//test_color_animation_t2d_chm_s_t_bar_conference_restart1();
+	//test_t2d_mpm_chm_s_t_bar_conference_restart2(); // *****
+	//test_color_animation_t2d_chm_s_t_bar_conference_restart2();
 
 	//system("pause");
 	return 0;

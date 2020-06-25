@@ -33,12 +33,16 @@ void test_color_animation_t2d_chm_s_restart_from_geostatic_hdf5_mcc();
 
 void test_postprocess_t2d_fluid();
 
-void test_color_animation_t2d_chm_s_t_bar_conference_geo();
-void test_color_animation_t2d_chm_s_t_bar_conference_restart();
-
 void test_t2d_chm_geostatic_animation();
 
 void display_s2d_mpm_me_s_geostatic();
 void display_s2d_mpm_me_s();
+
+void test_postprocess_restart_t2d_chm_s_1d_consolidation1();
+void test_postprocess_restart_t2d_chm_s_1d_consolidation2();
+
+void test_color_animation_t2d_chm_s_t_bar_conference_geo();
+void test_color_animation_t2d_chm_s_t_bar_conference_restart1();
+void test_color_animation_t2d_chm_s_t_bar_conference_restart2();
 
 #endif

@@ -58,6 +58,7 @@ add_executable(
     test_ModifiedCamClay.cpp
     test_mcc_get_Su.cpp
     # hdf5
+    test_t2d_chm_restart_1d_consolidation.cpp
     test_t2d_chm_s_geostatic_hdf5.cpp
     test_t2d_chm_s_restart_from_geostatic_hdf5.cpp
     test_t2d_chm_s_geostatic_hdf5_mcc.cpp
@@ -73,7 +74,8 @@ add_executable(
     test_triaxial_test_cam_clay.cpp
     # for the Durham conference paper
     test_t2d_mpm_chm_s_t_bar_conference_geo.cpp
-    test_t2d_mpm_chm_s_t_bar_conference_restart.cpp
+    test_t2d_mpm_chm_s_t_bar_conference_restart1.cpp
+    test_t2d_mpm_chm_s_t_bar_conference_restart2.cpp
     )
 
 target_include_directories(

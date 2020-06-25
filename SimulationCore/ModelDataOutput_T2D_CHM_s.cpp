@@ -149,5 +149,8 @@ int model_data_output_func_t2d_chm_s_to_hdf5_res_file(ModelDataOutput &_self)
 	
 	using Model_T2D_CHM_s_hdf5_io_utilities::output_model_data_to_hdf5_file;
 	output_model_data_to_hdf5_file(model, rf);
+	using Model_T2D_CHM_s_hdf5_io_utilities::output_bcs_to_hdf5_file;
+	output_bcs_to_hdf5_file(model, rf);
+
 	return 0;
 }

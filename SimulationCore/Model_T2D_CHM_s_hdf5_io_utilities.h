@@ -99,6 +99,9 @@ inline hid_t get_pcl_dt_id(void)
 int output_model_data_to_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf);
 int load_model_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf);
 
+int output_bcs_to_hdf5_file(Model_T2D_CHM_s& md, ResultFile_hdf5& rf);
+int load_bcs_to_hdf5_file(Model_T2D_CHM_s& md, ResultFile_hdf5& rf);
+
 int output_model_container_to_hdf5_file(ModelContainer &mc, ResultFile_hdf5 &rf, hid_t frame_id /* frame id */);
 int load_model_container_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t frame_id /* frame id */);
 
@@ -109,6 +112,7 @@ int output_pcl_data_to_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t
 int load_pcl_data_from_hdf5_file(Model_T2D_CHM_s &md, ResultFile_hdf5 &rf, hid_t frame_id /* frame id */);
 
 int load_chm_s_model_from_hdf5_file(Model_T2D_CHM_s &md, const char *hdf5_name, const char *th_name, size_t frame_id);
+
 };
 
 #endif

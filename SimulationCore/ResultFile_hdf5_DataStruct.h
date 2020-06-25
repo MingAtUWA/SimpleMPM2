@@ -3,6 +3,7 @@
 
 #include "hdf5.h"
 #include "ModelContainer.h"
+#include "BC.h"
 
 namespace ResultFile_hdf5_DataStruct
 {
@@ -144,6 +145,103 @@ inline hid_t get_rc_dt_id(void)
 	H5Tinsert(res, "xr",  HOFFSET(RigidBodyParticleData, xr),  H5T_NATIVE_DOUBLE);
 	H5Tinsert(res, "yr",  HOFFSET(RigidBodyParticleData, yr),  H5T_NATIVE_DOUBLE);
 	H5Tinsert(res, "vol", HOFFSET(RigidBodyParticleData, vol), H5T_NATIVE_DOUBLE);
+	return res;
+}
+
+// Boundary conditions
+struct AccelerationBCData
+{
+	unsigned long long node_id; // node id
+	double a;
+	inline void from_abc(AccelerationBC& abc)
+	{
+		node_id = abc.node_id;
+		a = abc.a;
+	}
+	inline void to_abc(AccelerationBC& abc)
+	{
+		abc.node_id = node_id;
+		abc.a = a;
+	}
+};
+
+inline hid_t get_abc_dt_id()
+{
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(AccelerationBCData));
+	H5Tinsert(res, "node_id", HOFFSET(AccelerationBCData, node_id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "a", HOFFSET(AccelerationBCData, a), H5T_NATIVE_DOUBLE);
+	return res;
+}
+
+struct VelocityBCData
+{
+	unsigned long long node_id; // node id
+	double v;
+	inline void from_vbc(VelocityBC& vbc)
+	{
+		node_id = vbc.node_id;
+		v = vbc.v;
+	}
+	inline void to_vbc(VelocityBC& vbc)
+	{
+		vbc.node_id = node_id;
+		vbc.v = v;
+	}
+};
+
+inline hid_t get_vbc_dt_id()
+{
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(VelocityBCData));
+	H5Tinsert(res, "node_id", HOFFSET(VelocityBCData, node_id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "v", HOFFSET(VelocityBCData, v), H5T_NATIVE_DOUBLE);
+	return res;
+}
+
+struct BodyForceData
+{
+	unsigned long long pcl_id;
+	double bf;
+	inline void from_bf(BodyForce& _bf)
+	{
+		pcl_id = _bf.pcl_id;
+		bf = _bf.bf;
+	}
+	inline void to_bf(BodyForce& _bf)
+	{
+		_bf.pcl_id = pcl_id;
+		_bf.bf = bf;
+	}
+};
+
+inline hid_t get_bf_dt_id()
+{
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(BodyForceData));
+	H5Tinsert(res, "pcl_id", HOFFSET(BodyForceData, pcl_id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "bf", HOFFSET(BodyForceData, bf), H5T_NATIVE_DOUBLE);
+	return res;
+}
+
+struct TractionBC_MPMData
+{
+	unsigned long long pcl_id;
+	double t;
+	inline void from_tbc(TractionBC_MPM& tbc)
+	{
+		pcl_id = tbc.pcl_id;
+		t = tbc.t;
+	}
+	inline void to_tbc(TractionBC_MPM& tbc)
+	{
+		tbc.pcl_id = pcl_id;
+		tbc.t = t;
+	}
+};
+
+inline hid_t get_tbc_dt_id()
+{
+	hid_t res = H5Tcreate(H5T_COMPOUND, sizeof(TractionBC_MPMData));
+	H5Tinsert(res, "pcl_id", HOFFSET(TractionBC_MPMData, pcl_id), H5T_NATIVE_ULLONG);
+	H5Tinsert(res, "t", HOFFSET(TractionBC_MPMData, t), H5T_NATIVE_DOUBLE);
 	return res;
 }
 

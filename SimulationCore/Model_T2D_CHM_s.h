@@ -459,8 +459,11 @@ public:
 
 	Element *find_in_which_element(double x, double y);
 	
+	inline double get_bg_grid_hx() { return grid_hx; }
+	inline double get_bg_grid_hy() { return grid_hy; }
+
 	int init_bg_mesh(double hx, double hy);
-	inline void clear_bg_mesh(void)
+	inline void clear_bg_mesh()
 	{
 		if (bg_grids)
 		{

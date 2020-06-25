@@ -77,6 +77,10 @@ void test_mcc_get_Su();
 void test_triaxial_test_cam_clay();
 
 void test_t2d_mpm_chm_s_t_bar_conference_geo();
-void test_t2d_mpm_chm_s_t_bar_conference_restart();
+void test_t2d_mpm_chm_s_t_bar_conference_restart1();
+void test_t2d_mpm_chm_s_t_bar_conference_restart2();
+
+void test_t2d_chm_restart_1d_consolidation();
+void test_t2d_chm_restart_1d_consolidation2();
 
 #endif

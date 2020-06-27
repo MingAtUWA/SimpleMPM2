@@ -350,7 +350,7 @@ void test_color_animation_t2d_chm_s_t_bar_conference_geo(void)
 	gen.generate(
 		5.0, // time
 		-3.6, 3.6, -5.1, 1.1,
-		"t2d_mpm_chm_t_bar_conference_geo.hdf5",
+		"t2d_mpm_chm_t_bar_conference_geo.h5",
 		"geostatic",
 		"t2d_mpm_chm_t_bar_conference_geo.gif"
 		);

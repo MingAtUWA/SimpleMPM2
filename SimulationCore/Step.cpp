@@ -195,7 +195,7 @@ void Step::output_all_time_history(void)
 		pth->output();
 }
 
-void Step::output_time_history(void)
+void Step::output_time_history()
 {
 	for (TimeHistoryOutput *pth = time_history_top; pth; pth = pth->next)
 	{

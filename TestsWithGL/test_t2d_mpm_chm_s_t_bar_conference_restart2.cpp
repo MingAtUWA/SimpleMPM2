@@ -19,7 +19,6 @@
 
 #include "GA_T2D_CHM_s_hdf5.h"
 
-
 void test_t2d_mpm_chm_s_t_bar_conference_restart2()
 {
 	Model_T2D_CHM_s model;
@@ -32,9 +31,9 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart2()
 		501
 		);
 
-	MemoryUtilities::ItemArray<GLfloat> pt_array;
-	pt_array.reserve(100);
-	GLfloat pt_coord;
+	//MemoryUtilities::ItemArray<GLfloat> pt_array;
+	//pt_array.reserve(100);
+	//GLfloat pt_coord;
 	//for (size_t t_id = 0; t_id < mid_tbc_num; ++t_id)
 	//{
 	//	Model_T2D_CHM_s::Particle &pcl = model.pcls[mid_tbc_pcl_ids[t_id]];
@@ -77,7 +76,6 @@ void test_t2d_mpm_chm_s_t_bar_conference_restart2()
 	out.set_output_init_state();
 	TimeHistoryOutput_ConsoleProgressBar out_pb;
 
-	// penetration step
 	Step_T2D_CHM_s_SE step;
 	step.set_model(model);
 	step.set_time(5.0); // 1.0s

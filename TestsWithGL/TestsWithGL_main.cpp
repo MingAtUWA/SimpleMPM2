@@ -131,9 +131,9 @@ int main(int argc, void **argv)
 	//test_t2d_area_distribution();
 	//test_t2d_area_distribution2();
 
-	test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
+	//test_t2d_mpm_chm_s_t_bar_conference_geo(); // *****
 	//test_color_animation_t2d_chm_s_t_bar_conference_geo();
-	//test_t2d_mpm_chm_s_t_bar_conference_restart1(); // *****
+	test_t2d_mpm_chm_s_t_bar_conference_restart1(); // *****
 	//test_color_animation_t2d_chm_s_t_bar_conference_restart1();
 	//test_t2d_mpm_chm_s_t_bar_conference_restart2(); // *****
 	//test_color_animation_t2d_chm_s_t_bar_conference_restart2();
